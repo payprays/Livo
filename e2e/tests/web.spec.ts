@@ -6,10 +6,10 @@ test('web app loads the reader shell', async ({ page }) => {
 
   await expect(page).toHaveTitle(/Livo/)
   await expect(page.locator('#root')).toBeVisible()
-  await page.waitForFunction(() => {
-    const root = document.querySelector('#root')
-    return !!root && (root.textContent?.trim().length ?? 0) > 0
-  })
+  // 没有桌面版时渲染"未连接"提示；桌面版在跑时渲染阅读器外壳。
+  await expect(page.locator('#root')).toContainText(
+    /未连接到 Livo 桌面版|暂无文章|添加订阅源|No articles|Add a feed/,
+  )
 })
 
 test('opening the selected entry image does not trigger a React update loop', async ({

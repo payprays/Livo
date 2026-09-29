@@ -108,13 +108,15 @@ pnpm dev
 
 这会通过 `electron-vite dev` 启动 Electron 窗口并开启 HMR。
 
-### 3. 启动 Web 开发模式
+### 3. Web 版
+
+桌面版运行时，浏览器打开 http://127.0.0.1:27412 。数据、抓取、AI 全部由桌面版处理。文件对话框会在桌面端弹出。端口可用环境变量 `LIVO_LOCAL_API_PORT` 修改。
+
+开发模式 `pnpm dev:web` 通过代理连到同一端口，首次打开需要在地址栏加 `?token=`，token 在 用户数据目录/local-api.json 里。
 
 ```bash
 pnpm dev:web
 ```
-
-Web 入口复用渲染层界面，运行在浏览器环境中，使用 IndexedDB 保存数据，并通过 `src/web/web-api.ts` 提供与 preload 相同形状的 API。适合验证通用阅读界面和浏览器兼容路径。依赖 Electron 主进程的能力（如本机 SQLite 数据目录、系统文件对话框、原生下载等）仅在桌面端完整可用。
 
 ## 常用命令
 
@@ -122,7 +124,7 @@ Web 入口复用渲染层界面，运行在浏览器环境中，使用 IndexedDB
 pnpm dev                  # 开发模式启动桌面端
 pnpm dev:web              # 开发模式启动 Web 端
 pnpm preview              # 预览已构建的桌面端
-pnpm build                # 构建桌面端
+pnpm build                # 构建桌面端（含 Web 端）
 pnpm build:win            # 构建 Windows win-unpacked 产物
 pnpm build:web            # 构建 Web 端
 pnpm typecheck            # 类型检查

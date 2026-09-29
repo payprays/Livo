@@ -171,8 +171,9 @@ export function startAutoRefresh(
       : intervalMinutes
 
   const notifyUpdated = (newEntries: number): void => {
-    if (newEntries > 0 && mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('feeds:updated', { newEntries })
+    // 走 event bus，本地 API 的 SSE 客户端也能收到。
+    if (newEntries > 0) {
+      getEventBus().send('feeds:updated', { newEntries })
     }
   }
 

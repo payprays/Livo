@@ -21,7 +21,7 @@ function errorMessage(error: unknown): string {
   return 'IPC handler failed'
 }
 
-function toIpcError(error: unknown) {
+export function toIpcError(error: unknown) {
   if (error instanceof IpcContractError) {
     return {
       code: error.code,
@@ -36,10 +36,27 @@ function toIpcError(error: unknown) {
   }
 }
 
+type AnyIpcHandler = (
+  event: IpcMainInvokeEvent,
+  ...args: unknown[]
+) => unknown | Promise<unknown>
+
+// 本地 HTTP API 复用同一批 handler。
+const handlers = new Map<IpcChannel, AnyIpcHandler>()
+
+export function getIpcHandler(channel: IpcChannel): AnyIpcHandler | undefined {
+  return handlers.get(channel)
+}
+
+export function listIpcChannels(): IpcChannel[] {
+  return [...handlers.keys()]
+}
+
 export function registerChannel<C extends IpcChannel, R>(
   channel: C,
   handler: IpcHandler<C, R>,
 ): void {
+  handlers.set(channel, handler as AnyIpcHandler)
   ipcMain.handle(channel, async (event, ...rawArgs: unknown[]) => {
     try {
       const args = validateIpcArgs(channel, rawArgs)

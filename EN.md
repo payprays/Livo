@@ -108,13 +108,15 @@ pnpm dev
 
 This starts an Electron window through `electron-vite dev` with HMR enabled.
 
-### 3. Start Web development mode
+### 3. Web version
+
+While the desktop app is running, open http://127.0.0.1:27412 in a browser. Data, fetching and AI are all handled by the desktop app. File dialogs open on the desktop side. The port can be changed with the `LIVO_LOCAL_API_PORT` environment variable.
+
+In development, `pnpm dev:web` connects to the same port through a proxy. On first open, append `?token=` to the address; the token is in `<user data directory>/local-api.json`.
 
 ```bash
 pnpm dev:web
 ```
-
-The Web entry point reuses the renderer UI, runs in the browser, stores data in IndexedDB, and provides an API shaped like preload through `src/web/web-api.ts`. It is useful for validating the shared reading UI and browser compatibility paths. Features that depend on the Electron main process, such as the local SQLite data directory, system file dialogs, and native downloads, are fully available only in the desktop client.
 
 ## Common Commands
 
@@ -122,7 +124,7 @@ The Web entry point reuses the renderer UI, runs in the browser, stores data in 
 pnpm dev                  # Start desktop development mode
 pnpm dev:web              # Start Web development mode
 pnpm preview              # Preview the built desktop app
-pnpm build                # Build the desktop app
+pnpm build                # Build the desktop app (including the Web app)
 pnpm build:win            # Build the Windows win-unpacked artifact
 pnpm build:web            # Build the Web app
 pnpm typecheck            # Run type checks

@@ -4,7 +4,19 @@ export interface EventBus {
   send(channel: string, ...args: unknown[]): void
 }
 
-/** Sends events to all open BrowserWindows. No-op if no windows exist. */
+export type EventSink = (channel: string, args: unknown[]) => void
+
+const sinks = new Set<EventSink>()
+
+/** Receives every event sent through the default bus (e.g. local API SSE clients). */
+export function addEventSink(sink: EventSink): () => void {
+  sinks.add(sink)
+  return () => {
+    sinks.delete(sink)
+  }
+}
+
+/** Sends events to all open BrowserWindows and registered sinks. */
 export function createBrowserWindowEventBus(): EventBus {
   return {
     send(channel: string, ...args: unknown[]) {
@@ -13,6 +25,7 @@ export function createBrowserWindowEventBus(): EventBus {
           win.webContents.send(channel, ...args)
         }
       }
+      for (const sink of sinks) sink(channel, args)
     },
   }
 }

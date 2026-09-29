@@ -32,6 +32,9 @@ export default defineConfig({
   server: {
     ...sharedRendererConfig.server,
     port: 5433,
-    open: true,
+    open: false,
+    proxy: {
+      '/api': { target: 'http://127.0.0.1:27412', changeOrigin: false },
+    },
   },
 })

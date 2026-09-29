@@ -40,6 +40,10 @@ import { registerSessionPolicies } from './services/system/session-policies'
 import { parseDeepLink } from '../shared/deep-link'
 import { UpdaterService } from './services/updater'
 import { registerUpdaterHandlers } from './handlers/updater-handlers'
+import {
+  launchLocalApi,
+  type LocalApiServer,
+} from './services/local-api/local-api-server'
 
 // 自动刷新会触发同步 SQLite 写事务并阻塞主进程 IPC；启动后的前几秒是
 // 用户交互最密集的窗口期，延后到首屏数据与交互稳定之后再开始。
@@ -53,6 +57,7 @@ export class AppManager {
   private isQuitting = false
   private databaseReady = false
   private databaseClosed = false
+  private localApi: LocalApiServer | null = null
   private updater: UpdaterService
 
   constructor(
@@ -133,7 +138,17 @@ export class AppManager {
 
     if (this.isQuitting) return
 
+    void this.startLocalApi()
     this.scheduleStartupBackgroundJobs(mainWindow, settings)
+  }
+
+  private async startLocalApi(): Promise<void> {
+    const server = await launchLocalApi()
+    if (this.isQuitting) {
+      void server?.close()
+      return
+    }
+    this.localApi = server
   }
 
   handleActivate(): void {
@@ -150,6 +165,8 @@ export class AppManager {
     this.windowManager.prepareForQuit()
     this.tray?.destroy()
     this.tray = null
+    void this.localApi?.close()
+    this.localApi = null
     this.stopDatabaseBackedBackgroundJobs()
     this.closeDatabaseOnce()
   }

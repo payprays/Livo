@@ -157,7 +157,7 @@ function attachWebReloadPrompt() {
 }
 
 async function main() {
-  // Initialize the web platform (IndexedDB + WebAPI)
+  // Connect to the desktop app's local API
   const api = await initWebPlatform()
 
   // Expose the web API as window.api (same interface as Electron preload)
@@ -196,9 +196,8 @@ main().catch((err) => {
   console.error('[Livo Web] Failed to start:', err)
   document.getElementById('root')!.innerHTML = `
     <div style="padding:40px;font-family:sans-serif;">
-      <h2 style="color:#FF5C00;">Livo Web 启动失败</h2>
+      <h2 style="color:#FF5C00;">未连接到 Livo 桌面版。请先启动桌面版，然后打开 http://127.0.0.1:27412/</h2>
       <pre style="background:#f5f5f5;padding:16px;border-radius:8px;color:#c00;">${err}</pre>
-      <p>请确保浏览器支持 IndexedDB。</p>
     </div>
   `
 })

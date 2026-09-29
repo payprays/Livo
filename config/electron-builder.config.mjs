@@ -40,6 +40,10 @@ export default {
       from: 'resources/tray.png',
       to: 'tray.png',
     },
+    {
+      from: 'dist-web',
+      to: 'web',
+    },
   ],
   protocols: [
     {

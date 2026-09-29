@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => {
     handlers,
     isPackaged: true,
     getVersion: vi.fn(() => '1.0.0'),
+    windowSend: null as null | ((...args: unknown[]) => void),
     checkForAppUpdates: vi.fn(),
     installAppUpdate: vi.fn(),
     canInstallMacUpdateInPlace: vi.fn(() => true),
@@ -34,6 +35,12 @@ vi.mock('electron', () => ({
     },
     getVersion: mocks.getVersion,
   },
+}))
+
+vi.mock('./system/event-bus', () => ({
+  getEventBus: () => ({
+    send: (...args: unknown[]) => mocks.windowSend?.(...args),
+  }),
 }))
 
 vi.mock('electron-updater', () => ({
@@ -101,6 +108,7 @@ describe('UpdaterService', () => {
       return ['/tmp/Livo-1.2.0-mac-arm64.zip']
     })
     const send = vi.fn()
+    mocks.windowSend = send
     const service = new UpdaterService(false)
     service.setWindow({
       isDestroyed: () => false,
@@ -170,6 +178,7 @@ describe('UpdaterService', () => {
         '/tmp/Livo-1.2.0-mac-arm64.zip',
       ])
       const send = vi.fn()
+      mocks.windowSend = send
       const service = new UpdaterService(false)
       service.setWindow({
         isDestroyed: () => false,
@@ -201,6 +210,7 @@ describe('UpdaterService', () => {
         '/tmp/Livo-1.2.0-mac-arm64.zip',
       ])
       const send = vi.fn()
+      mocks.windowSend = send
       const service = new UpdaterService(false)
       service.setWindow({
         isDestroyed: () => false,

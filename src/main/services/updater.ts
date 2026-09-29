@@ -6,6 +6,7 @@ import type {
   AppUpdateState,
 } from '../../shared/types'
 import { __internal } from './system/update-check-internal'
+import { getEventBus } from './system/event-bus'
 import { checkForAppUpdates as checkWindowsUpdates } from './system/update-check'
 import { installAppUpdate as installWindowsUpdate } from './system/update-install'
 import { canInstallMacUpdateInPlace } from './system/mac-update-capability'
@@ -161,7 +162,7 @@ export class UpdaterService {
   }
 
   private sendUpdateState(state: AppUpdateState): void {
-    this.sendToWindow('app:update-state', state)
+    getEventBus().send('app:update-state', state)
   }
 
   setWindow(window: BrowserWindow): void {
