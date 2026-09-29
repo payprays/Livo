@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom'
 import { router } from '@renderer/router'
 import { ErrorBoundary } from '@renderer/components/ErrorBoundary'
 import { RootProviders } from '@renderer/providers/RootProviders'
+import { setAppIsReady } from '@renderer/store/app-store'
 import '@renderer/styles/tokens.css'
 import '@renderer/styles/globals.css'
 import { initWebPlatform } from './web-api'
@@ -186,6 +187,8 @@ async function main() {
     </React.StrictMode>,
   )
 
+  // app-runtime gates the shell on this flag; the Electron entry sets it in main.tsx.
+  setAppIsReady(true)
   console.log('[Livo Web] App mounted successfully')
 }
 
