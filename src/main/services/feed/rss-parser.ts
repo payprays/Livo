@@ -1,7 +1,7 @@
 import RssParser from 'rss-parser'
 import https from 'https'
 import http from 'http'
-import { session } from 'electron'
+import { app, session } from 'electron'
 import { fetchBilibiliDynamicFeedFromOfficialApi } from '../bilibili/bilibili-dynamic'
 import { isMirrorHost } from '../../../shared/url-detect'
 import {
@@ -145,9 +145,29 @@ function isInstagramRelatedUrl(url: string): boolean {
   )
 }
 
+const LEGACY_FEED_USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+
+/**
+ * Electron's real User-Agent with the Electron/livo tokens removed.
+ * A spoofed UA whose Chrome major disagrees with the sec-ch-ua client hints
+ * Chromium sends trips WordPress bot checks (403 "Checking your browser...").
+ * Falls back to the legacy string when `app` is unavailable (unit tests).
+ */
+function feedUserAgent(): string {
+  let real = ''
+  try {
+    real =
+      typeof app?.userAgentFallback === 'string' ? app.userAgentFallback : ''
+  } catch {
+    // vitest throws when a mocked module has no `app` export; use the fallback.
+  }
+  return real
+    ? real.replace(/\s(?:Electron|livo)\/[\d.]+/gi, '')
+    : LEGACY_FEED_USER_AGENT
+}
+
 const FEED_REQUEST_HEADERS: Record<string, string> = {
-  'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
   Accept:
     'application/rss+xml, application/xml, application/atom+xml, text/xml, */*',
   'Accept-Language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
@@ -157,7 +177,11 @@ function buildRequestHeaders(
   url: string,
   extraHeaders?: Record<string, string>,
 ): Record<string, string> {
-  const headers = { ...FEED_REQUEST_HEADERS, ...extraHeaders }
+  const headers = {
+    'User-Agent': feedUserAgent(),
+    ...FEED_REQUEST_HEADERS,
+    ...extraHeaders,
+  }
 
   // For Instagram-related URLs, use mobile User-Agent
   if (isInstagramRelatedUrl(url)) {
@@ -1000,6 +1024,13 @@ async function fetchWithConditional(
           return
         }
 
+        // A bot-check or error page must surface as an HTTP failure, not be
+        // handed to the RSS parser as if it were the feed body.
+        if (res.statusCode && res.statusCode >= 400) {
+          res.resume()
+          rejectOnce(new Error(`HTTP ${res.statusCode}`))
+          return
+        }
         if (res.statusCode === 304) {
           res.resume()
           resolveOnce({
