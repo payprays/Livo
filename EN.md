@@ -108,13 +108,6 @@ pnpm dev
 
 This starts an Electron window through `electron-vite dev` with HMR enabled.
 
-To use Google OAuth login, create a Google OAuth Desktop Client first, then set the Client ID before starting the app:
-
-```bash
-$env:LIVO_GOOGLE_OAUTH_CLIENT_ID="your-desktop-client-id.apps.googleusercontent.com"
-pnpm dev
-```
-
 ### 3. Start Web development mode
 
 ```bash

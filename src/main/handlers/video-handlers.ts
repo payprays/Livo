@@ -1,9 +1,8 @@
 ﻿/**
- * IPC handlers for video URL resolution and YouTube account linking.
+ * IPC handlers for video URL resolution.
  *
- * - VIDEO_RESOLVE: Invidious/Piped proxy 鈫?direct .mp4 URLs
- * - VIDEO_YT_LOGIN / STATUS / LOGOUT: Legacy compatibility wrappers around
- *   the hardened account-linking service's YouTube provider.
+ * - VIDEO_RESOLVE: Invidious/Piped proxy -> direct .mp4 URLs
+ * - VIDEO_YT_STATUS: Legacy compatibility stub; account linking was removed.
  */
 import { BrowserWindow } from 'electron'
 import { IPC } from '../../shared/types'
@@ -12,11 +11,6 @@ import { registerChannel } from '../ipc/register-channel'
 import { toHandlerError } from '../ipc/handler-error'
 import { classifyNetworkFetchUrl } from '../services/system/network-url-policy'
 import { resolveVideoUrl } from '../services/video/video-proxy'
-import {
-  getAccountState,
-  linkAccount,
-  unlinkAccount,
-} from '../services/account/account-auth'
 
 const DESKTOP_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
@@ -135,22 +129,9 @@ export function registerVideoHandlers(): void {
     }
   })
 
-  // Legacy YouTube account IPC: route through hardened account linking.
-  registerChannel(IPC.VIDEO_YT_LOGIN, async () => {
-    return linkAccount('youtube')
-  })
-
-  // Legacy YouTube account: check if linked.
-  registerChannel(IPC.VIDEO_YT_STATUS, async () => {
-    const state = await getAccountState('youtube')
-    return {
-      loggedIn: state.linked,
-      name: state.displayName || (state.linked ? 'YouTube' : null),
-    }
-  })
-
-  // Legacy YouTube account: clear linked session.
-  registerChannel(IPC.VIDEO_YT_LOGOUT, async () => {
-    return unlinkAccount('youtube')
-  })
+  // Legacy YouTube account status: account linking was removed, never linked.
+  registerChannel(IPC.VIDEO_YT_STATUS, async () => ({
+    loggedIn: false,
+    name: null,
+  }))
 }

@@ -229,7 +229,9 @@ export const SocialMediaItem = memo(function SocialMediaItem({
             return `https://unavatar.io/x/${username}`
           }
         }
-      } catch {}
+      } catch {
+        // ignore
+      }
     }
     if (feedUrl) {
       const m = feedUrl.match(/\/twitter\/user\/([a-zA-Z0-9_]+)/i)

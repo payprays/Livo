@@ -133,7 +133,9 @@ export function TextContextMenu() {
               if (!text) return
               try {
                 await navigator.clipboard.writeText(text)
-              } catch {}
+              } catch {
+                // ignore
+              }
               const start = editable.selectionStart ?? 0
               const end = editable.selectionEnd ?? 0
               editable.setRangeText('', start, end, 'start')
@@ -155,13 +157,17 @@ export function TextContextMenu() {
               if (!text) return
               try {
                 await navigator.clipboard.writeText(text)
-              } catch {}
+              } catch {
+                // ignore
+              }
               return
             }
             if (selectionText) {
               try {
                 await navigator.clipboard.writeText(selectionText)
-              } catch {}
+              } catch {
+                // ignore
+              }
             }
           },
         },
@@ -175,7 +181,9 @@ export function TextContextMenu() {
             let text = ''
             try {
               text = await navigator.clipboard.readText()
-            } catch {}
+            } catch {
+              // ignore
+            }
             if (!text) return
             if (isInput) {
               const start = editable.selectionStart ?? 0
@@ -234,7 +242,9 @@ export function TextContextMenu() {
           if (!selectionText) return
           try {
             await navigator.clipboard.writeText(selectionText)
-          } catch {}
+          } catch {
+            // ignore
+          }
         },
       },
       {

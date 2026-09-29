@@ -43,12 +43,6 @@ import {
   buildListBuiltinFeedsTool,
 } from './tools/discover-tools'
 import {
-  buildListAccountProvidersTool,
-  buildOpenAccountLoginTool,
-  buildRefreshAccountStatusTool,
-  buildUnlinkAccountTool,
-} from './tools/account-tools'
-import {
   buildCleanupOldEntriesTool,
   buildClearRefreshLogTool,
   buildExportOpmlTool,
@@ -60,7 +54,6 @@ import {
   buildRecallPreferenceTool,
   buildRememberPreferenceTool,
 } from './tools/memory-tools'
-import { buildSearchLivoKnowledgeTool } from './tools/rag-tools'
 
 /** Build every agent tool exactly once. Used by the registry provider. */
 export function buildAllAgentTools(): AgentTool[] {
@@ -98,17 +91,10 @@ export function buildAllAgentTools(): AgentTool[] {
     buildExportOpmlTool(),
     buildClearRefreshLogTool(),
     buildCleanupOldEntriesTool(),
-    // Account
-    buildListAccountProvidersTool(),
-    buildRefreshAccountStatusTool(),
-    buildOpenAccountLoginTool(),
-    buildUnlinkAccountTool(),
     // Memory
     buildRecallPreferenceTool(),
     buildRememberPreferenceTool(),
     buildForgetPreferenceTool(),
-    // Server knowledge
-    buildSearchLivoKnowledgeTool(),
     // External
     buildWebSearchTool(),
     // Navigation
@@ -130,13 +116,6 @@ export function buildDefaultAgentToolRegistry(): AgentToolRegistry {
 
 export function buildAllowedAgentToolRegistry(
   permissions?: AgentPermissionSettings,
-  options: { enableServerKnowledge?: boolean } = {},
 ): AgentToolRegistry {
-  const registry = agentToolRegistryProvider.forPermissions(permissions)
-  if (options.enableServerKnowledge !== false) {
-    return registry
-  }
-  return new AgentToolRegistry(
-    registry.list().filter((tool) => tool.name !== 'search_livo_knowledge'),
-  )
+  return agentToolRegistryProvider.forPermissions(permissions)
 }

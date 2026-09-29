@@ -22,14 +22,11 @@ import type {
   EntryListResult,
   FeedWithCount,
   FeedViewType,
-  FeedSyncResult,
-  FeedSyncStatus,
   ReaderSnapshot,
   ReaderSnapshotRequest,
   ReaderSnapshotScope,
   MediaItem,
   AppSettings,
-  AccountProvider,
   DiscoverFeedPreviewResult,
   AISemanticFilterInput,
   AISemanticFilterResult,
@@ -1463,7 +1460,6 @@ function listWebTaskRuns(options?: TaskRunListOptions): TaskRunRecord[] {
 
 export function createWebAPI(): ElectronAPI {
   const api: ElectronAPI = {
-    serverUrl: typeof window !== 'undefined' ? window.location.origin : '',
     feeds: {
       add: async (
         url: string,
@@ -1798,36 +1794,6 @@ export function createWebAPI(): ElectronAPI {
         // Web: stub — full refresh cycle not supported in web mode.
         // The import itself already parses feeds inline.
         return { success: true, total: 0, refreshed: 0, failed: 0 }
-      },
-
-      syncNow: async (): Promise<
-        FeedSyncResult | { success: false; error: string }
-      > => ({
-        success: false,
-        error: 'Web 模式暂不支持订阅源云同步',
-      }),
-      syncToCloud: async (): Promise<
-        FeedSyncResult | { success: false; error: string }
-      > => ({
-        success: false,
-        error: 'Web 模式暂不支持订阅源云同步',
-      }),
-      syncFromCloud: async (): Promise<
-        FeedSyncResult | { success: false; error: string }
-      > => ({
-        success: false,
-        error: 'Web 模式暂不支持订阅源云同步',
-      }),
-      syncStatus: async (): Promise<FeedSyncStatus> => ({
-        isAuthenticated: false,
-        lastSyncAt: null,
-        pendingChanges: 0,
-      }),
-    },
-
-    readingActivity: {
-      sync: async () => {
-        throw new Error('Web 模式暂不支持阅读活动云同步')
       },
     },
 
@@ -2516,12 +2482,7 @@ export function createWebAPI(): ElectronAPI {
           url: string
           siteUrl: string
           description: string
-          source: 'curated' | 'url' | 'rsshub' | 'wechat-rss'
-          requiresLogin?: boolean
-          metadata?: {
-            fakeId?: string
-            source?: 'wechat-rss'
-          }
+          source: 'curated' | 'url' | 'rsshub'
         }> = []
         const curated = searchCuratedFeeds(query)
         for (const f of curated)
@@ -2586,16 +2547,6 @@ export function createWebAPI(): ElectronAPI {
         }
         return results
       },
-      searchWechatMp: async () => ({
-        results: [],
-        total: 0,
-        limit: 10,
-        offset: 0,
-      }),
-      ensureWechatMpFeed: async () => ({
-        success: false,
-        error: 'Web 平台暂不支持微信公众号订阅接入',
-      }),
       rsshubRoutes: async (category?: string) =>
         category
           ? RSSHUB_ROUTES.filter((r) => r.category === category)
@@ -2657,17 +2608,6 @@ export function createWebAPI(): ElectronAPI {
             resolved.matched = true
             resolved.reason = null
           }
-        }
-        if (
-          resolved.candidates.some((c) =>
-            c.requiresAccount?.includes('youtube'),
-          )
-        ) {
-          resolved.accountStates = [
-            { provider: 'youtube', linked: false, displayName: null },
-          ]
-        } else {
-          resolved.accountStates = []
         }
         return resolved
       },
@@ -2866,86 +2806,7 @@ export function createWebAPI(): ElectronAPI {
       openInApp: async (url: string) => {
         return openExternalUrlForWeb(url)
       },
-      ytLogin: async () => ({ success: false, error: 'Not available on web' }),
       ytStatus: async () => ({ loggedIn: false, name: null }),
-      ytLogout: async () => ({ success: false, error: 'Not available on web' }),
-    },
-
-    accounts: {
-      status: async (provider: AccountProvider) => ({
-        provider,
-        linked: false as const,
-        displayName: null,
-      }),
-      link: async (_provider: AccountProvider) => ({
-        success: false as const,
-        error: 'Not available on web',
-      }),
-      unlink: async (_provider: AccountProvider) => ({
-        success: false as const,
-        error: 'Not available on web',
-      }),
-      setDisplayName: async (
-        _provider: AccountProvider,
-        _displayName: string,
-      ) => ({ success: false as const, error: 'Not available on web' }),
-      bilibiliFollowings: async () => ({
-        success: false as const,
-        error: 'Not available on web',
-      }),
-    },
-
-    auth: {
-      loginGoogle: async () => ({
-        success: false as const,
-        error: 'Not available on web',
-      }),
-      loginWechat: async () => ({
-        success: false as const,
-        error: 'Not available on web',
-      }),
-      bindGoogle: async () => ({
-        success: false as const,
-        error: 'Not available on web',
-      }),
-      bindWechat: async () => ({
-        success: false as const,
-        error: 'Not available on web',
-      }),
-      getCurrentUser: async () => ({
-        success: true as const,
-        user: null,
-        token: null,
-      }),
-      logout: async () => ({ success: true as const }),
-      checkSession: async () => ({
-        success: true as const,
-        isValid: false,
-        user: null,
-      }),
-      wechatMpLogin: async () => {
-        throw new Error('Not available on web')
-      },
-      onLoginProgress: () => (() => {}) as any,
-    },
-
-    notifications: {
-      list: async () => ({
-        notifications: [],
-        total: 0,
-        limit: 0,
-        offset: 0,
-      }),
-      unreadCount: async () => ({ count: 0 }),
-      markRead: async () => ({ success: true }),
-      markUnread: async () => ({ success: true }),
-      markAllRead: async () => ({ count: 0 }),
-    },
-
-    websocket: {
-      connect: async () => ({ success: true }),
-      disconnect: async () => ({ success: true }),
-      status: async () => ({ connected: false }),
     },
 
     actions: {

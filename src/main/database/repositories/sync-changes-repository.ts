@@ -29,14 +29,22 @@ export interface ISyncChangesRepository {
   countPending(userId: string): number
 }
 
-function syncChangeFromRow(row: any): SyncChange {
+function syncChangeFromRow(row: unknown): SyncChange {
+  const r = row as {
+    url: string
+    action: FeedSyncAction
+    updated_at: number
+    user_id: string
+    synced: number
+    title: string | null
+  }
   return {
-    url: row.url,
-    action: row.action,
-    updatedAt: row.updated_at,
-    userId: row.user_id,
-    synced: row.synced === 1,
-    title: row.title ?? undefined,
+    url: r.url,
+    action: r.action,
+    updatedAt: r.updated_at,
+    userId: r.user_id,
+    synced: r.synced === 1,
+    title: r.title ?? undefined,
   }
 }
 

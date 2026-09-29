@@ -6,7 +6,6 @@
 import { useSettingsStore } from '../store/settings-store'
 import { serializeFeedsForCache, useFeedStore } from '../store/feed-store'
 import { useActionsStore } from '../store/actions-store'
-import { useAuthStore } from '../store/auth-store'
 import { useEntryStore } from '../store/entry-store'
 import { recordAppMetric } from '../lib/performance-metrics'
 import { writeDefaultHomeSnapshotCache } from '../lib/reader-snapshot-cache'
@@ -15,7 +14,12 @@ import {
   cacheEntrySnapshots,
   setCachedListResult,
 } from '../lib/entry-cache'
-import type { AppHydratePayload } from '../../../shared/types'
+import type {
+  ActionRule,
+  AppHydratePayload,
+  AppSettings,
+  FeedWithCount,
+} from '../../../shared/types'
 
 const DEFAULT_INITIAL_SNAPSHOT_LIMIT = 20
 const isDev = import.meta.env.DEV
@@ -41,16 +45,14 @@ export function hydrateFromLocalCache(): void {
 }
 
 export interface HydrateResult {
-  settings: any
-  feeds: any[]
-  rules: any[]
-  session: any | null
-  initialSnapshot: any | null
+  settings: AppSettings | null
+  feeds: FeedWithCount[]
+  rules: ActionRule[]
+  initialSnapshot: AppHydratePayload['initialSnapshot']
   timings: {
     settings: number
     feeds: number
     rules: number
-    auth: number
     total: number
   }
 }
@@ -65,13 +67,11 @@ export async function hydrateDataToMemory(): Promise<HydrateResult> {
     settings: 0,
     feeds: 0,
     rules: 0,
-    auth: 0,
     total: 0,
   }
 
-  let settings: any = null
-  let feeds: any[] = []
-  let sessionData: any = null
+  let settings: AppSettings | null = null
+  let feeds: FeedWithCount[] = []
   let initialSnapshot: AppHydratePayload['initialSnapshot'] = null
 
   try {
@@ -81,29 +81,23 @@ export async function hydrateDataToMemory(): Promise<HydrateResult> {
 
     settings = batch.settings
     feeds = batch.feeds
-    sessionData = batch.auth
     initialSnapshot = batch.initialSnapshot ?? null
     timings.settings = batchDuration
     timings.feeds = batchDuration
-    timings.auth = batchDuration
   } catch {
     console.warn(
       '[Hydrate] Batch hydration failed, falling back to individual calls',
     )
-    const [settingsResult, feedsResult, sessionResult] =
-      await Promise.allSettled([
-        window.api.settings.get(),
-        window.api.feeds.list(),
-        window.api.auth.checkSession(),
-      ])
+    const [settingsResult, feedsResult] = await Promise.allSettled([
+      window.api.settings.get(),
+      window.api.feeds.list(),
+    ])
     settings =
       settingsResult.status === 'fulfilled' ? settingsResult.value : null
     feeds = feedsResult.status === 'fulfilled' ? feedsResult.value : []
-    sessionData =
-      sessionResult.status === 'fulfilled' ? sessionResult.value : null
   }
 
-  const rules: any[] = []
+  const rules: ActionRule[] = []
   timings.rules = 0
 
   if (settings) {
@@ -128,29 +122,12 @@ export async function hydrateDataToMemory(): Promise<HydrateResult> {
 
   useActionsStore.getState().loadRules()
 
-  if (sessionData?.success && sessionData?.isValid && sessionData?.user) {
-    useAuthStore.setState({
-      user: sessionData.user,
-      isAuthenticated: true,
-      isSessionChecked: true,
-      isLoading: false,
-    })
-  } else {
-    useAuthStore.setState({
-      user: null,
-      isAuthenticated: false,
-      isSessionChecked: true,
-      isLoading: false,
-    })
-  }
-
   timings.total = performance.now() - startTime
 
   console.log('[Hydrate] Data hydration complete:', {
     settings: !!settings,
     feedCount: feeds.length,
     ruleCount: rules.length,
-    authenticated: sessionData?.success && sessionData?.isValid,
     timings,
   })
 
@@ -158,7 +135,6 @@ export async function hydrateDataToMemory(): Promise<HydrateResult> {
     settings,
     feeds,
     rules,
-    session: sessionData,
     initialSnapshot,
     timings,
   }

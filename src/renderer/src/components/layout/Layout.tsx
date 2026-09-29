@@ -29,6 +29,7 @@ import {
   markStartupComponentMounted,
   recordStartupReactProfiler,
 } from '../../lib/startup-block-diagnostics'
+import { scheduleIdleTask } from '../../lib/idle-task'
 
 const EntryContent = lazy(() =>
   import('../entry/EntryContent').then((m) => ({ default: m.EntryContent })),
@@ -76,23 +77,6 @@ function loadWidths(): { sidebar: number; entryList: number } {
 
 function saveWidths(sidebar: number, entryList: number) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ sidebar, entryList }))
-}
-
-function scheduleIdleTask(
-  callback: () => void,
-  options: { timeout: number; fallbackDelay: number },
-): () => void {
-  if (typeof window === 'undefined') return () => {}
-
-  if (typeof window.requestIdleCallback === 'function') {
-    const handle = window.requestIdleCallback(callback, {
-      timeout: options.timeout,
-    })
-    return () => window.cancelIdleCallback(handle)
-  }
-
-  const handle = window.setTimeout(callback, options.fallbackDelay)
-  return () => window.clearTimeout(handle)
 }
 
 function preloadWideViewModules(): Promise<unknown> {

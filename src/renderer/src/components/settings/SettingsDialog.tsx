@@ -17,8 +17,6 @@ import {
   Star,
   Flame,
   Keyboard,
-  User,
-  MessageCircle,
 } from 'lucide-react'
 import { useOverlayHotkeyScope } from '../../hooks/useHotkeyScope'
 import { LocalErrorBoundary } from '../LocalErrorBoundary'
@@ -33,14 +31,12 @@ const settingsTabImporters = {
   ai: () => import('./AISettings'),
   translation: () => import('./TranslationSettings'),
   actions: () => import('./ActionsSettings'),
-  user: () => import('./UserSettings'),
   data: () => import('./DataSettings'),
   privacy: () => import('./PrivacySettings'),
   about: () => import('./AboutSettings'),
   refreshLogs: () => import('./RefreshLogSettings'),
   favorites: () => import('./FavoritesPanel'),
   fever: () => import('./FeverSettings'),
-  'wechat-rss': () => import('./WechatRssSettings'),
 } satisfies Record<SettingsTabId, () => Promise<unknown>>
 
 const settingsTabComponents = {
@@ -84,11 +80,6 @@ const settingsTabComponents = {
       .actions()
       .then((module) => ({ default: module.ActionsSettings })),
   ),
-  user: lazy(() =>
-    settingsTabImporters
-      .user()
-      .then((module) => ({ default: module.UserSettings })),
-  ),
   data: lazy(() =>
     settingsTabImporters
       .data()
@@ -119,11 +110,6 @@ const settingsTabComponents = {
       .fever()
       .then((module) => ({ default: module.FeverSettings })),
   ),
-  'wechat-rss': lazy(() =>
-    settingsTabImporters['wechat-rss']().then((module) => ({
-      default: module.WechatRssSettings,
-    })),
-  ),
 } satisfies Record<SettingsTabId, React.ComponentType>
 
 function preloadSettingsTab(tabId: SettingsTabId) {
@@ -146,12 +132,6 @@ export function SettingsDialog() {
   const ActiveTabPanel = settingsTabComponents[activeTab]
 
   const tabs = [
-    { id: 'user' as const, label: '账户', icon: User },
-    {
-      id: 'wechat-rss' as const,
-      label: '微信公众号',
-      icon: MessageCircle,
-    },
     { id: 'general' as const, label: t('settings.general'), icon: Settings },
     {
       id: 'appearance' as const,

@@ -78,7 +78,7 @@ export class EntryRepository implements IEntryRepository {
     const placeholders = cleanIds.map(() => '?').join(',')
     const rows = this.db
       .prepare(`SELECT * FROM entries WHERE id IN (${placeholders})`)
-      .all(...cleanIds) as any[]
+      .all(...cleanIds)
     return new Map(
       rows.map((row) => {
         const entry = entryFromRow(row)
@@ -102,7 +102,7 @@ export class EntryRepository implements IEntryRepository {
       FROM entries WHERE feed_id = ?
     `,
       )
-      .all(feedId) as any[]
+      .all(feedId)
     return rows.map(entryFromRow)
   }
 
@@ -168,7 +168,7 @@ export class EntryRepository implements IEntryRepository {
         FROM entries WHERE feed_id = ?
       `,
         )
-        .all(feedId) as any[]
+        .all(feedId) as Array<Record<string, unknown>>
 
       const stateByKey = new Map<
         string,
@@ -379,7 +379,7 @@ export class EntryRepository implements IEntryRepository {
     const conditions = [
       '(e.title LIKE ? OR e.content LIKE ? OR e.summary LIKE ?)',
     ]
-    const params: any[] = [q, q, q]
+    const params: unknown[] = [q, q, q]
     if (options.feedId) {
       conditions.push('e.feed_id = ?')
       params.push(options.feedId)
@@ -416,7 +416,7 @@ export class EntryRepository implements IEntryRepository {
       LIMIT ?
     `,
       )
-      .all(...params, q, q, cappedLimit) as any[]
+      .all(...params, q, q, cappedLimit)
     return rows.map(entryFromRow)
   }
 
@@ -465,7 +465,7 @@ export class EntryRepository implements IEntryRepository {
 
     let sql = `SELECT ${selectColumns} FROM entries e INNER JOIN feeds f ON f.id = e.feed_id`
     const conditions: string[] = []
-    const params: any[] = []
+    const params: unknown[] = []
 
     if (options.feedId) {
       conditions.push('e.feed_id = ?')
@@ -509,7 +509,7 @@ export class EntryRepository implements IEntryRepository {
       params.push(offset)
     }
 
-    const rows = this.db.prepare(sql).all(...params) as any[]
+    const rows = this.db.prepare(sql).all(...params)
     const hasExtraRawRow = rows.length > fetchLimit - 1
     const visibleRows = hasExtraRawRow ? rows.slice(0, fetchLimit - 1) : rows
     const pageRows = options.skipDedupe
@@ -557,7 +557,7 @@ export class EntryRepository implements IEntryRepository {
     ): string => {
       const raw = value || ''
       if (!raw) return ''
-      let next = raw
+      const next = raw
         .replace(
           /&lt;\s*(img|video|iframe|audio|picture|source)\b[\s\S]*?(?:&gt;|$)/gi,
           ' ',
@@ -603,7 +603,7 @@ export class EntryRepository implements IEntryRepository {
       WHERE f.id IS NULL
     `,
       )
-      .all() as any[]
+      .all()
     return rows.map(entryFromRow)
   }
 
@@ -620,7 +620,7 @@ export class EntryRepository implements IEntryRepository {
       .prepare(
         'SELECT COUNT(*) as count FROM entries WHERE feed_id = ? AND is_read = 0',
       )
-      .get(feedId) as any
+      .get(feedId) as { count: number } | undefined
     return row?.count ?? 0
   }
 
@@ -634,7 +634,7 @@ export class EntryRepository implements IEntryRepository {
       GROUP BY feed_id
     `,
       )
-      .all() as any[]
+      .all() as Array<{ feed_id: string; count: number }>
     const map = new Map<string, number>()
     for (const row of rows) {
       map.set(row.feed_id, row.count)

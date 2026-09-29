@@ -51,13 +51,6 @@ vi.mock('./services/updater', () => ({
   })),
 }))
 
-vi.mock('./services/websocket', () => ({
-  WebSocketService: vi.fn().mockImplementation(() => ({
-    disconnect: vi.fn(),
-    setWindow: vi.fn(),
-  })),
-}))
-
 vi.mock('./services/system/tray', () => ({
   AppTray: vi.fn().mockImplementation(() => ({
     destroy: vi.fn(),
@@ -89,12 +82,6 @@ vi.mock('./services/feed/feed-refresh', () => ({
   stopAutoRefresh: mocks.stopAutoRefresh,
 }))
 
-vi.mock('./services/feed/feed-sync-service', () => ({
-  feedSyncService: {
-    syncNow: vi.fn(),
-  },
-}))
-
 vi.mock('./services/feed/aggregator-jobs', () => ({
   startAggregatorJobs: vi.fn(),
   stopAggregatorJobs: mocks.stopAggregatorJobs,
@@ -119,10 +106,6 @@ vi.mock('./services/system/logger', () => ({
   logError: vi.fn(),
 }))
 
-vi.mock('./services/auth/session-store', () => ({
-  sessionStore: {},
-}))
-
 vi.mock('./services/bilibili/bilibili-orphan-recovery', () => ({
   recoverOrphanBilibiliDynamicFeeds: vi.fn(),
 }))
@@ -135,10 +118,6 @@ vi.mock('./services/system/update-check', () => ({
   checkForAppUpdates: vi.fn(),
 }))
 
-vi.mock('./services/backend/backend-config', () => ({
-  getBackendBaseUrl: vi.fn(() => 'ws://localhost'),
-}))
-
 vi.mock('../shared/deep-link', () => ({
   parseDeepLink: vi.fn(),
 }))
@@ -148,9 +127,6 @@ vi.mock('./menu', () => ({
 }))
 
 vi.mock('./handlers/feed-handlers', () => ({ registerFeedHandlers: vi.fn() }))
-vi.mock('./handlers/feed-sync-handlers', () => ({
-  registerFeedSyncHandlers: vi.fn(),
-}))
 vi.mock('./handlers/entry-handlers', () => ({ registerEntryHandlers: vi.fn() }))
 vi.mock('./handlers/reader-handlers', () => ({
   registerReaderHandlers: vi.fn(),
@@ -166,9 +142,6 @@ vi.mock('./handlers/discover-handlers', () => ({
   registerDiscoverHandlers: vi.fn(),
 }))
 vi.mock('./handlers/video-handlers', () => ({ registerVideoHandlers: vi.fn() }))
-vi.mock('./handlers/account-handlers', () => ({
-  registerAccountHandlers: vi.fn(),
-}))
 vi.mock('./handlers/agent-handlers', () => ({ registerAgentHandlers: vi.fn() }))
 vi.mock('./handlers/action-handlers', () => ({
   registerActionHandlers: vi.fn(),
@@ -176,21 +149,8 @@ vi.mock('./handlers/action-handlers', () => ({
 vi.mock('./handlers/fever-handlers', () => ({ registerFeverHandlers: vi.fn() }))
 vi.mock('./handlers/task-handlers', () => ({ registerTaskHandlers: vi.fn() }))
 vi.mock('./handlers/app-handlers', () => ({ registerAppHandlers: vi.fn() }))
-vi.mock('./handlers/auth-handlers', () => ({ registerAuthHandlers: vi.fn() }))
-vi.mock('./handlers/wechat-mp-handlers', () => ({
-  registerWechatMpHandlers: vi.fn(),
-}))
-vi.mock('./handlers/reading-activity-handlers', () => ({
-  registerReadingActivityHandlers: vi.fn(),
-}))
 vi.mock('./handlers/updater-handlers', () => ({
   registerUpdaterHandlers: vi.fn(),
-}))
-vi.mock('./handlers/websocket-handlers', () => ({
-  registerWebSocketHandlers: vi.fn(),
-}))
-vi.mock('./handlers/notification-handlers', () => ({
-  registerNotificationHandlers: vi.fn(),
 }))
 
 function setPlatform(platform: NodeJS.Platform): void {

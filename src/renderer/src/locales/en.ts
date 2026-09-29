@@ -14,7 +14,6 @@ import { enShortcuts } from './en/shortcuts'
 import { enSidebar } from './en/sidebar'
 import { enVideoPlayer } from './en/video-player'
 import { enImageViewer } from './en/image-viewer'
-import { enAccountLogin } from './en/account-login'
 
 export const en = {
   settings: enSettings,
@@ -153,8 +152,6 @@ export const en = {
   videoPlayer: enVideoPlayer,
 
   imageViewer: enImageViewer,
-
-  accountLogin: enAccountLogin,
 
   time: {
     justNow: 'Just Now',

@@ -76,10 +76,6 @@ export function useDeepLinkNavigate(): void {
         case 'refresh-all':
           void useFeedStore.getState().refreshAll()
           return
-        case 'login':
-          closePanelsBeforeDeepLinkNavigation()
-          navigate(ROUTES.login(action.provider))
-          return
       }
     })
   }, [navigate])

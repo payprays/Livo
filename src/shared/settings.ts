@@ -210,13 +210,6 @@ function normalizeWebSearchProviders(settings: AppSettings): void {
       : [...DEFAULT_SETTINGS.agent.webSearchProviders]
 }
 
-function normalizeAgentFeatureSettings(settings: AppSettings): void {
-  if (typeof settings.agent.enableServerKnowledge !== 'boolean') {
-    settings.agent.enableServerKnowledge =
-      DEFAULT_SETTINGS.agent.enableServerKnowledge
-  }
-}
-
 export function cloneDefaultSettings(): AppSettings {
   return JSON.parse(JSON.stringify(DEFAULT_SETTINGS)) as AppSettings
 }
@@ -238,7 +231,6 @@ export function normalizeSettings(input?: Partial<AppSettings>): AppSettings {
   merged.general.viewTabs = normalizeViewTabs(merged.general.viewTabs)
   merged.general.feedColumns = normalizeFeedColumns(merged.general.feedColumns)
   normalizeNumericSettings(merged)
-  normalizeAgentFeatureSettings(merged)
   normalizeWebSearchProviders(merged)
   syncContentWidth(merged)
 

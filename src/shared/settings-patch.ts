@@ -256,7 +256,6 @@ const aiSettingsPatchSchema: Record<string, FieldSanitizer> = {
 const agentSettingsPatchSchema: Record<string, FieldSanitizer> = {
   runTimeoutSeconds: sanitizeNumber,
   maxRounds: sanitizeNumber,
-  enableServerKnowledge: sanitizeBoolean,
   webSearchProviders: (value, field) => {
     if (!Array.isArray(value) || value.length > WEB_SEARCH_PROVIDERS.length) {
       rejectSettingsPatch(field, `max_items_${WEB_SEARCH_PROVIDERS.length}`)

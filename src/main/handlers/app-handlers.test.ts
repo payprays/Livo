@@ -68,10 +68,6 @@ vi.mock('../database', () => ({
   })),
 }))
 
-vi.mock('../services/auth/session-store', () => ({
-  sessionStore: { getCurrentUser: vi.fn(() => null) },
-}))
-
 vi.mock('../app-icon', () => ({
   getAppIconPath: vi.fn(() => '/tmp/icon.png'),
 }))

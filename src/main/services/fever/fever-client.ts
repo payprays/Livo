@@ -1,3 +1,4 @@
+import { session } from 'electron'
 import { createHash } from 'node:crypto'
 import { normalizeFeverBaseUrl } from './fever-endpoint'
 
@@ -79,7 +80,7 @@ export function createFeverClient(
   ): Promise<any> {
     const url = `${base}?api&${query}`
     const formBody = new URLSearchParams({ api_key: hash, ...body })
-    const res = await fetch(url, {
+    const res = await session.defaultSession.fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: formBody.toString(),

@@ -29,13 +29,12 @@ import {
   isTwitterUserFeedUrl,
 } from '../feed/feed-route-policy'
 
+// 自建 WeRSS 实例直接输出的公众号 RSS（条目链接指向 mp.weixin.qq.com）。
 function isWechatMpFeedUrl(feedUrl: string | undefined): boolean {
   if (!feedUrl) return false
   try {
     const parsed = new URL(feedUrl)
-    return /^\/(?:api\/wechat-rss\/)?feed\/MP_WXS_[^/?#]+\.xml$/i.test(
-      parsed.pathname,
-    )
+    return /^\/feed\/MP_WXS_[^/?#]+\.xml$/i.test(parsed.pathname)
   } catch {
     return false
   }

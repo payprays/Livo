@@ -106,7 +106,9 @@ describe('Windows elevated installer command', () => {
     const command = Buffer.from(encoded, 'base64').toString('utf16le')
     expect(command).toContain('Start-Process -FilePath $installerPath')
     expect(command).toContain('-Verb RunAs')
-    expect(command).toContain('--silent-install "C:\\Program Files\\Livo" --silent-update')
+    expect(command).toContain(
+      '--silent-install "C:\\Program Files\\Livo" --silent-update',
+    )
   })
 })
 
@@ -128,10 +130,12 @@ describe('installAppUpdate', () => {
     })
     mocks.spawn.mockImplementation(() => {
       const child = {
-        once: vi.fn((event: string, listener: (code?: number | null) => void) => {
-          if (event === 'exit') queueMicrotask(() => listener(0))
-          return child
-        }),
+        once: vi.fn(
+          (event: string, listener: (code?: number | null) => void) => {
+            if (event === 'exit') queueMicrotask(() => listener(0))
+            return child
+          },
+        ),
         stderr: { on: vi.fn() },
       }
       return child

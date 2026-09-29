@@ -1,11 +1,4 @@
-function decodeHtmlEntities(input: string): string {
-  return (input || '')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
-}
+import { decodeHtmlEntities } from '@shared/discover-helpers'
 
 function trimTrailingUrlPunctuation(input: string): string {
   return (input || '').replace(/[)\]}>，。,;；!！?？]+$/g, '')

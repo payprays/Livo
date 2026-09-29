@@ -3,14 +3,9 @@ export type DiscoverSearchResult = {
   url: string
   siteUrl: string
   description: string
-  source: 'curated' | 'url' | 'rsshub' | 'wechat-rss'
+  source: 'curated' | 'url' | 'rsshub'
   image?: string
   followers?: string
-  requiresLogin?: boolean
-  metadata?: {
-    fakeId?: string
-    source?: 'wechat-rss'
-  }
 }
 
 function stripPlatformSuffix(input: string): string {
@@ -23,7 +18,7 @@ function normalizeDiscoverMatchValue(input: string): string {
   return input
     .toLowerCase()
     .replace(/<[^>]+>/g, '')
-    .replace(/[\s_.\-\/|]+/g, '')
+    .replace(/[\s_.\-/|]+/g, '')
     .trim()
 }
 

@@ -1,3 +1,4 @@
+import { session } from 'electron'
 import {
   isAbortError,
   scopedSignalWithTimeout,
@@ -203,7 +204,7 @@ async function fetchText(
   url: string,
   init: RequestInit,
 ): Promise<string | null> {
-  const response = await fetch(url, init)
+  const response = await session.defaultSession.fetch(url, init)
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`)
   }

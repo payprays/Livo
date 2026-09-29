@@ -15,6 +15,7 @@ import {
   discoveryFetch,
   extractOgMeta,
 } from './platform-search'
+import { logInfo, logWarn } from '../system/logger'
 
 export type XUserProbeCandidate = {
   username: string
@@ -96,7 +97,7 @@ export async function fetchXDisplayNameByUsername(
   try {
     const profileUrl = `https://x.com/${encodeURIComponent(clean)}`
     const safeProfileUrl = await assertPublicDiscoveryUrl(profileUrl)
-    const res = await fetch(safeProfileUrl, {
+    const res = await session.defaultSession.fetch(safeProfileUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
         Accept:
@@ -311,7 +312,7 @@ export async function _fetchXFollowersByUsername(
       // 2) JSON state may include followers_count as raw number.
       const numericPatterns = [
         /"followers_count"\s*:\s*(\d{1,12})/i,
-        /\\\"followers_count\\\"\s*:\s*(\d{1,12})/i,
+        /\\"followers_count\\"\s*:\s*(\d{1,12})/i,
       ]
       for (const pattern of numericPatterns) {
         const m = decoded.match(pattern)
@@ -432,7 +433,7 @@ export async function probeXUsersByKeyword(
 ): Promise<XUserProbeCandidate[]> {
   const clean = query.trim().replace(/^@+/, '')
   if (!clean) return []
-  console.log(`[X Search] Starting search for "${clean}"`)
+  logInfo(`[X Search] Starting search for "${clean}"`)
 
   const out: XUserProbeCandidate[] = []
   const candidateIndexByKey = new Map<string, number>()
@@ -486,13 +487,13 @@ export async function probeXUsersByKeyword(
   // If input already looks like a username, always keep it as a high-priority candidate.
   const directHandle = extractLikelyXHandle(clean)
   if (directHandle) {
-    console.log(`[X Search] Input looks like a handle: @${directHandle}`)
+    logInfo(`[X Search] Input looks like a handle: @${directHandle}`)
     pushCandidate(directHandle, '', 'X user', 3)
   } else {
     // Also support keyword input like "elon musk" -> "elonmusk".
     const compactHandle = extractLikelyXHandleFromKeywords(clean)
     if (compactHandle) {
-      console.log(
+      logInfo(
         `[X Search] Input compacted to handle candidate: @${compactHandle}`,
       )
       pushCandidate(compactHandle, '', 'X user', 2)
@@ -503,7 +504,7 @@ export async function probeXUsersByKeyword(
   for (const nitterInstance of FALLBACK_NITTER_INSTANCES) {
     try {
       const searchUrl = `${nitterInstance}/search?f=users&q=${encodeURIComponent(clean)}`
-      console.log(`[X Search] Trying Nitter: ${searchUrl}`)
+      logInfo(`[X Search] Trying Nitter: ${searchUrl}`)
       const res = await discoveryFetch(searchUrl, {
         fetchImpl,
         headers: {
@@ -511,10 +512,10 @@ export async function probeXUsersByKeyword(
             'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         },
       })
-      console.log(`[X Search] Nitter status: ${res?.status}`)
+      logInfo(`[X Search] Nitter status: ${res?.status}`)
       if (res?.ok) {
         const html = await res.text()
-        console.log(`[X Search] Nitter HTML length: ${html.length}`)
+        logInfo(`[X Search] Nitter HTML length: ${html.length}`)
 
         // Nitter search results contain user profiles in specific patterns
         // Look for profile links: <a class="profile-link" href="/username">
@@ -541,7 +542,7 @@ export async function probeXUsersByKeyword(
             const followers = followersMatch
               ? normalizeXFollowersLabel(followersMatch[0])
               : undefined
-            console.log(
+            logInfo(
               `[X Search] Found via Nitter: @${username} (${displayName})`,
             )
             pushCandidate(username, displayName, '', 2, followers)
@@ -567,7 +568,7 @@ export async function probeXUsersByKeyword(
             const username = match[1]
             if (excludePaths.includes(username.toLowerCase())) continue
             if (username) {
-              console.log(`[X Search] Found via Nitter (alt): @${username}`)
+              logInfo(`[X Search] Found via Nitter (alt): @${username}`)
               pushCandidate(username, '', '', 1)
               if (out.length >= 10) break
             }
@@ -577,19 +578,19 @@ export async function probeXUsersByKeyword(
         if (out.length > 0) break // Found results, no need to try other instances
       }
     } catch (e) {
-      console.log(`[X Search] Nitter error:`, e)
+      logWarn(`[X Search] Nitter error:`, e)
     }
   }
 
   // Try X.com search (requires login for most results, but may work for some queries)
   try {
     const searchUrl = `https://x.com/search?q=${encodeURIComponent(clean)}&f=user`
-    console.log(`[X Search] Trying X.com: ${searchUrl}`)
+    logInfo(`[X Search] Trying X.com: ${searchUrl}`)
     const res = await discoveryFetch(searchUrl, { fetchImpl })
-    console.log(`[X Search] X.com status: ${res?.status}`)
+    logInfo(`[X Search] X.com status: ${res?.status}`)
     if (res?.ok) {
       const html = await res.text()
-      console.log(`[X Search] X.com HTML length: ${html.length}`)
+      logInfo(`[X Search] X.com HTML length: ${html.length}`)
 
       // Try to extract user data from __INITIAL_STATE__
       const stateMatch = html.match(
@@ -599,7 +600,7 @@ export async function probeXUsersByKeyword(
         try {
           const data = JSON.parse(stateMatch[1])
           const users = data?.entities?.users?.users || {}
-          console.log(
+          logInfo(
             `[X Search] Found ${Object.keys(users).length} users in __INITIAL_STATE__`,
           )
           for (const [, user] of Object.entries(users) as [string, any][]) {
@@ -616,7 +617,7 @@ export async function probeXUsersByKeyword(
             if (out.length >= 20) break
           }
         } catch (_e) {
-          console.log(`[X Search] Failed to parse __INITIAL_STATE__`)
+          logWarn(`[X Search] Failed to parse __INITIAL_STATE__`)
         }
       }
 
@@ -646,7 +647,7 @@ export async function probeXUsersByKeyword(
           const username = match[1]
           if (excludePaths.includes(username.toLowerCase())) continue
           if (username) {
-            console.log(`[X Search] Found via HTML: @${username}`)
+            logInfo(`[X Search] Found via HTML: @${username}`)
             pushCandidate(username, '', '', 1)
             if (out.length >= 10) break
           }
@@ -654,10 +655,10 @@ export async function probeXUsersByKeyword(
       }
     }
   } catch (e) {
-    console.log(`[X Search] X.com error:`, e)
+    logWarn(`[X Search] X.com error:`, e)
   }
 
-  console.log(`[X Search] Total candidates: ${out.length}`)
+  logInfo(`[X Search] Total candidates: ${out.length}`)
 
   // Use sourceScore for sorting via the shared dedupe/score/sort core. Each
   // candidate already has a unique username key (merged above), so dedupe is a
@@ -678,6 +679,6 @@ export async function probeXUsersByKeyword(
     ...candidate,
   })) as XUserProbeCandidate[]
 
-  console.log(`[X Search] Final results: ${scored.length}`)
+  logInfo(`[X Search] Final results: ${scored.length}`)
   return scored
 }

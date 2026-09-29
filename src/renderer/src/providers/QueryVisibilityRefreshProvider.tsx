@@ -29,10 +29,9 @@ export function QueryVisibilityRefreshProvider({
       }
 
       lastHiddenAtRef.current = null
-      void Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.discover.all() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all() }),
-      ])
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.discover.all(),
+      })
     }
 
     const handleVisibilityChange = () => {

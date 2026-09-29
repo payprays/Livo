@@ -32,6 +32,7 @@ import {
   markStartupComponentMounted,
   recordStartupBlockEvent,
 } from '../../lib/startup-block-diagnostics'
+import { isEditableTarget } from '../../lib/dom-target'
 
 const SharePoster = lazy(() =>
   import('../ui/SharePoster').then((module) => ({
@@ -41,14 +42,6 @@ const SharePoster = lazy(() =>
 
 const SCROLL_GUARD_PX = 120
 const LOAD_MORE_BOTTOM_OFFSET_PX = 260
-
-function isEditableTarget(target: EventTarget | null): boolean {
-  return (
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLTextAreaElement ||
-    (target instanceof HTMLElement && target.isContentEditable)
-  )
-}
 
 export function EntryList({ width }: { width?: number }) {
   useEffect(() => {

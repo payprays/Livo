@@ -75,11 +75,6 @@ describe('ipc-contracts', () => {
         { taskName: 'ai.summarize', limit: 10 },
       ]),
     ).toEqual([{ taskName: 'ai.summarize', limit: 10 }])
-    expect(validateIpcArgs(IPC.ACCOUNT_STATUS, ['google'])).toEqual(['google'])
-    expect(validateIpcArgs(IPC.AUTH_CHECK_SESSION, [])).toEqual([])
-    expect(validateIpcArgs(IPC.AUTH_BIND_GOOGLE, [])).toEqual([])
-    expect(validateIpcArgs(IPC.AUTH_BIND_WECHAT, [])).toEqual([])
-    expect(validateIpcArgs(IPC.WS_CONNECT, [])).toEqual([])
     expect(validateIpcArgs(IPC.APP_READY_TO_SHOW_MAIN_WINDOW, [])).toEqual([])
 
     expect(() =>
@@ -91,71 +86,6 @@ describe('ipc-contracts', () => {
     expect(() =>
       validateIpcArgs(IPC.TASK_RUN_LIST, [{ taskName: 42 }]),
     ).toThrow(IpcValidationError)
-    expect(() => validateIpcArgs(IPC.ACCOUNT_STATUS, ['unknown'])).toThrow(
-      IpcValidationError,
-    )
-    expect(() => validateIpcArgs(IPC.WS_CONNECT, ['user-2'])).toThrow(
-      IpcValidationError,
-    )
-  })
-
-  it('validates reading activity sync payloads deeply', () => {
-    const validDays = [
-      { day: '2026-07-07', count: 1 },
-      { day: '2026-07-06', count: 42 },
-    ]
-
-    expect(
-      validateIpcArgs(IPC.READING_ACTIVITY_SYNC, [
-        'device_1783420000000_abcd1234',
-        validDays,
-      ]),
-    ).toEqual(['device_1783420000000_abcd1234', validDays])
-    expect(
-      validateIpcArgs(IPC.READING_ACTIVITY_SYNC, ['device-1', []]),
-    ).toEqual(['device-1', []])
-
-    expect(() =>
-      validateIpcArgs(IPC.READING_ACTIVITY_SYNC, ['', validDays]),
-    ).toThrow(IpcValidationError)
-    expect(() =>
-      validateIpcArgs(IPC.READING_ACTIVITY_SYNC, ['bad device', validDays]),
-    ).toThrow(IpcValidationError)
-    expect(() =>
-      validateIpcArgs(IPC.READING_ACTIVITY_SYNC, ['d'.repeat(129), validDays]),
-    ).toThrow(IpcValidationError)
-    expect(() =>
-      validateIpcArgs(IPC.READING_ACTIVITY_SYNC, ['device-1', 'not-days']),
-    ).toThrow(IpcValidationError)
-    expect(() =>
-      validateIpcArgs(IPC.READING_ACTIVITY_SYNC, [
-        'device-1',
-        Array.from({ length: 401 }, () => ({
-          day: '2026-07-07',
-          count: 1,
-        })),
-      ]),
-    ).toThrow(IpcValidationError)
-    expect(() =>
-      validateIpcArgs(IPC.READING_ACTIVITY_SYNC, [
-        'device-1',
-        [{ day: '2026-7-7', count: 1 }],
-      ]),
-    ).toThrow(IpcValidationError)
-    expect(() =>
-      validateIpcArgs(IPC.READING_ACTIVITY_SYNC, [
-        'device-1',
-        [{ day: '2026-02-31', count: 1 }],
-      ]),
-    ).toThrow(IpcValidationError)
-    for (const count of [0, -1, 1.5, Number.POSITIVE_INFINITY, 1_000_001]) {
-      expect(() =>
-        validateIpcArgs(IPC.READING_ACTIVITY_SYNC, [
-          'device-1',
-          [{ day: '2026-07-07', count }],
-        ]),
-      ).toThrow(IpcValidationError)
-    }
   })
 
   it('validates settings:set payloads deeply at the IPC boundary', () => {

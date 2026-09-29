@@ -6,3 +6,4 @@ dist-web/
 .turbo/
 *.tsbuildinfo
 *.log
+pnpm-lock.yaml

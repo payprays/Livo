@@ -187,8 +187,8 @@ async function fetchYouTubeFollowersByChannelPath(
         /"subscriberCountText"\s*:\s*\{"simpleText"\s*:\s*"([^"]+)"/i,
         /"subscriberCountText"\s*:\s*\{"runs"\s*:\s*\[\s*\{"text"\s*:\s*"([^"]+)"/i,
         /"accessibilityData"\s*:\s*\{"label"\s*:\s*"([^"]*subscribers?[^"]*)"/i,
-        /\\\"subscriberCountText\\\"\s*:\s*\\\{\\\"simpleText\\\"\s*:\s*\\\"([^\\\"]+)\\\"/i,
-        /\\\"subscriberCountText\\\"\s*:\s*\\\{\\\"runs\\\"\s*:\s*\\\[\s*\\\{\\\"text\\\"\s*:\s*\\\"([^\\\"]+)\\\"/i,
+        /\\"subscriberCountText\\"\s*:\s*\\\{\\"simpleText\\"\s*:\s*\\"([^\\"]+)\\"/i,
+        /\\"subscriberCountText\\"\s*:\s*\\\{\\"runs\\"\s*:\s*\\\[\s*\\\{\\"text\\"\s*:\s*\\"([^\\"]+)\\"/i,
       ]
 
       for (const pattern of patterns) {

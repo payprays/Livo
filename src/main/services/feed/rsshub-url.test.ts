@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeRsshubProtocolUrl, toRsshubProtocolUrl } from './rsshub-url'
+import {
+  normalizeRsshubProtocolUrl,
+  toRsshubProtocolUrl,
+} from '../../../shared/rsshub-url'
 
 describe('rsshub-url', () => {
   it('normalizes xiaoyuzhou rsshub protocol routes to fetchable URLs', () => {

@@ -9,39 +9,23 @@ const mocks = vi.hoisted(() => {
       onHeadersReceived: vi.fn(),
     },
   }
-  const wechatSession = {
-    setPermissionRequestHandler: vi.fn(),
-    setPermissionCheckHandler: vi.fn(),
-    webRequest: {
-      onBeforeSendHeaders: vi.fn(),
-      onHeadersReceived: vi.fn(),
-    },
-  }
-  return {
-    defaultSession,
-    wechatSession,
-    fromPartition: vi.fn(() => wechatSession),
-  }
+  return { defaultSession }
 })
 
 vi.mock('electron', () => ({
   session: {
     defaultSession: mocks.defaultSession,
-    fromPartition: mocks.fromPartition,
   },
 }))
 
 import { registerSessionPolicies } from './session-policies'
 
 describe('session policies', () => {
-  it('denies permission requests and checks for default and login sessions', () => {
+  it('denies permission requests and checks for the default session', () => {
     registerSessionPolicies()
 
     expect(mocks.defaultSession.setPermissionRequestHandler).toHaveBeenCalled()
     expect(mocks.defaultSession.setPermissionCheckHandler).toHaveBeenCalled()
-    expect(mocks.fromPartition).toHaveBeenCalledWith('persist:wechat-mp')
-    expect(mocks.wechatSession.setPermissionRequestHandler).toHaveBeenCalled()
-    expect(mocks.wechatSession.setPermissionCheckHandler).toHaveBeenCalled()
 
     const defaultRequestHandler =
       mocks.defaultSession.setPermissionRequestHandler.mock.calls[0]?.[0]

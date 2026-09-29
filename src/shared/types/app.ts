@@ -128,11 +128,6 @@ export interface DownloadUrlResult {
 export interface AppHydratePayload {
   settings: AppSettings
   feeds: FeedWithCount[]
-  auth: {
-    success: boolean
-    isValid: boolean
-    user: unknown
-  }
   initialSnapshot: ReaderSnapshot | null
 }
 
@@ -141,33 +136,4 @@ export interface NativeContextMenuItem {
   label?: string
   separator?: boolean
   disabled?: boolean
-}
-
-export interface WechatMpDiscoverResult {
-  title: string
-  description: string
-  image: string
-  fakeId: string
-  rssUrl: string
-  siteUrl: string
-  source: 'wechat-rss'
-  requiresLogin: true
-}
-
-export interface EnsureWechatMpFeedInput {
-  mpName: string
-  fakeId: string
-  avatar: string
-  intro?: string
-}
-
-export interface EnsureWechatMpFeedResult {
-  success: boolean
-  title?: string
-  description?: string
-  image?: string
-  fakeId?: string
-  rssUrl?: string
-  siteUrl?: string
-  error?: string
 }

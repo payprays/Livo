@@ -5,6 +5,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Pipette } from 'lucide-react'
 import { ACCENT_COLOR_MAP } from '../../lib/appearance'
+import { ToggleSwitch } from '../ui/ToggleSwitch'
 
 const ACCENT_COLORS = Object.entries(ACCENT_COLOR_MAP).map(
   ([name, palette]) => ({
@@ -414,29 +415,5 @@ export function AppearanceSettings() {
         />
       </div>
     </div>
-  )
-}
-
-/** Reusable Toggle Switch component */
-function ToggleSwitch({
-  checked,
-  onChange,
-}: {
-  checked: boolean
-  onChange: (v: boolean) => void
-}) {
-  return (
-    <button
-      onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 rounded-full transition-colors ${
-        checked ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-600'
-      }`}
-    >
-      <span
-        className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-5' : ''
-        }`}
-      />
-    </button>
   )
 }

@@ -4,32 +4,7 @@ import {
 } from '../../store/settings-store'
 import { useTranslation } from 'react-i18next'
 import { Shield, Globe, Server } from 'lucide-react'
-
-function ToggleSwitch({
-  checked,
-  onChange,
-}: {
-  checked: boolean
-  onChange: (v: boolean) => void
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`inline-flex h-6 w-10 items-center rounded-full transition-colors ${
-        checked ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-600'
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-          checked ? 'translate-x-5' : 'translate-x-1'
-        }`}
-      />
-    </button>
-  )
-}
+import { ToggleSwitch } from '../ui/ToggleSwitch'
 
 function InfoCard({
   icon: Icon,

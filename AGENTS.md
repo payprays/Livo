@@ -94,7 +94,7 @@ pnpm build:web
 ## 文档入口
 
 - 项目总览见 [`README.md`](README.md)
-- 设计与实现文档见 `docs/superpowers/specs` 与 `docs/superpowers/plans`
+- 设计与实现文档见 `docs/plans`
 
 ## 许可证
 

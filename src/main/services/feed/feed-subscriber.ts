@@ -13,12 +13,11 @@ import {
   ensureTwitterUserFeedLimit,
   normalizeRsshubProtocolUrl,
   toRsshubProtocolUrl,
-} from './rsshub-url'
+} from '../../../shared/rsshub-url'
 import { getEventBus } from '../system/event-bus'
 import { settingsProvider } from '../system/settings-provider'
 import { DEFAULT_RSSHUB_INSTANCE } from '../../../shared/discover-data'
 import { inferDiscoverFeedViewFromUrl } from '../../../shared/subscription-intake'
-import { rewriteWechatMpFeedUrlToBackendProxy } from './wechat-mp-feed-url'
 
 export interface SubscribeFeedOptions {
   url: string
@@ -67,10 +66,8 @@ export async function subscribeFeed(
 
   // ---- URL normalization ----
   const originalProtocolUrl = toRsshubProtocolUrl(url)
-  const rawProtocolUrl =
-    rewriteWechatMpFeedUrlToBackendProxy(originalProtocolUrl)
   const limitedProtocolUrl = ensureTwitterUserFeedLimit(
-    ensureInstagramUserFeedLimit(rawProtocolUrl, 100),
+    ensureInstagramUserFeedLimit(originalProtocolUrl, 100),
     120,
   )
   const storedUrl = limitedProtocolUrl
@@ -91,11 +88,9 @@ export async function subscribeFeed(
     getDb().feeds.getFeedByUrl(toRsshubProtocolUrl(normalizedLegacyUrl))
 
   if (existingFeed) {
-    const upgradedUrl = rewriteWechatMpFeedUrlToBackendProxy(
-      ensureTwitterUserFeedLimit(
-        ensureInstagramUserFeedLimit(existingFeed.url, 100),
-        120,
-      ),
+    const upgradedUrl = ensureTwitterUserFeedLimit(
+      ensureInstagramUserFeedLimit(existingFeed.url, 100),
+      120,
     )
     if (upgradedUrl !== existingFeed.url) {
       getDb().feeds.updateFeed(existingFeed.id, {
@@ -140,7 +135,7 @@ export async function subscribeFeed(
       id: optimisticId,
       title: formatFeedTitle(storedUrl, undefined, options.title || storedUrl),
       url: storedUrl,
-      upstreamUrl: rawProtocolUrl,
+      upstreamUrl: originalProtocolUrl,
       siteUrl: undefined,
       description: undefined,
       imageUrl: getImmediateFeedAvatar(normalizedUrl),
@@ -187,8 +182,8 @@ export async function subscribeFeed(
 
   // ---- Fetch + parse ----
   const now = Date.now()
-  const fetchUrl = /^https?:\/\//i.test(rawProtocolUrl)
-    ? rawProtocolUrl
+  const fetchUrl = /^https?:\/\//i.test(originalProtocolUrl)
+    ? originalProtocolUrl
     : normalizedUrl
   let parsed: Awaited<ReturnType<typeof fetchAndParseFeed>>['data'] | null =
     null
@@ -225,7 +220,7 @@ export async function subscribeFeed(
       options.title || storedUrl,
     ),
     url: storedUrl,
-    upstreamUrl: rawProtocolUrl,
+    upstreamUrl: originalProtocolUrl,
     siteUrl: parsed?.link,
     description: parsed?.description,
     imageUrl,

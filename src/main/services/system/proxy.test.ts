@@ -3,7 +3,7 @@ import {
   buildElectronProxyConfig,
   getNormalizedProxyState,
   normalizeProxyUrl,
-} from './proxy'
+} from './proxy-policy'
 
 describe('proxy helpers', () => {
   it('normalizes valid proxy urls', () => {

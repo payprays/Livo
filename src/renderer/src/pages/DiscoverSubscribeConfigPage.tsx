@@ -27,7 +27,6 @@ import {
   resolveDiscoverSubscribeUrl,
 } from '../lib/discover-subscribe-config'
 import { shouldPreserveExplicitDiscoverView } from '../lib/discover-search'
-import { prepareDiscoverSubscriptionTarget } from '../lib/wechat-mp-subscription'
 import { ROUTES } from '../router/route-paths'
 import { useFeedStore } from '../store/feed-store'
 
@@ -90,7 +89,6 @@ export default function DiscoverSubscribeConfigPage() {
   const pageTitle = isEditMode
     ? t('discoverSubscribeConfig.editTitle')
     : t('discoverSubscribeConfig.pageTitle')
-  const isWechatMpTarget = effectiveTarget.metadata?.source === 'wechat-rss'
 
   useEffect(() => {
     if (feeds.length > 0 || isLoadingFeeds) return
@@ -122,17 +120,12 @@ export default function DiscoverSubscribeConfigPage() {
     setSubmitError('')
 
     try {
-      const prepared = await prepareDiscoverSubscriptionTarget(effectiveTarget)
-      const preparedTarget = prepared.target
-      const resolvedView = isWechatMpTarget
-        ? FeedViewType.Articles
-        : selectedView
       const nextTitle =
-        titleValue.trim() || preparedTarget.title || displayTitle || targetUrl
+        titleValue.trim() || effectiveTarget.title || displayTitle || targetUrl
       const nextCategory = normalizeDiscoverCategory(categoryValue)
       const nextUrl = resolveDiscoverSubscribeUrl(
-        preparedTarget,
-        resolvedView,
+        effectiveTarget,
+        selectedView,
         existingFeed,
       )
 
@@ -141,8 +134,8 @@ export default function DiscoverSubscribeConfigPage() {
           title: nextTitle,
           category: nextCategory,
           folder: nextCategory,
-          view: resolvedView,
-          imageUrl: preparedTarget.imageUrl || existingFeed.imageUrl,
+          view: selectedView,
+          imageUrl: effectiveTarget.imageUrl || existingFeed.imageUrl,
         })
         navigate(ROUTES.feed(existingFeed.id), { replace: true })
         return
@@ -151,7 +144,7 @@ export default function DiscoverSubscribeConfigPage() {
       const result = await addFeed(
         nextUrl,
         nextCategory || undefined,
-        resolvedView,
+        selectedView,
         nextTitle,
       )
       if (!result.success) {
@@ -165,17 +158,17 @@ export default function DiscoverSubscribeConfigPage() {
         const updates: Parameters<typeof updateFeed>[1] = {}
         if (
           shouldPreserveExplicitDiscoverView({
-            requestedView: resolvedView,
+            requestedView: selectedView,
             persistedView:
               typeof result.feed?.view === 'number'
                 ? (result.feed.view as number)
                 : undefined,
           })
         ) {
-          updates.view = resolvedView
+          updates.view = selectedView
         }
-        if (preparedTarget.imageUrl && !result.feed?.imageUrl) {
-          updates.imageUrl = preparedTarget.imageUrl
+        if (effectiveTarget.imageUrl && !result.feed?.imageUrl) {
+          updates.imageUrl = effectiveTarget.imageUrl
         }
         if (Object.keys(updates).length > 0) {
           await updateFeed(feedId, updates)
@@ -195,7 +188,6 @@ export default function DiscoverSubscribeConfigPage() {
     effectiveTarget,
     existingFeed,
     isSubmitting,
-    isWechatMpTarget,
     navigate,
     selectedView,
     t,
@@ -336,7 +328,6 @@ export default function DiscoverSubscribeConfigPage() {
                   <FeedSubscribeViewTypeRail
                     selectedView={selectedView}
                     onSelect={(view) => {
-                      if (isWechatMpTarget) return
                       setSelectedView(view)
                     }}
                   />

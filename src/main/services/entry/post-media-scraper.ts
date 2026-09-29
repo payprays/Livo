@@ -1,18 +1,10 @@
 import type { Entry } from '../../../shared/types/index'
+import { decodeHtmlEntities } from '../../../shared/discover-helpers'
 
 type EntryLike = Pick<
   Entry,
   'url' | 'content' | 'summary' | 'imageUrl' | 'media'
 >
-
-function decodeHtmlEntities(value: string): string {
-  return (value || '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-}
 
 function isDecorativeInstagramAssetUrl(url: string): boolean {
   const raw = decodeHtmlEntities((url || '').trim())
@@ -48,7 +40,7 @@ function isDecorativeInstagramAssetUrl(url: string): boolean {
       )
         return true
       if (
-        /\/(?:logos?|icons?|favicons?|downloads?|apple-touch-icon|android-chrome|mstile|sprites?|emoji|buttons?|badges?)(?:$|[\/_\-.])/i.test(
+        /\/(?:logos?|icons?|favicons?|downloads?|apple-touch-icon|android-chrome|mstile|sprites?|emoji|buttons?|badges?)(?:$|[/_\-.])/i.test(
           path,
         )
       )

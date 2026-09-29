@@ -21,6 +21,7 @@ import type {
   AgentRunResponse,
   AgentRoundDetail,
 } from '@shared'
+import { isRecord } from '@shared/guards'
 
 export type ChatMessage = StoredChatMessage
 
@@ -87,10 +88,6 @@ function emptyRunMetrics(): AgentRunMetrics {
     toolMs: 0,
     rounds: [],
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
 function optionalString(value: unknown): string | null | undefined {

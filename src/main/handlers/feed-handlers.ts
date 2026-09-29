@@ -25,7 +25,7 @@ import {
 import {
   normalizeRsshubProtocolUrl,
   toRsshubProtocolUrl,
-} from '../services/feed/rsshub-url'
+} from '../../shared/rsshub-url'
 import { resolveFeedAvatar } from '../services/feed/feed-avatar'
 import {
   loadRefreshLogs,

@@ -1,9 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
+const sessionFetch = vi.hoisted(() => vi.fn())
+
+vi.mock('electron', () => ({
+  session: { defaultSession: { fetch: sessionFetch } },
+}))
+
 import { resolveFeedAvatar } from './feed-avatar'
 
 describe('resolveFeedAvatar', () => {
   afterEach(() => {
-    vi.unstubAllGlobals()
+    sessionFetch.mockReset()
   })
 
   it('uses a site-level profile image when a FeedBurner feed has no image metadata', async () => {
@@ -36,7 +43,7 @@ describe('resolveFeedAvatar', () => {
         },
       )
     })
-    vi.stubGlobal('fetch', fetchMock)
+    sessionFetch.mockImplementation(fetchMock)
 
     await expect(
       resolveFeedAvatar(
@@ -52,7 +59,7 @@ describe('resolveFeedAvatar', () => {
 
   it('does not fetch a loopback site avatar page', async () => {
     const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
+    sessionFetch.mockImplementation(fetchMock)
 
     await expect(
       resolveFeedAvatar(
@@ -72,7 +79,7 @@ describe('resolveFeedAvatar', () => {
         headers: { location: 'http://127.0.0.1/admin' },
       })
     })
-    vi.stubGlobal('fetch', fetchMock)
+    sessionFetch.mockImplementation(fetchMock)
 
     await expect(
       resolveFeedAvatar(
@@ -105,7 +112,7 @@ describe('resolveFeedAvatar', () => {
         },
       )
     })
-    vi.stubGlobal('fetch', fetchMock)
+    sessionFetch.mockImplementation(fetchMock)
 
     await expect(
       resolveFeedAvatar(

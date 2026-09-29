@@ -77,20 +77,22 @@ export class MaintenanceRepository implements IMaintenanceRepository {
     dataSizeBytes: number
   } {
     const feedCount = (
-      this.db.prepare('SELECT COUNT(*) as c FROM feeds').get() as any
+      this.db.prepare('SELECT COUNT(*) as c FROM feeds').get() as { c: number }
     ).c
     const entryCount = (
-      this.db.prepare('SELECT COUNT(*) as c FROM entries').get() as any
+      this.db.prepare('SELECT COUNT(*) as c FROM entries').get() as {
+        c: number
+      }
     ).c
     const readCount = (
       this.db
         .prepare('SELECT COUNT(*) as c FROM entries WHERE is_read = 1')
-        .get() as any
+        .get() as { c: number }
     ).c
     const starredCount = (
       this.db
         .prepare('SELECT COUNT(*) as c FROM entries WHERE is_starred = 1')
-        .get() as any
+        .get() as { c: number }
     ).c
 
     let dataSizeBytes = 0

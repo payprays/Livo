@@ -8,6 +8,7 @@ import {
   FeedViewType,
   type FeedColumnId,
 } from './types/feed'
+import { DEFAULT_RSSHUB_INSTANCE } from './discover-data'
 
 export const DEFAULT_AGENT_RUN_TIMEOUT_SECONDS = 120
 export const MAX_AGENT_RUN_TIMEOUT_SECONDS = 3600
@@ -25,7 +26,6 @@ export interface AppSettings {
   agent: {
     runTimeoutSeconds: number
     maxRounds: number
-    enableServerKnowledge: boolean
     webSearchProviders: WebSearchProviderId[]
   }
   agentPermissions: AgentPermissionSettings
@@ -98,14 +98,12 @@ export type SettingsTabId =
   | 'ai'
   | 'translation'
   | 'actions'
-  | 'user'
   | 'data'
   | 'privacy'
   | 'about'
   | 'refreshLogs'
   | 'favorites'
   | 'fever'
-  | 'wechat-rss'
 
 export const DEFAULT_SETTINGS: AppSettings = {
   ai: {
@@ -127,7 +125,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   agent: {
     runTimeoutSeconds: DEFAULT_AGENT_RUN_TIMEOUT_SECONDS,
     maxRounds: DEFAULT_AGENT_MAX_ROUNDS,
-    enableServerKnowledge: true,
     webSearchProviders: ['duckduckgo', 'bing', 'brave'],
   },
   agentPermissions: { ...DEFAULT_AGENT_PERMISSION_SETTINGS },
@@ -146,7 +143,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     contentLineHeight: 1.75,
     uiFontFamily: 'inherit',
     contentFontFamily: 'inherit',
-    rsshubInstance: 'https://rsshub.pseudoyu.com',
+    rsshubInstance: DEFAULT_RSSHUB_INSTANCE,
     accentColor: 'rose',
     opaqueSidebar: false,
     reduceMotion: false,

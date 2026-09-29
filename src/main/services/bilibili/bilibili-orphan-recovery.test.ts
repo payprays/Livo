@@ -17,7 +17,7 @@ describe('bilibili orphan recovery module', () => {
       title: '示例动态 视频地址：https://www.bilibili.com/video/BV1UGQBBJENW',
       url: 'https://t.bilibili.com/1183202093510426675',
       content:
-        '图文地址：<a href=\"https://www.bilibili.com/opus/1180419659061526565\">https://www.bilibili.com/opus/1180419659061526565</a>',
+        '图文地址：<a href="https://www.bilibili.com/opus/1180419659061526565">https://www.bilibili.com/opus/1180419659061526565</a>',
       summary: '示例动态',
       author: '小管同學',
       authorAvatar:

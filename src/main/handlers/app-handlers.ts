@@ -19,7 +19,6 @@ import {
 import { downloadUrlToFile, saveTextFile } from '../services/system/download'
 import { settingsProvider } from '../services/system/settings-provider'
 import { getDb, whenDbReady } from '../database'
-import { sessionStore } from '../services/auth/session-store'
 import type { WindowManager } from '../window-manager'
 import type { UpdaterService } from '../services/updater'
 
@@ -144,7 +143,7 @@ export function registerAppHandlers(
     return windowManager.isWindowMaximized()
   })
 
-  // Batched shell hydration: returns settings + feeds + auth in a single IPC
+  // Batched shell hydration: returns settings + feeds in a single IPC
   // call. The heavier reader snapshot is loaded separately after the shell is
   // visible so startup does not block on entry-list queries.
   registerChannel(IPC.APP_HYDRATE, async () => {
@@ -174,19 +173,11 @@ export function registerAppHandlers(
       .sort((a, b) => a.title.localeCompare(b.title))
     logStartupTiming('app.hydrate.feeds', feedsStartTime)
 
-    const authStartTime = performance.now()
-    const user = sessionStore.getCurrentUser()
-    logStartupTiming('app.hydrate.auth', authStartTime)
     logStartupTiming('app.hydrate.total', startTime)
 
     return {
       settings,
       feeds,
-      auth: {
-        success: true,
-        isValid: !!user,
-        user,
-      },
       initialSnapshot: null,
     }
   })

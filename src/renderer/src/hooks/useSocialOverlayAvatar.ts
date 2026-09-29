@@ -41,7 +41,9 @@ export function useSocialOverlayAvatar({
             return `https://unavatar.io/x/${username}`
           }
         }
-      } catch {}
+      } catch {
+        // ignore
+      }
       const m = u.match(/\/twitter\/user\/([a-zA-Z0-9_]+)/i)
       if (m) return `https://unavatar.io/x/${m[1]}`
     }

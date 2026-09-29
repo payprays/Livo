@@ -9,6 +9,7 @@ import {
   discoveryFetch,
   extractOgMeta,
 } from './platform-search'
+import { logInfo, logWarn } from '../system/logger'
 
 export const INSTAGRAM_DISCOVER_PROFILE_TIMEOUT_MS = 1600
 
@@ -182,7 +183,7 @@ export async function fetchInstagramAvatarByUsername(
           json?.graphql?.user?.profile_pic_url
         if (avatarUrl && /^https?:\/\//i.test(avatarUrl)) {
           const normalizedAvatarUrl = normalizeImageUrl(avatarUrl)
-          console.log(
+          logInfo(
             `[Instagram Avatar] Found via __a=1 for ${clean}: ${normalizedAvatarUrl.substring(0, 80)}...`,
           )
           const inlined = await tryConvertImageUrlToDataUri(normalizedAvatarUrl)
@@ -190,11 +191,11 @@ export async function fetchInstagramAvatarByUsername(
           return normalizedAvatarUrl
         }
       } catch {
-        console.log(`[Instagram Avatar] __a=1 JSON parse failed for ${clean}`)
+        logWarn(`[Instagram Avatar] __a=1 JSON parse failed for ${clean}`)
       }
     }
   } catch (e) {
-    console.log(`[Instagram Avatar] __a=1 failed for ${clean}:`, e)
+    logWarn(`[Instagram Avatar] __a=1 failed for ${clean}:`, e)
   }
 
   // Method 2: Parse profile page HTML for og:image
@@ -257,7 +258,7 @@ export async function fetchInstagramAvatarByUsername(
     }
 
     if (avatarUrl) {
-      console.log(
+      logInfo(
         `[Instagram Avatar] Found via HTML parse for ${clean}: ${avatarUrl.substring(0, 80)}...`,
       )
       // Try to fetch avatar image and convert to base64 data URI
@@ -279,7 +280,7 @@ export async function fetchInstagramAvatarByUsername(
             avatarRes.headers.get('content-type') || ''
           ).toLowerCase()
           if (contentType && !contentType.startsWith('image/')) {
-            console.log(
+            logInfo(
               `[Instagram Avatar] Avatar response is not image for ${clean}: ${contentType}`,
             )
             return undefined
@@ -304,17 +305,17 @@ export async function fetchInstagramAvatarByUsername(
                     ? 'image/gif'
                     : 'image/jpeg'
           const base64 = buffer.toString('base64')
-          console.log(
+          logInfo(
             `[Instagram Avatar] Converted to base64 for ${clean} (${buffer.length} bytes)`,
           )
           return `data:${mimeType};base64,${base64}`
         } else {
-          console.log(
+          logWarn(
             `[Instagram Avatar] Avatar fetch failed for ${clean}: ${avatarRes.status}`,
           )
         }
       } catch (e) {
-        console.log(`[Instagram Avatar] Avatar fetch error for ${clean}:`, e)
+        logWarn(`[Instagram Avatar] Avatar fetch error for ${clean}:`, e)
       }
       return avatarUrl
     }
@@ -350,7 +351,7 @@ export async function fetchInstagramAvatarByUsername(
           /^https?:\/\//i.test(picukiAvatarMatch[1])
         ) {
           const avatarFromPicuki = picukiAvatarMatch[1]
-          console.log(
+          logInfo(
             `[Instagram Avatar] Found via picuki for ${clean}: ${avatarFromPicuki.substring(0, 80)}...`,
           )
           // Try to fetch as base64
@@ -392,13 +393,13 @@ export async function fetchInstagramAvatarByUsername(
         }
       }
     } catch (e) {
-      console.log(`[Instagram Avatar] picuki failed for ${clean}:`, e)
+      logWarn(`[Instagram Avatar] picuki failed for ${clean}:`, e)
     }
 
-    console.log(`[Instagram Avatar] No avatar found for ${clean}`)
+    logInfo(`[Instagram Avatar] No avatar found for ${clean}`)
     return undefined
   } catch (e) {
-    console.log(`[Instagram Avatar] HTML parse failed for ${clean}:`, e)
+    logWarn(`[Instagram Avatar] HTML parse failed for ${clean}:`, e)
   }
 
   return undefined
@@ -419,7 +420,7 @@ export async function probeInstagramUsersByKeyword(
 ): Promise<InstagramUserProbeCandidate[]> {
   const clean = query.trim().replace(/^@+/, '')
   if (!clean) return []
-  console.log(`[Instagram Search] Starting search for "${clean}"`)
+  logInfo(`[Instagram Search] Starting search for "${clean}"`)
 
   const out: InstagramUserProbeCandidate[] = []
   const seen = new Set<string>()
@@ -448,9 +449,7 @@ export async function probeInstagramUsersByKeyword(
   // If input already looks like a username, always keep it as a high-priority candidate
   const directHandle = extractLikelyInstagramHandle(clean)
   if (directHandle) {
-    console.log(
-      `[Instagram Search] Input looks like a handle: @${directHandle}`,
-    )
+    logInfo(`[Instagram Search] Input looks like a handle: @${directHandle}`)
     pushCandidate(directHandle, '', '', 3)
   }
 
@@ -458,7 +457,7 @@ export async function probeInstagramUsersByKeyword(
   if (directHandle) {
     try {
       const profileUrl = `https://www.instagram.com/${encodeURIComponent(directHandle)}/`
-      console.log(`[Instagram Search] Trying to fetch profile: ${profileUrl}`)
+      logInfo(`[Instagram Search] Trying to fetch profile: ${profileUrl}`)
       const res = await discoveryFetch(profileUrl, {
         fetchImpl,
         signal: AbortSignal.timeout(INSTAGRAM_DISCOVER_PROFILE_TIMEOUT_MS),
@@ -542,7 +541,7 @@ export async function probeInstagramUsersByKeyword(
             displayName &&
             displayName.toLowerCase() !== directHandle.toLowerCase()
           ) {
-            console.log(`[Instagram Search] Found display name: ${displayName}`)
+            logInfo(`[Instagram Search] Found display name: ${displayName}`)
             // Update the first candidate with better info
             const first = out[0]
             if (first) {
@@ -563,10 +562,10 @@ export async function probeInstagramUsersByKeyword(
         }
       }
     } catch (e) {
-      console.log(`[Instagram Search] Profile fetch error:`, e)
+      logWarn(`[Instagram Search] Profile fetch error:`, e)
     }
   }
 
-  console.log(`[Instagram Search] Total candidates: ${out.length}`)
+  logInfo(`[Instagram Search] Total candidates: ${out.length}`)
   return out
 }

@@ -13,10 +13,8 @@ import { useSettingsStore } from './store/settings-store'
 import { useAIChatStore } from './store/ai-chat-store'
 import { useCommandPaletteStore } from './store/command-palette-store'
 import { useQuickSearchStore } from './store/quick-search-store'
-import { useAuthStore } from './store/auth-store'
 import { usePlayerStore } from './store/player-store'
 import { useAppIsReady } from './store/app-store'
-import { NotificationProvider } from './providers/NotificationProvider'
 
 const SettingsDialog = lazy(() =>
   import('./components/settings/SettingsDialog').then((module) => ({
@@ -46,11 +44,6 @@ const AudioMiniBar = lazy(() =>
 const TextContextMenu = lazy(() =>
   import('./components/ui/TextContextMenu').then((module) => ({
     default: module.TextContextMenu,
-  })),
-)
-const LoginModal = lazy(() =>
-  import('./components/auth/LoginModal').then((module) => ({
-    default: module.LoginModal,
   })),
 )
 
@@ -148,14 +141,6 @@ function LazyCommandPaletteMount() {
 
   if (!isOpen) return null
   return <CommandPalette />
-}
-
-function LazyLoginModalMount() {
-  const isSessionChecked = useAuthStore((state) => state.isSessionChecked)
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-
-  if (!isSessionChecked || isAuthenticated) return null
-  return <LoginModal />
 }
 
 function LazyAudioMiniBarMount() {
@@ -287,7 +272,6 @@ function GlobalOverlays() {
   return (
     <>
       <Suspense>
-        <LazyLoginModalMount />
         <LocalErrorBoundary
           title="设置面板加载失败"
           onDismiss={() => useSettingsStore.getState().setOpen(false)}
@@ -315,7 +299,6 @@ function GlobalOverlays() {
         <LazyAudioMiniBarMount />
       </Suspense>
       <TextContextMenu />
-      <NotificationProvider />
     </>
   )
 }

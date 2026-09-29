@@ -3,7 +3,6 @@ export type DiscoverPlatformId =
   | 'bilibili'
   | 'x'
   | 'instagram'
-  | 'wechat-mp'
   | 'nitter'
   | 'rsshub'
   | 'rss'
@@ -19,28 +18,9 @@ export interface DiscoverPlatformBadge {
 /**
  * Infer a platform identity from a feed URL. Nitter is checked before generic
  * RSSHub because nitter instances also serve `*.rss` paths but with a distinct host.
- *
- * Note: this helper does NOT carry account/sign-in metadata. Today only
- * YouTube is gated by the backend (`discover-handlers.ts`); callers express
- * that policy explicitly at the call site (e.g. checking `platform.id ===
- * 'youtube'` alongside `useAccountStatusQuery('youtube')`). When the backend
- * adds a `requiresAccount` flag to `discover:search` results, prefer
- * threading that through instead of re-introducing platform-keyed gating
- * here.
  */
-export function inferDiscoverPlatform(
-  url: string,
-  metadata?: { source?: 'wechat-rss' },
-): DiscoverPlatformBadge {
+export function inferDiscoverPlatform(url: string): DiscoverPlatformBadge {
   const lower = (url || '').toLowerCase()
-
-  if (metadata?.source === 'wechat-rss') {
-    return {
-      id: 'wechat-mp',
-      label: '公众号',
-      color: '#07C160',
-    }
-  }
 
   if (/\/youtube\//i.test(lower) || /(^|\.)youtube\.com\//i.test(lower)) {
     return {

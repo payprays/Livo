@@ -120,12 +120,6 @@ export function createRendererSharedConfig(projectRoot = process.cwd()): any {
                 return 'app-settings-data'
               if (
                 normalizedId.includes(
-                  '/src/renderer/src/components/settings/AccountsSettings.tsx',
-                )
-              )
-                return 'app-settings-accounts'
-              if (
-                normalizedId.includes(
                   '/src/renderer/src/components/settings/AISettings.tsx',
                 ) ||
                 normalizedId.includes(

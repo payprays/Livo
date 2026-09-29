@@ -13,6 +13,8 @@ import {
 } from '../../../../shared/types'
 import { isRedactedSecretValue } from '../../../../shared/settings-secrets'
 import { VIEW_TYPE_I18N_KEYS } from '../../lib/view-type-keys'
+import { ToggleSwitch } from '../ui/ToggleSwitch'
+import { DEFAULT_RSSHUB_INSTANCE } from '../../../../shared/discover-data'
 export function GeneralSettings() {
   const general = useSettingSection('general')
   const { updateSettingsSection } = useSettingsActions()
@@ -407,13 +409,13 @@ export function GeneralSettings() {
         </p>
         <input
           type="url"
-          value={general.rsshubInstance || 'https://rsshub.pseudoyu.com'}
+          value={general.rsshubInstance || DEFAULT_RSSHUB_INSTANCE}
           onChange={(e) =>
             void updateSettingsSection('general', {
               rsshubInstance: e.target.value.trim(),
             })
           }
-          placeholder="https://rsshub.pseudoyu.com"
+          placeholder={DEFAULT_RSSHUB_INSTANCE}
           className="bg-surface-secondary focus:ring-accent/50 dark:bg-surface-dark-tertiary w-full rounded-lg border px-3 py-2.5 font-mono text-sm focus:outline-none focus:ring-2"
         />
         <div className="text-text-tertiary mt-1.5 text-xs">
@@ -716,29 +718,5 @@ function ImageIcon({ size = 16 }: { size?: number }) {
       <circle cx="9" cy="9" r="2" />
       <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
     </svg>
-  )
-}
-
-/** Reusable Toggle Switch component */
-function ToggleSwitch({
-  checked,
-  onChange,
-}: {
-  checked: boolean
-  onChange: (v: boolean) => void
-}) {
-  return (
-    <button
-      onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 rounded-full transition-colors ${
-        checked ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-600'
-      }`}
-    >
-      <span
-        className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-5' : ''
-        }`}
-      />
-    </button>
   )
 }

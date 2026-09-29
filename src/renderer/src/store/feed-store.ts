@@ -432,11 +432,6 @@ export const useFeedStore = createAppStore<FeedState>((set, get) => ({
       // 不依赖 feeds:updated 事件（该事件在批量刷新完成时可能未触发）。
       await get().loadFeeds()
       await reloadEntriesForCurrentScope(get())
-
-      // Also sync subscription list to/from cloud (best-effort, silently skip if not logged in)
-      window.api.feeds.syncNow().catch(() => {
-        // Ignore — user may not be logged in or cloud sync may be unavailable
-      })
     } finally {
       removeListener()
       set({ isRefreshing: false })

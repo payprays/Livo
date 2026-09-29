@@ -31,11 +31,8 @@ export default tseslint.config(
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       'no-console': 'off',
-      'no-empty': 'off',
       'no-undef': 'off',
       'no-misleading-character-class': 'off',
-      'no-useless-escape': 'off',
-      'prefer-const': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-unused-vars': [
@@ -46,6 +43,12 @@ export default tseslint.config(
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+  {
+    files: ['src/shared/**/*.{ts,tsx}', 'src/main/database/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
     },
   },
 )

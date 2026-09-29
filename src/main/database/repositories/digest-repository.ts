@@ -65,7 +65,7 @@ export class DigestRepository implements IDigestRepository {
       WHERE e.published_at >= ? AND e.published_at <= ?
         AND f.show_in_all = 1
     `
-    const params: any[] = [windowStartAt, windowEndAt]
+    const params: unknown[] = [windowStartAt, windowEndAt]
 
     if (options.feedId) {
       sql += ' AND e.feed_id = ?'
@@ -75,9 +75,19 @@ export class DigestRepository implements IDigestRepository {
     sql += ' ORDER BY e.published_at DESC LIMIT ?'
     params.push(limit)
 
-    const rows = this.db.prepare(sql).all(...params) as any[]
+    const rows = this.db.prepare(sql).all(...params) as Array<{
+      id: string
+      title: string | null
+      summary: string | null
+      content: string | null
+      readability_content: string | null
+      ai_summary: string | null
+      url: string
+      published_at: number
+      feed_title: string
+    }>
 
-    const stripText = (value: string | undefined): string =>
+    const stripText = (value: string | null | undefined): string =>
       (value || '')
         .replace(/<[^>]+>/g, ' ')
         .replace(/\s+/g, ' ')
@@ -112,7 +122,7 @@ export class DigestRepository implements IDigestRepository {
       LIMIT ?
     `,
       )
-      .all(Math.max(1, Math.min(limit, 100))) as any[]
+      .all(Math.max(1, Math.min(limit, 100)))
     return rows.map(digestRunFromRow)
   }
 
@@ -127,7 +137,9 @@ export class DigestRepository implements IDigestRepository {
       WHERE preset = ? AND feed_id IS ? AND window_start_at = ?
     `,
       )
-      .get(input.preset, input.feedId ?? null, input.windowStartAt) as any
+      .get(input.preset, input.feedId ?? null, input.windowStartAt) as
+      | { id: string }
+      | undefined
 
     if (existing) {
       this.db
@@ -194,7 +206,7 @@ export class DigestRepository implements IDigestRepository {
   ): AIDigestRun | null {
     const existing = this.db
       .prepare('SELECT * FROM ai_digest_runs WHERE id = ?')
-      .get(id) as any
+      .get(id)
     if (!existing) return null
 
     const merged = {

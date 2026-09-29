@@ -35,11 +35,6 @@ describe('discover-subscribe-config', () => {
       description: undefined,
       category: undefined,
       view: undefined,
-      metadata: {
-        fakeId: undefined,
-        source: undefined,
-        requiresLogin: undefined,
-      },
     })
   })
 

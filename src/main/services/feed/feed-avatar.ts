@@ -1,4 +1,6 @@
+import { session } from 'electron'
 import { assertNetworkFetchUrl } from '../system/network-url-policy'
+import { extractBilibiliUid } from '../../../shared/discover-helpers'
 
 const MAX_AVATAR_REDIRECTS = 5
 const MAX_AVATAR_HTML_BYTES = 2 * 1024 * 1024
@@ -12,7 +14,7 @@ async function fetchAvatarResource(
 ): Promise<Response | undefined> {
   try {
     const safeUrl = await assertNetworkFetchUrl(url)
-    const response = await fetch(safeUrl, {
+    const response = await session.defaultSession.fetch(safeUrl, {
       ...init,
       redirect: 'manual',
     })
@@ -79,16 +81,6 @@ async function readResponseText(
 ): Promise<string | undefined> {
   const bytes = await readResponseBytes(response, maxBytes)
   return bytes?.toString('utf8')
-}
-
-function extractBilibiliUid(feedUrl: string): string | null {
-  try {
-    const u = new URL(feedUrl)
-    const m = u.pathname.match(/\/bilibili\/user\/(?:video|dynamic)\/(\d+)/i)
-    return m?.[1] || null
-  } catch {
-    return null
-  }
 }
 
 function extractInstagramUsername(feedUrl: string): string | null {

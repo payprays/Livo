@@ -1,5 +1,4 @@
 import type {
-  AccountProvider,
   AgentChatHistoryMessage,
   AITranslateEntrySegmentsInput,
   AppSettings,
@@ -18,6 +17,7 @@ import {
 } from './settings-patch'
 import type { AISemanticFilterInput, AIDigestPreset } from './types'
 import { FeedViewType } from './types/feed'
+import { isRecord } from './guards'
 
 const IPC_TEXT_CONTENT_MAX_LENGTH = 10 * 1024 * 1024
 const IPC_TEXT_FIELD_MAX_LENGTH = 512
@@ -30,9 +30,6 @@ const IPC_FILTER_EXTENSION_MAX_LENGTH = 16
 const IPC_CONTEXT_MENU_ITEMS_MAX_COUNT = 80
 const IPC_IMPORTED_REFRESH_IDS_MAX_COUNT = 100
 const IPC_IMPORTED_REFRESH_ID_MAX_LENGTH = 128
-const IPC_READING_ACTIVITY_DAYS_MAX_COUNT = 400
-const IPC_READING_ACTIVITY_DEVICE_ID_MAX_LENGTH = 128
-const IPC_READING_ACTIVITY_COUNT_MAX = 1_000_000
 const IPC_FEED_EDITABLE_TEXT_MAX_LENGTH = 512
 const IPC_FEED_EDITABLE_IMAGE_URL_MAX_LENGTH = 2048
 const IPC_FEED_MAX_ENTRIES_MAX = 10_000
@@ -59,11 +56,6 @@ export const IPC = {
   FEED_IMPORT_OPML: 'feed:import-opml',
   FEED_EXPORT_OPML: 'feed:export-opml',
   FEED_REFRESH_IMPORTED: 'feed:refresh-imported',
-  FEED_SYNC_NOW: 'feed:sync-now',
-  FEED_SYNC_TO_CLOUD: 'feed:sync-to-cloud',
-  FEED_SYNC_FROM_CLOUD: 'feed:sync-from-cloud',
-  FEED_SYNC_STATUS: 'feed:sync-status',
-  READING_ACTIVITY_SYNC: 'reading-activity:sync',
   ENTRY_LIST: 'entry:list',
   ENTRY_GET: 'entry:get',
   ENTRY_MARK_READ: 'entry:mark-read',
@@ -117,30 +109,13 @@ export const IPC = {
   DISCOVER_PROBE_BILIBILI_UID: 'discover:probe-bilibili-uid',
   DISCOVER_PROBE_BILIBILI_USERS: 'discover:probe-bilibili-users',
   DISCOVER_PROBE_INSTAGRAM_USER: 'instagram:probe-user',
-  DISCOVER_SEARCH_WECHAT_MP: 'discover:search-wechat-mp',
-  DISCOVER_ENSURE_WECHAT_MP_FEED: 'discover:ensure-wechat-mp-feed',
-  ACCOUNT_STATUS: 'account:status',
-  ACCOUNT_LINK: 'account:link',
-  ACCOUNT_UNLINK: 'account:unlink',
-  ACCOUNT_SET_DISPLAY_NAME: 'account:set-display-name',
-  ACCOUNT_BILIBILI_FOLLOWINGS: 'account:bilibili-followings',
-  AUTH_LOGIN_GOOGLE: 'auth:login-google',
-  AUTH_LOGIN_WECHAT: 'auth:login-wechat',
-  AUTH_BIND_GOOGLE: 'auth:bind-google',
-  AUTH_BIND_WECHAT: 'auth:bind-wechat',
-  AUTH_GET_CURRENT_USER: 'auth:get-current-user',
-  AUTH_LOGOUT: 'auth:logout',
-  AUTH_CHECK_SESSION: 'auth:check-session',
-  WECHAT_MP_LOGIN: 'wechat-mp:login',
   DATA_CLEANUP: 'data:cleanup',
   DATA_STATS: 'data:stats',
   REFRESH_LOG_LIST: 'refresh-log:list',
   REFRESH_LOG_CLEAR: 'refresh-log:clear',
   VIDEO_RESOLVE: 'video:resolve',
   VIDEO_OPEN_IN_APP: 'video:open-in-app',
-  VIDEO_YT_LOGIN: 'video:yt-login',
   VIDEO_YT_STATUS: 'video:yt-status',
-  VIDEO_YT_LOGOUT: 'video:yt-logout',
   APP_GET_VERSION: 'app:version',
   APP_GET_ICON: 'app:get-icon',
   APP_OPEN_EXTERNAL: 'app:open-external',
@@ -187,18 +162,10 @@ export const IPC = {
   ADMIN_GET_SETTINGS: 'admin:get-settings',
   ADMIN_UPDATE_SETTING: 'admin:update-setting',
   ADMIN_BATCH_UPDATE_SETTINGS: 'admin:batch-update-settings',
-  NOTIFICATION_LIST: 'notification:list',
-  NOTIFICATION_UNREAD_COUNT: 'notification:unread-count',
-  NOTIFICATION_MARK_READ: 'notification:mark-read',
-  NOTIFICATION_MARK_UNREAD: 'notification:mark-unread',
-  NOTIFICATION_MARK_ALL_READ: 'notification:mark-all-read',
   ADMIN_GET_ROLES: 'admin:get-roles',
   UPDATER_CHECK: 'updater:check',
   UPDATER_DOWNLOAD: 'updater:download',
   UPDATER_INSTALL: 'updater:install',
-  WS_CONNECT: 'ws:connect',
-  WS_DISCONNECT: 'ws:disconnect',
-  WS_STATUS: 'ws:status',
   ADMIN_GET_ROLE_BY_ID: 'admin:get-role-by-id',
   ADMIN_CREATE_ROLE: 'admin:create-role',
   ADMIN_UPDATE_ROLE: 'admin:update-role',
@@ -285,14 +252,6 @@ export type IpcArgsByChannel = {
   [IPC.FEED_IMPORT_OPML]: []
   [IPC.FEED_EXPORT_OPML]: []
   [IPC.FEED_REFRESH_IMPORTED]: [feedIds: string[]]
-  [IPC.FEED_SYNC_NOW]: []
-  [IPC.FEED_SYNC_TO_CLOUD]: []
-  [IPC.FEED_SYNC_FROM_CLOUD]: []
-  [IPC.FEED_SYNC_STATUS]: []
-  [IPC.READING_ACTIVITY_SYNC]: [
-    deviceId: string,
-    days: Array<{ day: string; count: number }>,
-  ]
   [IPC.ENTRY_LIST]: [
     options: {
       feedId?: string
@@ -384,34 +343,6 @@ export type IpcArgsByChannel = {
   [IPC.DISCOVER_PROBE_BILIBILI_UID]: [uid: string]
   [IPC.DISCOVER_PROBE_BILIBILI_USERS]: [query: string]
   [IPC.DISCOVER_PROBE_INSTAGRAM_USER]: [username: string]
-  [IPC.DISCOVER_SEARCH_WECHAT_MP]: [
-    query: string,
-    options?: { limit?: number; offset?: number },
-  ]
-  [IPC.DISCOVER_ENSURE_WECHAT_MP_FEED]: [
-    input: {
-      mpName: string
-      fakeId: string
-      avatar: string
-      intro?: string
-    },
-  ]
-  [IPC.ACCOUNT_STATUS]: [provider: AccountProvider]
-  [IPC.ACCOUNT_LINK]: [provider: AccountProvider]
-  [IPC.ACCOUNT_UNLINK]: [provider: AccountProvider]
-  [IPC.ACCOUNT_SET_DISPLAY_NAME]: [
-    provider: AccountProvider,
-    displayName: string,
-  ]
-  [IPC.ACCOUNT_BILIBILI_FOLLOWINGS]: []
-  [IPC.AUTH_LOGIN_GOOGLE]: []
-  [IPC.AUTH_LOGIN_WECHAT]: []
-  [IPC.AUTH_BIND_GOOGLE]: []
-  [IPC.AUTH_BIND_WECHAT]: []
-  [IPC.AUTH_GET_CURRENT_USER]: []
-  [IPC.AUTH_LOGOUT]: []
-  [IPC.AUTH_CHECK_SESSION]: []
-  [IPC.WECHAT_MP_LOGIN]: []
   [IPC.DATA_CLEANUP]: [
     options?: { entriesPerFeed?: number; maxEntryAgeDays?: number },
   ]
@@ -420,9 +351,7 @@ export type IpcArgsByChannel = {
   [IPC.REFRESH_LOG_CLEAR]: []
   [IPC.VIDEO_RESOLVE]: [url: string]
   [IPC.VIDEO_OPEN_IN_APP]: [url: string]
-  [IPC.VIDEO_YT_LOGIN]: []
   [IPC.VIDEO_YT_STATUS]: []
-  [IPC.VIDEO_YT_LOGOUT]: []
   [IPC.APP_GET_VERSION]: []
   [IPC.APP_GET_ICON]: []
   [IPC.APP_OPEN_EXTERNAL]: [url: string]
@@ -494,17 +423,6 @@ export type IpcArgsByChannel = {
   [IPC.ADMIN_BATCH_UPDATE_SETTINGS]: [
     updates: Array<{ key: string; value: string }>,
   ]
-  [IPC.NOTIFICATION_LIST]: [
-    options?: {
-      unread?: boolean
-      limit?: number
-      offset?: number
-    },
-  ]
-  [IPC.NOTIFICATION_UNREAD_COUNT]: []
-  [IPC.NOTIFICATION_MARK_READ]: [id: string]
-  [IPC.NOTIFICATION_MARK_UNREAD]: [id: string]
-  [IPC.NOTIFICATION_MARK_ALL_READ]: []
   [IPC.ADMIN_GET_ROLES]: []
   [IPC.ADMIN_GET_ROLE_BY_ID]: [id: string]
   [IPC.ADMIN_CREATE_ROLE]: [dto: { name: string; permissions: string[] }]
@@ -523,9 +441,6 @@ export type IpcArgsByChannel = {
   [IPC.ADMIN_GET_ANALYTICS_SUMMARY]: []
   [IPC.ADMIN_GET_ANALYTICS_USER_GROWTH]: [days?: number]
   [IPC.ADMIN_GET_ANALYTICS_ACTIVE_USERS]: [days?: number]
-  [IPC.WS_CONNECT]: []
-  [IPC.WS_DISCONNECT]: []
-  [IPC.WS_STATUS]: []
 }
 
 export type IpcArgs<C extends IpcChannel> = C extends keyof IpcArgsByChannel
@@ -537,10 +452,6 @@ type IpcArgsValidator<C extends IpcChannel> = (args: unknown[]) => IpcArgs<C>
 type IpcContract<C extends IpcChannel> = {
   channel: C
   validateArgs: IpcArgsValidator<C>
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function assertArity(
@@ -952,27 +863,6 @@ function oneSettingsPatch<C extends IpcChannel>(
   }
 }
 
-const accountProviders = new Set<AccountProvider>([
-  'google',
-  'youtube',
-  'x',
-  'instagram',
-  'bilibili',
-  'wechat-mp',
-])
-
-function assertAccountProvider(
-  value: unknown,
-  field: string,
-): asserts value is AccountProvider {
-  assertString(value, field)
-  if (!accountProviders.has(value as AccountProvider)) {
-    throw new IpcValidationError('Invalid IPC argument', {
-      [field]: 'unsupported_provider',
-    })
-  }
-}
-
 function assertMessages(value: unknown): void {
   if (!Array.isArray(value)) {
     throw new IpcValidationError('Invalid IPC argument', {
@@ -1120,58 +1010,6 @@ function assertAgentTraceListOptions(value: unknown): void {
       'options.sessionId',
       AGENT_REQUEST_ID_MAX_LENGTH,
     )
-  }
-}
-
-function assertReadingActivityDeviceId(value: unknown): void {
-  assertString(value, 'deviceId')
-  assertStringLengthRange(value, 'deviceId', {
-    min: 1,
-    max: IPC_READING_ACTIVITY_DEVICE_ID_MAX_LENGTH,
-  })
-  if (!/^[A-Za-z0-9._:-]+$/.test(value)) {
-    throw new IpcValidationError('Invalid IPC argument', {
-      deviceId: 'invalid_format',
-    })
-  }
-}
-
-function assertReadingActivityDayKey(value: unknown, field: string): void {
-  assertString(value, field)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new IpcValidationError('Invalid IPC argument', {
-      [field]: 'invalid_date',
-    })
-  }
-  const date = new Date(`${value}T00:00:00.000Z`)
-  if (
-    Number.isNaN(date.getTime()) ||
-    date.toISOString().slice(0, 10) !== value
-  ) {
-    throw new IpcValidationError('Invalid IPC argument', {
-      [field]: 'invalid_date',
-    })
-  }
-}
-
-function assertReadingActivityDays(value: unknown): void {
-  if (
-    !Array.isArray(value) ||
-    value.length > IPC_READING_ACTIVITY_DAYS_MAX_COUNT
-  ) {
-    throw new IpcValidationError('Invalid IPC argument', {
-      days: 'invalid_days',
-    })
-  }
-  for (const [index, day] of value.entries()) {
-    const prefix = `days.${index}`
-    assertObject(day, prefix)
-    assertReadingActivityDayKey(day.day, `${prefix}.day`)
-    assertNumber(day.count, `${prefix}.count`)
-    assertIntegerRange(day.count, `${prefix}.count`, {
-      min: 1,
-      max: IPC_READING_ACTIVITY_COUNT_MAX,
-    })
   }
 }
 
@@ -1338,19 +1176,6 @@ export const IPC_CONTRACTS = {
         maxItemLength: IPC_IMPORTED_REFRESH_ID_MAX_LENGTH,
       })
       return args as IpcArgs<typeof IPC.FEED_REFRESH_IMPORTED>
-    },
-  },
-  [IPC.FEED_SYNC_NOW]: noArgs(IPC.FEED_SYNC_NOW),
-  [IPC.FEED_SYNC_TO_CLOUD]: noArgs(IPC.FEED_SYNC_TO_CLOUD),
-  [IPC.FEED_SYNC_FROM_CLOUD]: noArgs(IPC.FEED_SYNC_FROM_CLOUD),
-  [IPC.FEED_SYNC_STATUS]: noArgs(IPC.FEED_SYNC_STATUS),
-  [IPC.READING_ACTIVITY_SYNC]: {
-    channel: IPC.READING_ACTIVITY_SYNC,
-    validateArgs: (args) => {
-      assertArity(IPC.READING_ACTIVITY_SYNC, args, 2)
-      assertReadingActivityDeviceId(args[0])
-      assertReadingActivityDays(args[1])
-      return args as IpcArgs<typeof IPC.READING_ACTIVITY_SYNC>
     },
   },
   [IPC.ENTRY_LIST]: {
@@ -1658,61 +1483,6 @@ export const IPC_CONTRACTS = {
     IPC.DISCOVER_PROBE_INSTAGRAM_USER,
     'username',
   ),
-  [IPC.DISCOVER_SEARCH_WECHAT_MP]: {
-    channel: IPC.DISCOVER_SEARCH_WECHAT_MP,
-    validateArgs: (args) => {
-      assertArity(IPC.DISCOVER_SEARCH_WECHAT_MP, args, 1, 2)
-      assertString(args[0], 'query')
-      if (args[1] !== undefined) assertObject(args[1], 'options')
-      return args as IpcArgs<typeof IPC.DISCOVER_SEARCH_WECHAT_MP>
-    },
-  },
-  [IPC.DISCOVER_ENSURE_WECHAT_MP_FEED]: oneObject(
-    IPC.DISCOVER_ENSURE_WECHAT_MP_FEED,
-    'input',
-  ),
-  [IPC.ACCOUNT_STATUS]: {
-    channel: IPC.ACCOUNT_STATUS,
-    validateArgs: (args) => {
-      assertArity(IPC.ACCOUNT_STATUS, args, 1)
-      assertAccountProvider(args[0], 'provider')
-      return args as IpcArgs<typeof IPC.ACCOUNT_STATUS>
-    },
-  },
-  [IPC.ACCOUNT_LINK]: {
-    channel: IPC.ACCOUNT_LINK,
-    validateArgs: (args) => {
-      assertArity(IPC.ACCOUNT_LINK, args, 1)
-      assertAccountProvider(args[0], 'provider')
-      return args as IpcArgs<typeof IPC.ACCOUNT_LINK>
-    },
-  },
-  [IPC.ACCOUNT_UNLINK]: {
-    channel: IPC.ACCOUNT_UNLINK,
-    validateArgs: (args) => {
-      assertArity(IPC.ACCOUNT_UNLINK, args, 1)
-      assertAccountProvider(args[0], 'provider')
-      return args as IpcArgs<typeof IPC.ACCOUNT_UNLINK>
-    },
-  },
-  [IPC.ACCOUNT_SET_DISPLAY_NAME]: {
-    channel: IPC.ACCOUNT_SET_DISPLAY_NAME,
-    validateArgs: (args) => {
-      assertArity(IPC.ACCOUNT_SET_DISPLAY_NAME, args, 2)
-      assertAccountProvider(args[0], 'provider')
-      assertString(args[1], 'displayName')
-      return args as IpcArgs<typeof IPC.ACCOUNT_SET_DISPLAY_NAME>
-    },
-  },
-  [IPC.ACCOUNT_BILIBILI_FOLLOWINGS]: noArgs(IPC.ACCOUNT_BILIBILI_FOLLOWINGS),
-  [IPC.AUTH_LOGIN_GOOGLE]: noArgs(IPC.AUTH_LOGIN_GOOGLE),
-  [IPC.AUTH_LOGIN_WECHAT]: noArgs(IPC.AUTH_LOGIN_WECHAT),
-  [IPC.AUTH_BIND_GOOGLE]: noArgs(IPC.AUTH_BIND_GOOGLE),
-  [IPC.AUTH_BIND_WECHAT]: noArgs(IPC.AUTH_BIND_WECHAT),
-  [IPC.AUTH_GET_CURRENT_USER]: noArgs(IPC.AUTH_GET_CURRENT_USER),
-  [IPC.AUTH_LOGOUT]: noArgs(IPC.AUTH_LOGOUT),
-  [IPC.AUTH_CHECK_SESSION]: noArgs(IPC.AUTH_CHECK_SESSION),
-  [IPC.WECHAT_MP_LOGIN]: noArgs(IPC.WECHAT_MP_LOGIN),
   [IPC.DATA_CLEANUP]: {
     channel: IPC.DATA_CLEANUP,
     validateArgs: (args) => {
@@ -1726,9 +1496,7 @@ export const IPC_CONTRACTS = {
   [IPC.REFRESH_LOG_CLEAR]: noArgs(IPC.REFRESH_LOG_CLEAR),
   [IPC.VIDEO_RESOLVE]: oneString(IPC.VIDEO_RESOLVE, 'url'),
   [IPC.VIDEO_OPEN_IN_APP]: oneString(IPC.VIDEO_OPEN_IN_APP, 'url'),
-  [IPC.VIDEO_YT_LOGIN]: noArgs(IPC.VIDEO_YT_LOGIN),
   [IPC.VIDEO_YT_STATUS]: noArgs(IPC.VIDEO_YT_STATUS),
-  [IPC.VIDEO_YT_LOGOUT]: noArgs(IPC.VIDEO_YT_LOGOUT),
   [IPC.APP_GET_VERSION]: noArgs(IPC.APP_GET_VERSION),
   [IPC.APP_GET_ICON]: noArgs(IPC.APP_GET_ICON),
   [IPC.APP_OPEN_EXTERNAL]: {
@@ -1927,18 +1695,6 @@ export const IPC_CONTRACTS = {
       return args as IpcArgs<typeof IPC.ADMIN_BATCH_UPDATE_SETTINGS>
     },
   },
-  [IPC.NOTIFICATION_LIST]: {
-    channel: IPC.NOTIFICATION_LIST,
-    validateArgs: (args) => {
-      assertArity(IPC.NOTIFICATION_LIST, args, 0, 1)
-      assertOptionalObject(args[0], 'options')
-      return args as IpcArgs<typeof IPC.NOTIFICATION_LIST>
-    },
-  },
-  [IPC.NOTIFICATION_UNREAD_COUNT]: noArgs(IPC.NOTIFICATION_UNREAD_COUNT),
-  [IPC.NOTIFICATION_MARK_READ]: oneString(IPC.NOTIFICATION_MARK_READ, 'id'),
-  [IPC.NOTIFICATION_MARK_UNREAD]: oneString(IPC.NOTIFICATION_MARK_UNREAD, 'id'),
-  [IPC.NOTIFICATION_MARK_ALL_READ]: noArgs(IPC.NOTIFICATION_MARK_ALL_READ),
   [IPC.ADMIN_GET_ROLES]: noArgs(IPC.ADMIN_GET_ROLES),
   [IPC.ADMIN_GET_ROLE_BY_ID]: oneString(IPC.ADMIN_GET_ROLE_BY_ID, 'id'),
   [IPC.ADMIN_CREATE_ROLE]: oneObject(IPC.ADMIN_CREATE_ROLE, 'dto'),
@@ -1980,9 +1736,6 @@ export const IPC_CONTRACTS = {
   [IPC.UPDATER_CHECK]: noArgs(IPC.UPDATER_CHECK),
   [IPC.UPDATER_DOWNLOAD]: noArgs(IPC.UPDATER_DOWNLOAD),
   [IPC.UPDATER_INSTALL]: noArgs(IPC.UPDATER_INSTALL),
-  [IPC.WS_CONNECT]: noArgs(IPC.WS_CONNECT),
-  [IPC.WS_DISCONNECT]: noArgs(IPC.WS_DISCONNECT),
-  [IPC.WS_STATUS]: noArgs(IPC.WS_STATUS),
 } satisfies { [C in IpcChannel]: IpcContract<C> }
 
 export function validateIpcArgs<C extends IpcChannel>(

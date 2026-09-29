@@ -21,6 +21,7 @@ import { useSettingsStore } from '../../store/settings-store'
 import { isDirectVideoUrl } from '@shared/video-url'
 import { openExternalUrlSafe } from '../../services/external-url'
 import { isAllowedPlaybackMediaUrl } from '../../lib/media-source-policy'
+import { decodeHtmlEntities } from '@shared/discover-helpers'
 
 export const PAUSE_INLINE_VIDEOS_EVENT = 'livo:pause-inline-videos'
 
@@ -36,16 +37,6 @@ interface VideoPlayerProps {
   className?: string
   autoPlay?: boolean
   onOpenBilibiliInPage?: (url: string) => void
-}
-
-function decodeHtmlEntities(raw: string): string {
-  return (raw || '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
 }
 
 function decodeMirrorPreviewUrl(rawUrl: string): string {

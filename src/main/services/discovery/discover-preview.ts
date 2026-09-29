@@ -19,7 +19,7 @@ import {
   ensureTwitterUserFeedLimit,
   normalizeRsshubProtocolUrl,
   toRsshubProtocolUrl,
-} from '../feed/rsshub-url'
+} from '../../../shared/rsshub-url'
 import { detectRouteViewFromUrl } from '../feed/feed-view'
 import { fetchAndParseFeed } from '../feed/rss-parser'
 import { resolveFeedAvatar } from '../feed/feed-avatar'

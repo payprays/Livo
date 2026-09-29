@@ -56,12 +56,13 @@ import { useQuickSearchStore } from '../../store/quick-search-store'
 import { VIEW_TYPE_SLUGS } from '../../router/route-paths'
 import { getFeedRefreshIssueLabel } from '../../lib/feed-refresh-issue'
 import { FeedRefreshIssueBadge } from './FeedRefreshIssueBadge'
-import { NotificationBell } from '../notifications/NotificationBell'
 import { getSafeImageSrc } from '../../lib/safe-image-source'
 import {
   markStartupComponentMounted,
   measureStartupRender,
 } from '../../lib/startup-block-diagnostics'
+import { scheduleIdleTask } from '../../lib/idle-task'
+import { DEFAULT_RSSHUB_INSTANCE } from '../../../../shared/discover-data'
 
 const VIEW_ICONS: Record<FeedViewType, React.ReactNode> = {
   [FeedViewType.Articles]: <FileText size={18} />,
@@ -70,29 +71,10 @@ const VIEW_ICONS: Record<FeedViewType, React.ReactNode> = {
   [FeedViewType.Pictures]: <Image size={18} />,
 }
 
-const DEFAULT_RSSHUB_INSTANCE = 'https://rsshub.pseudoyu.com'
-
 const EMPTY_FOLDERS_STORAGE_KEY = 'livo-empty-folders'
 const FEED_CATEGORY_VIRTUALIZE_THRESHOLD = 24
 const SIDEBAR_ENHANCEMENT_IDLE_TIMEOUT = 2500
 const SIDEBAR_ENHANCEMENT_FALLBACK_DELAY = 1500
-
-function scheduleIdleTask(
-  callback: () => void,
-  options: { timeout: number; fallbackDelay: number },
-): () => void {
-  if (typeof window === 'undefined') return () => {}
-
-  if (typeof window.requestIdleCallback === 'function') {
-    const handle = window.requestIdleCallback(callback, {
-      timeout: options.timeout,
-    })
-    return () => window.cancelIdleCallback(handle)
-  }
-
-  const handle = window.setTimeout(callback, options.fallbackDelay)
-  return () => window.clearTimeout(handle)
-}
 
 function getPathLikeFromFeedUrl(rawUrl: string): string {
   try {
@@ -150,8 +132,8 @@ function formatTwitterFeedTitle(
     .trim()
   cleaned = stripHandleFragment(cleaned)
   // Strong normalization for titles like "Display Name / @username".
-  if (/[\/]/.test(cleaned) && /@[a-zA-Z0-9_]{1,15}/.test(cleaned)) {
-    const prefix = cleaned.split(/[\/]/)[0]?.trim()
+  if (/[/]/.test(cleaned) && /@[a-zA-Z0-9_]{1,15}/.test(cleaned)) {
+    const prefix = cleaned.split(/[/]/)[0]?.trim()
     if (prefix) cleaned = prefix
   }
   // Drop trailing or inline handle segments like " / @elonmusk" (including full-width slash).
@@ -160,7 +142,7 @@ function formatTwitterFeedTitle(
     .trim()
   // Normalize "Display Name / @username - X" to "Display Name - X".
   const slashParts = cleaned
-    .split(/[\/]/)
+    .split(/[/]/)
     .map((part) => part.trim())
     .filter(Boolean)
   if (slashParts.length > 1) {
@@ -169,7 +151,7 @@ function formatTwitterFeedTitle(
     )
     if (nonHandle) cleaned = nonHandle
   }
-  cleaned = cleaned.replace(/[\/\s]*@?[a-zA-Z0-9_]{1,15}\s*$/i, '').trim()
+  cleaned = cleaned.replace(/[/\s]*@?[a-zA-Z0-9_]{1,15}\s*$/i, '').trim()
   cleaned = cleaned.replace(/^@/, '').trim()
   return `${cleaned || fallback || 'X'} - X`
 }
@@ -624,7 +606,7 @@ export function Sidebar({ width }: { width?: number }) {
     return cancelIdleTask
   }, [])
 
-  // Global window-level listeners 锟?added once, check ref to see if drag is active
+  // Global window-level listeners -added once, check ref to see if drag is active
   useEffect(() => {
     if (!sidebarEnhancementsReady) return
 
@@ -707,7 +689,7 @@ export function Sidebar({ width }: { width?: number }) {
     }
   }, [sidebarEnhancementsReady])
 
-  // Start drag 锟?just sets state; window listeners handle move/up
+  // Start drag -just sets state; window listeners handle move/up
   const handleDragPointerStart = useCallback(
     (feedId: string, label: string, e: React.PointerEvent) => {
       e.preventDefault()
@@ -723,7 +705,7 @@ export function Sidebar({ width }: { width?: number }) {
   )
   const rsshubInstance =
     useSettingsStore((s) => s.settings.general.rsshubInstance) ||
-    'https://rsshub.pseudoyu.com'
+    DEFAULT_RSSHUB_INSTANCE
 
   // Instagram user search state
   const [instagramSearch, setInstagramSearch] = useState('')
@@ -1925,7 +1907,7 @@ export function Sidebar({ width }: { width?: number }) {
               />
             ))}
 
-            {/* Recommended feeds section 锟?only shown when enabled in settings */}
+            {/* Recommended feeds section -only shown when enabled in settings */}
             {sidebarEnhancementsReady &&
               showRecommended &&
               recommendedFeeds.length > 0 && (
@@ -2065,10 +2047,6 @@ export function Sidebar({ width }: { width?: number }) {
             >
               <Settings size={18} />
             </button>
-            <NotificationBell
-              iconSize={18}
-              className="sidebar-item text-text-secondary dark:text-text-dark-secondary flex-1 justify-center"
-            />
           </div>
         </div>
       </aside>
@@ -2082,7 +2060,7 @@ export function Sidebar({ width }: { width?: number }) {
           onMouseLeave={() => setContextMenu(null)}
         >
           {contextMenu.isRecommended ? (
-            /* Recommended feed 锟?subscribe or read actions only (built-in, cannot delete) */
+            /* Recommended feed -subscribe or read actions only (built-in, cannot delete) */
             <>
               <button
                 className="text-accent hover:bg-surface-secondary dark:hover:bg-surface-dark-tertiary flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
@@ -2199,7 +2177,7 @@ export function Sidebar({ width }: { width?: number }) {
               </button>
             </>
           ) : (
-            /* User feed 锟?normal actions */
+            /* User feed -normal actions */
             <>
               <button
                 className="hover:bg-surface-secondary dark:hover:bg-surface-dark-tertiary flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
@@ -2614,7 +2592,7 @@ export function Sidebar({ width }: { width?: number }) {
         </div>
       )}
 
-      {/* Drag overlay 锟?follows mouse exactly */}
+      {/* Drag overlay -follows mouse exactly */}
       {dragOverlay && (
         <div
           id="feed-drag-overlay"
@@ -2969,7 +2947,7 @@ const RecommendedSection = memo(function RecommendedSection({
   )
 })
 
-/** Smart feed icon with fallback chain: imageUrl 锟?favicon from siteUrl 锟?initials 锟?RSS icon */
+/** Smart feed icon with fallback chain: imageUrl -favicon from siteUrl -initials -RSS icon */
 type FeedIconProps = {
   imageUrl?: string
   siteUrl?: string
@@ -3053,7 +3031,9 @@ const FeedIcon = memo(function FeedIcon({
                 if (username && /^[a-zA-Z0-9._]+$/.test(username))
                   return username.replace(/^@/, '')
               }
-            } catch {}
+            } catch {
+              // ignore
+            }
             const rsshub = raw.match(/\/instagram\/user\/([^/?#]+)/i)
             if (rsshub?.[1])
               return decodeURIComponent(rsshub[1]).replace(/^@/, '')
@@ -3106,7 +3086,9 @@ const FeedIcon = memo(function FeedIcon({
                   return `https://unavatar.io/x/${username}`
                 }
               }
-            } catch {}
+            } catch {
+              // ignore
+            }
           }
           // Try feedUrl (e.g. RSSHub or Nitter RSS URL)
           if (feedUrl) {
@@ -3126,7 +3108,9 @@ const FeedIcon = memo(function FeedIcon({
                   return `https://unavatar.io/x/${parts[0]}`
                 }
               }
-            } catch {}
+            } catch {
+              // ignore
+            }
           }
           return null
         },

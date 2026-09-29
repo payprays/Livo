@@ -1,3 +1,4 @@
+import { session } from 'electron'
 import { computeMatchTier } from './discover-dedupe'
 import {
   type DiscoveryFetch,
@@ -29,7 +30,7 @@ export async function fetchBilibiliNameByUid(
   for (const endpoint of endpoints) {
     try {
       const safeEndpoint = await assertPublicDiscoveryUrl(endpoint)
-      const res = await fetch(safeEndpoint, {
+      const res = await session.defaultSession.fetch(safeEndpoint, {
         headers: {
           'User-Agent': 'Mozilla/5.0',
           Accept: 'application/json, text/plain, */*',
@@ -65,7 +66,7 @@ export async function fetchBilibiliAvatarByUid(
   for (const endpoint of endpoints) {
     try {
       const safeEndpoint = await assertPublicDiscoveryUrl(endpoint)
-      const res = await fetch(safeEndpoint, {
+      const res = await session.defaultSession.fetch(safeEndpoint, {
         headers: {
           'User-Agent': 'Mozilla/5.0',
           Accept: 'application/json, text/plain, */*',

@@ -17,7 +17,6 @@ const TRUSTED_TOOL_NAMES = new Set([
   'view_starred_entries',
   'view_refresh_log',
   'list_builtin_feeds',
-  'list_account_providers',
 ])
 
 export function isTrustedAgentToolResultSource(toolName: string): boolean {

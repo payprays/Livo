@@ -14,11 +14,8 @@ import type {
   EntryListResult,
   FeedWithCount,
   FeedViewType,
-  FeedSyncResult,
-  FeedSyncStatus,
   ReaderSnapshot,
   ReaderSnapshotRequest,
-  AccountProvider,
   AppUpdateInfo,
   AppUpdateInstallResult,
   NativeContextMenuItem,
@@ -27,9 +24,6 @@ import type {
   SaveTextFileOptions,
   SaveTextFileResult,
   DiscoverFeedPreviewResult,
-  EnsureWechatMpFeedInput,
-  EnsureWechatMpFeedResult,
-  WechatMpDiscoverResult,
   AISemanticFilterInput,
   AISemanticFilterResult,
   AITranslateEntrySegmentsInput,
@@ -74,12 +68,7 @@ async function invokeIpc<T = any>(
   return unwrapIpcEnvelope<T>(result)
 }
 
-import { getBackendBaseUrl } from '../main/services/backend/backend-config'
-
-const serverUrl = getBackendBaseUrl()
-
 const api = {
-  serverUrl,
   // Feed operations
   feeds: {
     add: (
@@ -98,21 +87,6 @@ const api = {
     exportOPML: () => invokeIpc(IPC.FEED_EXPORT_OPML),
     refreshImportedFeeds: (feedIds: string[]) =>
       invokeIpc(IPC.FEED_REFRESH_IMPORTED, feedIds),
-    syncNow: (): Promise<FeedSyncResult | { success: false; error: string }> =>
-      invokeIpc(IPC.FEED_SYNC_NOW),
-    syncToCloud: (): Promise<
-      FeedSyncResult | { success: false; error: string }
-    > => invokeIpc(IPC.FEED_SYNC_TO_CLOUD),
-    syncFromCloud: (): Promise<
-      FeedSyncResult | { success: false; error: string }
-    > => invokeIpc(IPC.FEED_SYNC_FROM_CLOUD),
-    syncStatus: (): Promise<FeedSyncStatus> => invokeIpc(IPC.FEED_SYNC_STATUS),
-  },
-
-  // Reading activity
-  readingActivity: {
-    sync: (deviceId: string, days: Array<{ day: string; count: number }>) =>
-      invokeIpc(IPC.READING_ACTIVITY_SYNC, deviceId, days),
   },
 
   // Entry operations
@@ -333,27 +307,8 @@ const api = {
     popular: (category?: string) => invokeIpc(IPC.DISCOVER_POPULAR, category),
     search: (
       query: string,
-      platform?:
-        | 'all'
-        | 'youtube'
-        | 'bilibili'
-        | 'x'
-        | 'instagram'
-        | 'wechat-mp',
+      platform?: 'all' | 'youtube' | 'bilibili' | 'x' | 'instagram',
     ) => invokeIpc(IPC.DISCOVER_SEARCH, query, platform),
-    searchWechatMp: (
-      query: string,
-      options?: { limit?: number; offset?: number },
-    ): Promise<{
-      results: WechatMpDiscoverResult[]
-      total: number
-      limit: number
-      offset: number
-    }> => invokeIpc(IPC.DISCOVER_SEARCH_WECHAT_MP, query, options),
-    ensureWechatMpFeed: (
-      input: EnsureWechatMpFeedInput,
-    ): Promise<EnsureWechatMpFeedResult> =>
-      invokeIpc(IPC.DISCOVER_ENSURE_WECHAT_MP_FEED, input),
     rsshubRoutes: (category?: string) =>
       invokeIpc(IPC.DISCOVER_RSSHUB_ROUTES, category),
     rsshubInstance: () => invokeIpc(IPC.DISCOVER_RSSHUB_INSTANCE),
@@ -482,42 +437,8 @@ const api = {
     }> => invokeIpc(IPC.VIDEO_RESOLVE, url),
     openInApp: (url: string): Promise<{ success: boolean; error?: string }> =>
       invokeIpc(IPC.VIDEO_OPEN_IN_APP, url),
-    ytLogin: (): Promise<{ success: boolean; error?: string }> =>
-      invokeIpc(IPC.VIDEO_YT_LOGIN),
     ytStatus: (): Promise<{ loggedIn: boolean; name: string | null }> =>
       invokeIpc(IPC.VIDEO_YT_STATUS),
-    ytLogout: (): Promise<{ success: boolean; error?: string }> =>
-      invokeIpc(IPC.VIDEO_YT_LOGOUT),
-  },
-
-  // Linked account sessions
-  accounts: {
-    status: (
-      provider: AccountProvider,
-    ): Promise<{
-      provider: AccountProvider
-      linked: boolean
-      displayName?: string | null
-      error?: string
-    }> => invokeIpc(IPC.ACCOUNT_STATUS, provider),
-    link: (
-      provider: AccountProvider,
-    ): Promise<{ success: boolean; error?: string }> =>
-      invokeIpc(IPC.ACCOUNT_LINK, provider),
-    unlink: (
-      provider: AccountProvider,
-    ): Promise<{ success: boolean; error?: string }> =>
-      invokeIpc(IPC.ACCOUNT_UNLINK, provider),
-    setDisplayName: (
-      provider: AccountProvider,
-      displayName: string,
-    ): Promise<{ success: boolean; error?: string }> =>
-      invokeIpc(IPC.ACCOUNT_SET_DISPLAY_NAME, provider, displayName),
-    bilibiliFollowings: (): Promise<{
-      success: boolean
-      creators?: Array<{ mid: number; uname: string }>
-      error?: string
-    }> => invokeIpc(IPC.ACCOUNT_BILIBILI_FOLLOWINGS),
   },
 
   // Fever sync
@@ -584,41 +505,6 @@ const api = {
       ipcRenderer.on('fever:sync-progress', handler)
       return () => ipcRenderer.removeListener('fever:sync-progress', handler)
     },
-  },
-
-  // Auth operations (for backend NestJS authentication)
-  auth: {
-    loginGoogle: () => invokeIpc(IPC.AUTH_LOGIN_GOOGLE),
-    loginWechat: () => invokeIpc(IPC.AUTH_LOGIN_WECHAT),
-    bindGoogle: () => invokeIpc(IPC.AUTH_BIND_GOOGLE),
-    bindWechat: () => invokeIpc(IPC.AUTH_BIND_WECHAT),
-    getCurrentUser: () => invokeIpc(IPC.AUTH_GET_CURRENT_USER),
-    logout: () => invokeIpc(IPC.AUTH_LOGOUT),
-    checkSession: () => invokeIpc(IPC.AUTH_CHECK_SESSION),
-    wechatMpLogin: () => invokeIpc(IPC.WECHAT_MP_LOGIN),
-    onLoginProgress: (
-      callback: (data: { status: string }) => void,
-    ): (() => void) => {
-      const handler = (_event: unknown, data: { status: string }) =>
-        callback(data)
-      ipcRenderer.on('auth:login-progress', handler)
-      return () => ipcRenderer.removeListener('auth:login-progress', handler)
-    },
-  },
-
-  notifications: {
-    list: (options?: { unread?: boolean; limit?: number; offset?: number }) =>
-      invokeIpc(IPC.NOTIFICATION_LIST, options),
-    unreadCount: () => invokeIpc(IPC.NOTIFICATION_UNREAD_COUNT),
-    markRead: (id: string) => invokeIpc(IPC.NOTIFICATION_MARK_READ, id),
-    markUnread: (id: string) => invokeIpc(IPC.NOTIFICATION_MARK_UNREAD, id),
-    markAllRead: () => invokeIpc(IPC.NOTIFICATION_MARK_ALL_READ),
-  },
-
-  websocket: {
-    connect: () => invokeIpc(IPC.WS_CONNECT),
-    disconnect: () => invokeIpc(IPC.WS_DISCONNECT),
-    status: () => invokeIpc(IPC.WS_STATUS),
   },
 
   // Events

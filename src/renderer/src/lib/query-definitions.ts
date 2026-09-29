@@ -1,20 +1,10 @@
 import { queryOptions } from '@tanstack/react-query'
-import type { AccountProvider } from '../../../shared/types'
 import {
   hasDiscoverSearchQueryForPlatform,
   shouldEnrichDiscoverResultsInForeground,
   type DiscoverSearchPlatform,
 } from './discover-search'
-import { fetchAccountStatus } from './account-status'
 import { queryKeys } from './query-keys'
-
-export function accountStatusQueryOptions(provider: AccountProvider) {
-  return queryOptions({
-    queryKey: queryKeys.accounts.status(provider),
-    queryFn: () => fetchAccountStatus(provider),
-    staleTime: 15_000,
-  })
-}
 
 export function discoverSearchQueryOptions(
   query: string,

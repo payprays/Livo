@@ -49,13 +49,6 @@ vi.mock('./settings-handlers', () => ({
   })),
 }))
 
-vi.mock('../services/auth/session-store', () => ({
-  sessionStore: {
-    isSessionValid: vi.fn(() => false),
-    getSession: vi.fn(() => null),
-  },
-}))
-
 vi.mock('../database', () => ({
   getDb: vi.fn(),
 }))

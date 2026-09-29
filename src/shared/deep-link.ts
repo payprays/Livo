@@ -12,7 +12,6 @@ export type DeepLinkAction =
   | { type: 'open-settings'; tab?: SettingsTabId }
   | { type: 'import-opml' }
   | { type: 'refresh-all' }
-  | { type: 'login'; provider?: string }
 
 const SETTINGS_TABS = new Set<SettingsTabId>([
   'general',
@@ -23,7 +22,6 @@ const SETTINGS_TABS = new Set<SettingsTabId>([
   'ai',
   'translation',
   'actions',
-  'user',
   'data',
   'privacy',
   'about',
@@ -131,8 +129,6 @@ export function parseDeepLink(rawUrl: string): DeepLinkAction | null {
       return { type: 'import-opml' }
     case 'refresh':
       return { type: 'refresh-all' }
-    case 'login':
-      return { type: 'login', provider: firstArg ?? undefined }
     default:
       return null
   }

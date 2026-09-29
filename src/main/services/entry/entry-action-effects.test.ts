@@ -7,6 +7,8 @@ import { enqueueEntryActionEffects } from './entry-action-effects'
 const enqueueMock = vi.hoisted(() => vi.fn())
 const getLocalTaskRunnerMock = vi.hoisted(() => vi.fn())
 
+vi.mock('electron', () => ({ BrowserWindow: {}, Notification: {} }))
+
 vi.mock('../system/task-runner-service', () => ({
   getLocalTaskRunner: getLocalTaskRunnerMock,
 }))

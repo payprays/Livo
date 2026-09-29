@@ -2,11 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BrowserWindow } from 'electron'
 import { IPC } from '../../shared/types'
 import { registerVideoHandlers } from './video-handlers'
-import {
-  getAccountState,
-  linkAccount,
-  unlinkAccount,
-} from '../services/account/account-auth'
 
 const registerChannelMock = vi.hoisted(() => vi.fn())
 const lookupMock = vi.hoisted(() => vi.fn())
@@ -25,12 +20,6 @@ vi.mock('../ipc/register-channel', () => ({
 
 vi.mock('../services/video/video-proxy', () => ({
   resolveVideoUrl: vi.fn(),
-}))
-
-vi.mock('../services/account/account-auth', () => ({
-  getAccountState: vi.fn(),
-  linkAccount: vi.fn(),
-  unlinkAccount: vi.fn(),
 }))
 
 function getRegisteredHandler(channel: string) {
@@ -105,36 +94,15 @@ describe('registerVideoHandlers YouTube account compatibility', () => {
     vi.mocked(BrowserWindow).mockReset()
     lookupMock.mockReset()
     lookupMock.mockResolvedValue([{ address: '93.184.216.34', family: 4 }])
-    vi.mocked(getAccountState).mockReset()
-    vi.mocked(linkAccount).mockReset()
-    vi.mocked(unlinkAccount).mockReset()
   })
 
-  it('routes legacy YouTube login/status/logout through account auth', async () => {
-    vi.mocked(linkAccount).mockResolvedValue({ success: true })
-    vi.mocked(getAccountState).mockResolvedValue({
-      provider: 'youtube',
-      linked: true,
-      displayName: 'Livo Tube',
-    })
-    vi.mocked(unlinkAccount).mockResolvedValue({ success: true })
-
+  it('reports legacy YouTube status as not linked', async () => {
     registerVideoHandlers()
 
-    await expect(getRegisteredHandler(IPC.VIDEO_YT_LOGIN)()).resolves.toEqual({
-      success: true,
-    })
     await expect(getRegisteredHandler(IPC.VIDEO_YT_STATUS)()).resolves.toEqual({
-      loggedIn: true,
-      name: 'Livo Tube',
+      loggedIn: false,
+      name: null,
     })
-    await expect(getRegisteredHandler(IPC.VIDEO_YT_LOGOUT)()).resolves.toEqual({
-      success: true,
-    })
-
-    expect(linkAccount).toHaveBeenCalledWith('youtube')
-    expect(getAccountState).toHaveBeenCalledWith('youtube')
-    expect(unlinkAccount).toHaveBeenCalledWith('youtube')
   })
 
   it('rejects unsafe in-app video URLs before creating a window', async () => {

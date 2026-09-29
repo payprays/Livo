@@ -21,10 +21,8 @@ import {
   getWarmupStrategy,
 } from '../../shared/subscription-intake'
 import { DEFAULT_RSSHUB_INSTANCE } from '../../shared/discover-data'
-import { normalizeRsshubProtocolUrl } from '../services/feed/rsshub-url'
+import { normalizeRsshubProtocolUrl } from '../../shared/rsshub-url'
 import { formatFeedTitle } from '../services/feed/feed-title'
-import { sessionStore } from '../services/auth/session-store'
-import type { FeedSyncAction } from '../database/repositories'
 
 export interface CancellableOperationOptions {
   signal?: AbortSignal
@@ -38,8 +36,6 @@ export interface AddFeedInput {
   /** Insert the feed optimistically and defer the initial fetch to a background
    *  bootstrap task. Used by the UI subscribe path so the feed appears instantly. */
   deferInitialFetch?: boolean
-  /** 同步服务应用云端变更时关闭，避免回写成新的本地待同步变更。 */
-  recordSyncChange?: boolean
 }
 
 export interface AddFeedResult {
@@ -48,44 +44,11 @@ export interface AddFeedResult {
   existed: boolean
 }
 
-function recordSubscriptionChange(
-  feed: Feed,
-  action: FeedSyncAction,
-  enabled = true,
-): void {
-  if (!enabled) return
-  if (!sessionStore.isSessionValid()) return
-  const session = sessionStore.getSession()
-  if (!session?.userId) return
-
-  const title = feed.title.trim()
-  getDb().syncChanges.upsertChange({
-    url: feed.url,
-    action,
-    updatedAt: Date.now(),
-    userId: session.userId,
-    synced: false,
-    title:
-      action === 'subscribe' && title !== feed.url && title !== feed.upstreamUrl
-        ? title
-        : undefined,
-  })
-}
-
 /**
  * Add (or re-subscribe to) a feed with full orchestration:
  * subscribe → warmup/bootstrap → video enrichment → view inference.
  */
 export async function addFeed(input: AddFeedInput): Promise<AddFeedResult> {
-  const finish = (result: AddFeedResult): AddFeedResult => {
-    recordSubscriptionChange(
-      result.feed,
-      'subscribe',
-      input.recordSyncChange !== false,
-    )
-    return result
-  }
-
   const outcome = await subscribeFeed({
     url: input.url.trim(),
     title: input.title,
@@ -138,11 +101,11 @@ export async function addFeed(input: AddFeedInput): Promise<AddFeedResult> {
         await bootstrapFeedEntries(mergedFeed, normalizedUrl, mergedFeed.view)
       }
       const refreshed = getDb().feeds.getFeedById(existingFeed.id)
-      return finish({
+      return {
         success: true,
         feed: refreshed ?? mergedFeed,
         existed: true,
-      })
+      }
     }
 
     const strategy = getWarmupStrategy(normalizedUrl, existingFeed.view)
@@ -152,11 +115,11 @@ export async function addFeed(input: AddFeedInput): Promise<AddFeedResult> {
       await bootstrapFeedEntries(existingFeed, normalizedUrl, existingFeed.view)
     }
     const refreshed = getDb().feeds.getFeedById(existingFeed.id)
-    return finish({
+    return {
       success: true,
       feed: refreshed ?? existingFeed,
       existed: true,
-    })
+    }
   }
 
   // New feed
@@ -167,7 +130,7 @@ export async function addFeed(input: AddFeedInput): Promise<AddFeedResult> {
   // real fetch + ingestion in a background bootstrap so the UI stays responsive.
   if (outcome.deferred) {
     queueBootstrapRefresh(feed, normalizedUrl, feed.view)
-    return finish({ success: true, feed, existed: false })
+    return { success: true, feed, existed: false }
   }
 
   if (
@@ -186,10 +149,10 @@ export async function addFeed(input: AddFeedInput): Promise<AddFeedResult> {
       await bootstrapFeedEntries(feed, normalizedUrl, feed.view)
     }
     const refreshed = getDb().feeds.getFeedById(feed.id)
-    return finish({ success: true, feed: refreshed ?? feed, existed: false })
+    return { success: true, feed: refreshed ?? feed, existed: false }
   }
 
-  return finish({ success: true, feed, existed: false })
+  return { success: true, feed, existed: false }
 }
 
 /**
@@ -197,7 +160,6 @@ export async function addFeed(input: AddFeedInput): Promise<AddFeedResult> {
  */
 export function removeFeed(
   feedId: string,
-  options: { recordSyncChange?: boolean } = {},
 ): { feed: Feed; entryCount: number } | null {
   const feed = getDb().feeds.getFeedById(feedId)
   if (!feed) return null
@@ -207,11 +169,6 @@ export function removeFeed(
     skipDedupe: true,
   })
   getDb().feeds.deleteFeed(feedId)
-  recordSubscriptionChange(
-    feed,
-    'unsubscribe',
-    options.recordSyncChange !== false,
-  )
   return { feed, entryCount: entries.length }
 }
 

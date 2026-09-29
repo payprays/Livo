@@ -12,7 +12,7 @@ import { getLocalTaskRunner } from '../system/task-runner-service'
 import type { TaskRunContext } from '../system/task-runner'
 import { assertNetworkFetchUrl } from '../system/network-url-policy'
 
-/** Simple in-memory cache: videoId 鈫?duration in seconds */
+/** Simple in-memory cache: videoId -> duration in seconds */
 const durationCache = new Map<string, number>()
 const inFlightFeeds = new Set<string>()
 const lastEnrichedAt = new Map<string, number>()
@@ -165,7 +165,7 @@ export async function fetchVideoDuration(
 
 /**
  * Batch fetch durations for multiple URLs (with concurrency limit).
- * Returns a Map of url 鈫?duration in seconds.
+ * Returns a Map of url -> duration in seconds.
  */
 export async function fetchVideoDurations(
   urls: string[],

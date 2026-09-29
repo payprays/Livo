@@ -568,9 +568,9 @@ async function scrapeBilibiliVideoPage(
             text(document.querySelector('title')?.textContent).replace(/\\s*-\\s*哔哩哔哩.*$/i, '')
           const authorAvatar =
             abs(document.querySelector('.bili-avatar img, .header-face img, .up-avatar img')?.getAttribute('src')) ||
-            abs(document.querySelector('meta[property=\"og:image\"]')?.getAttribute('content'))
+            abs(document.querySelector('meta[property="og:image"]')?.getAttribute('content'))
 
-          const anchors = Array.from(document.querySelectorAll('a[href*=\"/video/BV\"]'))
+          const anchors = Array.from(document.querySelectorAll('a[href*="/video/BV"]'))
           const cardsByLink = new Map()
 
           for (const anchor of anchors) {

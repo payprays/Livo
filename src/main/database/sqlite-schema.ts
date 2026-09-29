@@ -299,7 +299,7 @@ export function runMigrations(db: Database.Database): void {
     db
       .prepare('SELECT version FROM schema_migrations')
       .all()
-      .map((row: any) => row.version),
+      .map((row) => (row as { version: number }).version),
   )
 
   for (const migration of MIGRATIONS) {

@@ -3,6 +3,8 @@
  * Used by Electron main-process adapters and the web adapter.
  */
 
+import { DEFAULT_RSSHUB_INSTANCE } from './discover-data'
+
 export function normalizeDiscoverQueryToFeedUrl(
   query: string,
   rsshubInstance: string,
@@ -143,7 +145,7 @@ export function normalizeNameForMatch(input: string): string {
 
 /** Fallback RSSHub instances shared across platform probes. */
 export const FALLBACK_RSSHUB_INSTANCES = [
-  'https://rsshub.pseudoyu.com',
+  DEFAULT_RSSHUB_INSTANCE,
   'https://rsshub.rssforever.com',
 ]
 
@@ -161,10 +163,14 @@ export function decodeHtmlEntities(input: string): string {
     .replace(/&gt;/gi, '>')
     .replace(/&#(\d+);/g, (_m, dec) => {
       const code = Number(dec)
-      return Number.isFinite(code) ? String.fromCodePoint(code) : _m
+      return Number.isFinite(code) && code <= 0x10ffff
+        ? String.fromCodePoint(code)
+        : _m
     })
     .replace(/&#x([0-9a-f]+);/gi, (_m, hex) => {
       const code = Number.parseInt(hex, 16)
-      return Number.isFinite(code) ? String.fromCodePoint(code) : _m
+      return Number.isFinite(code) && code <= 0x10ffff
+        ? String.fromCodePoint(code)
+        : _m
     })
 }

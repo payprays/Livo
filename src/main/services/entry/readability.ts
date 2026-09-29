@@ -1,3 +1,4 @@
+import { session } from 'electron'
 import { Readability } from '@mozilla/readability'
 import chardet from 'chardet'
 import createDOMPurify from 'dompurify'
@@ -205,7 +206,7 @@ export async function fetchReadableContent(
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
 
   try {
-    const response = await fetch(safeUrl, {
+    const response = await session.defaultSession.fetch(safeUrl, {
       headers: {
         'User-Agent': READABILITY_USER_AGENT,
         Accept:

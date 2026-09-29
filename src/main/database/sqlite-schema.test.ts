@@ -94,7 +94,7 @@ describeSqliteSchema('sqlite schema migrations', () => {
       const columnNames = db
         .prepare('PRAGMA table_info(feeds)')
         .all()
-        .map((row: any) => row.name)
+        .map((row) => (row as { name: string }).name)
       expect(columnNames).toEqual(
         expect.arrayContaining([
           'last_refresh_status',
@@ -126,7 +126,7 @@ describeSqliteSchema('sqlite schema migrations', () => {
       const columnNames = db
         .prepare('PRAGMA table_info(sync_changes)')
         .all()
-        .map((row: any) => row.name)
+        .map((row) => (row as { name: string }).name)
       expect(columnNames).toEqual(
         expect.arrayContaining([
           'url',

@@ -15,6 +15,7 @@ import {
   scopedSignalWithTimeout,
   throwIfAborted,
 } from '../../utils/abort-signal'
+import { DEFAULT_RSSHUB_INSTANCE } from '../../../shared/discover-data'
 
 const parser = new RssParser({
   timeout: 20000,
@@ -94,7 +95,7 @@ export interface FetchFeedResult {
 }
 
 const TWITTER_RSSHUB_FALLBACKS = [
-  'https://rsshub.pseudoyu.com',
+  DEFAULT_RSSHUB_INSTANCE,
   'https://rsshub.rssforever.com',
 ]
 const RSSHUB_FALLBACK_ROUTE_PREFIX =
@@ -894,7 +895,6 @@ async function fetchWithConditional(
   return new Promise((resolve, reject) => {
     let settled = false
     let abortHandlerAttached = false
-    let req: ReturnType<typeof http.get> | undefined
 
     const cleanup = (): void => {
       if (abortHandlerAttached) {
@@ -944,7 +944,7 @@ async function fetchWithConditional(
       headers['User-Agent'] = INSTAGRAM_MOBILE_UA
     }
 
-    req = transport.get(
+    const req = transport.get(
       {
         hostname: parsedUrl.hostname,
         port: parsedUrl.port,

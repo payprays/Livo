@@ -1,10 +1,17 @@
 import { createHash } from 'node:crypto'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
+const sessionFetch = vi.hoisted(() => vi.fn())
+
+vi.mock('electron', () => ({
+  session: { defaultSession: { fetch: sessionFetch } },
+}))
+
 import { createFeverClient } from './fever-client'
 
 describe('createFeverClient', () => {
   afterEach(() => {
-    vi.unstubAllGlobals()
+    sessionFetch.mockReset()
   })
 
   it('normalizes a FreshRSS root URL before making Fever requests', async () => {
@@ -12,7 +19,7 @@ describe('createFeverClient', () => {
       ok: true,
       json: async () => ({ auth: 1, status: 1, groups: [] }),
     }))
-    vi.stubGlobal('fetch', fetchMock)
+    sessionFetch.mockImplementation(fetchMock)
 
     const client = createFeverClient(
       'https://rss.example.com/FreshRSS',

@@ -1,3 +1,4 @@
+import { session } from 'electron'
 import {
   FeedViewType,
   type ResolvedProfileFeedCandidate,
@@ -57,7 +58,7 @@ async function fetchHtml(url: string): Promise<string | null> {
   const timer = setTimeout(() => controller.abort(), 15000)
   try {
     const safeUrl = await assertPublicDiscoveryUrl(url)
-    const response = await fetch(safeUrl, {
+    const response = await session.defaultSession.fetch(safeUrl, {
       method: 'GET',
       headers: {
         'User-Agent':

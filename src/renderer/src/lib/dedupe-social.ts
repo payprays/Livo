@@ -127,7 +127,9 @@ function extractPicnobOriginUrl(url: string): string {
     try {
       const decoded = decodeURIComponent(nestedRaw)
       if (/^https?:\/\//i.test(decoded)) return decoded
-    } catch {}
+    } catch {
+      // ignore
+    }
     return /^https?:\/\//i.test(nestedRaw) ? nestedRaw : ''
   } catch {
     return ''

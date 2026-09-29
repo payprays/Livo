@@ -13,14 +13,7 @@ import {
 import { HOTKEY_OVERLAY_SCOPES } from '../lib/hotkey-scope'
 import { registerLayoutCommands } from '../lib/layout-commands'
 import { useFeedStore } from '../store/feed-store'
-
-function isEditableTarget(target: EventTarget | null): boolean {
-  return (
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLTextAreaElement ||
-    (target instanceof HTMLElement && target.isContentEditable)
-  )
-}
+import { isEditableTarget } from '../lib/dom-target'
 
 export function GlobalShortcutsProvider({ children }: PropsWithChildren) {
   const { setSettingsOpen } = useStoreShallow(useSettingsStore, (state) => ({

@@ -1,14 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  Check,
-  ExternalLink,
-  Loader2,
-  Plus,
-  Rss,
-  ShieldAlert,
-  X,
-} from 'lucide-react'
+import { Check, ExternalLink, Loader2, Plus, Rss, X } from 'lucide-react'
 import type { DiscoverSearchResult } from '../../lib/discover-search'
 import { buildDiscoverInstagramPlaceholderAvatar } from '../../lib/discover-avatar'
 import { inferDiscoverPlatform } from '../../lib/discover-platform-presentation'
@@ -28,8 +20,6 @@ export function DiscoverResultRow({
   result,
   subscribed,
   subscribing,
-  /** Show a "Sign in required" hint next to the platform badge. */
-  requiresSignIn,
   /** Label for the subscribe action when not yet subscribed. */
   subscribeLabel,
   onOpenPreview,
@@ -38,15 +28,14 @@ export function DiscoverResultRow({
   result: DiscoverSearchResult
   subscribed: boolean
   subscribing: boolean
-  requiresSignIn?: boolean
   subscribeLabel?: string
   onOpenPreview: () => void
   onToggleSubscribe: () => void
 }) {
   const { t } = useTranslation()
   const platform = useMemo(
-    () => inferDiscoverPlatform(result.url, result.metadata),
-    [result.metadata, result.url],
+    () => inferDiscoverPlatform(result.url),
+    [result.url],
   )
   const isInstagram = platform.id === 'instagram'
 
@@ -196,15 +185,6 @@ export function DiscoverResultRow({
           >
             {platform.label}
           </span>
-          {requiresSignIn && (
-            <span
-              className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-300"
-              title={t('discover.signInRequired')}
-            >
-              <ShieldAlert size={10} />
-              {t('discover.signInRequired')}
-            </span>
-          )}
         </div>
         <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
           {displayFollowers && (

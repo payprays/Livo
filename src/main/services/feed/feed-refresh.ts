@@ -11,16 +11,12 @@ import {
   queueVideoDurationEnrich,
   enrichAllVideoFeeds,
 } from '../video/video-duration'
-import {
-  resolveFeedPayload,
-  prefetchServerFeedCache,
-  getNormalizedFeedUrlForCache,
-} from './feed-source-provider'
+import { resolveFeedPayload } from './feed-source-provider'
 import {
   ensureInstagramUserFeedLimit,
   ensureTwitterUserFeedLimit,
   normalizeFeedUrl,
-} from './rsshub-url'
+} from '../../../shared/rsshub-url'
 import { resolveFeedAvatar } from './feed-avatar'
 import {
   pickBestFeedAvatar,
@@ -244,7 +240,6 @@ export async function refreshSingleFeed(
   options?: {
     force?: boolean
     logOperation?: boolean
-    serverCacheHit?: import('./feed-cache-client').FeedCacheHit
     signal?: AbortSignal
   },
 ): Promise<number> {
@@ -274,7 +269,6 @@ async function runRefreshSingleFeed(
   options:
     | {
         force?: boolean
-        serverCacheHit?: import('./feed-cache-client').FeedCacheHit
         signal?: AbortSignal
       }
     | undefined,
@@ -310,7 +304,6 @@ async function runRefreshSingleFeed(
     const result = await withTimeout(
       resolveFeedPayload(feed, {
         force: options?.force,
-        serverCacheHit: options?.serverCacheHit,
         signal: options?.signal,
       }),
       getRefreshTimeoutMs(feed.url),
@@ -598,15 +591,6 @@ async function runRefreshAllFeeds(
   const failedTitles: string[] = []
   let completedRefreshes = 0
 
-  // admin/vip 用户登录时，先批量问后端是否已经缓存了对应条目；
-  // 命中的源会被 resolveFeedPayload 直接消费，避免本地再去拉一次 RSS。
-  const serverCacheByUrl = options.signal
-    ? await prefetchServerFeedCache(sortedStaleFeeds, {
-        signal: options.signal,
-      })
-    : await prefetchServerFeedCache(sortedStaleFeeds)
-  throwIfAborted(options.signal)
-
   const reportFeedProgress = (
     feed: Feed,
     success: boolean,
@@ -643,9 +627,6 @@ async function runRefreshAllFeeds(
       try {
         const newCount = await refreshSingleFeed(feed, {
           logOperation: false,
-          serverCacheHit: serverCacheByUrl.get(
-            getNormalizedFeedUrlForCache(feed),
-          ),
           signal: options.signal,
         })
         totalNew += newCount
@@ -695,23 +676,13 @@ async function runRefreshAllFeeds(
             (failedByReject ? String(result.reason) : undefined)
           : undefined
 
-      // 命中后端缓存的源最终走的是 server-cache 路径（resolveFeedPayload
-      // 在 shouldUseServerFeedCache 为真时直接消费 serverCacheHit）；
-      // 未命中或非 admin/vip 用户都视作直接从订阅源原链接拉取。
-      const cacheKey = getNormalizedFeedUrlForCache(feed)
-      const hadServerCacheHit = serverCacheByUrl.has(cacheKey)
-      const source: RefreshRunItemResult['source'] =
-        status === 'succeeded' && hadServerCacheHit
-          ? 'server-cache'
-          : 'upstream'
-
       return {
         feedId: feed.id,
         feedTitle: refreshed?.title || feed.title,
         status,
         newEntries: result.status === 'fulfilled' ? result.value : 0,
         error,
-        source,
+        source: 'upstream',
       }
     },
   )

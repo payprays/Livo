@@ -39,10 +39,6 @@ describe('parseDeepLink', () => {
     })
     expect(parseDeepLink('livo://import-opml')).toEqual({ type: 'import-opml' })
     expect(parseDeepLink('livo://refresh')).toEqual({ type: 'refresh-all' })
-    expect(parseDeepLink('livo://login/google')).toEqual({
-      type: 'login',
-      provider: 'google',
-    })
   })
 
   it('rejects malformed or unsupported links', () => {

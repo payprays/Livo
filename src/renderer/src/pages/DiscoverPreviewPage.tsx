@@ -19,7 +19,6 @@ import type {
   DiscoverFeedPreviewEntry,
 } from '../../../shared/types'
 import { FeedViewType } from '../../../shared/types'
-import type { DiscoverSubscribeTargetMetadata } from '../../../shared/discover-target-resolution'
 import { EntryContent } from '../components/entry/EntryContent'
 import { SocialDetailView } from '../components/entry/SocialDetailView'
 import { FeedAvatar } from '../components/feed/FeedAvatar'
@@ -31,7 +30,6 @@ import { VIEW_TYPE_I18N_KEYS } from '../lib/view-type-keys'
 import { splitHtmlIntoParagraphs } from '../lib/entry-text'
 import { getDateLocale } from '../lib/date-locale'
 import { getSafeImageSrc } from '../lib/safe-image-source'
-import { ROUTES } from '../router/route-paths'
 import { useEntryStore } from '../store/entry-store'
 import { useGeneralSettingsShallowSelector } from '../store/settings-store'
 
@@ -42,7 +40,6 @@ interface DiscoverPreviewTarget {
   imageUrl?: string
   description?: string
   view?: FeedViewType
-  metadata?: DiscoverSubscribeTargetMetadata
 }
 
 export default function DiscoverPreviewPage() {
@@ -170,7 +167,6 @@ export default function DiscoverPreviewPage() {
       imageUrl: preview?.imageUrl || target.imageUrl,
       description: preview?.description || target.description,
       view: preferredView,
-      metadata: target.metadata,
     })
   }, [preferredView, preview, target])
 
@@ -407,11 +403,6 @@ function parseDiscoverPreviewTarget(search: string): DiscoverPreviewTarget {
     imageUrl: params.get('imageUrl') || undefined,
     description: params.get('description') || undefined,
     view: Number.isFinite(view) ? (view as FeedViewType) : undefined,
-    metadata: {
-      fakeId: params.get('fakeId') || undefined,
-      source: params.get('source') === 'wechat-rss' ? 'wechat-rss' : undefined,
-      requiresLogin: params.get('requiresLogin') === 'true' ? true : undefined,
-    },
   }
 }
 

@@ -5,6 +5,7 @@ import {
   sanitizeSettingsPatch,
   SettingsPatchValidationError,
 } from './settings-patch'
+import type { AppSettings } from './settings-schema'
 import {
   DEFAULT_AGENT_MAX_ROUNDS,
   DEFAULT_AGENT_RUN_TIMEOUT_SECONDS,
@@ -25,7 +26,7 @@ describe('settings normalization', () => {
       general: {
         language: 'en',
         viewTabs: [{ id: FeedViewType.Articles, visible: false }],
-      } as any,
+      } as unknown as AppSettings['general'],
     })
 
     expect(normalized.general.language).toBe('en')
@@ -40,7 +41,7 @@ describe('settings normalization', () => {
       general: {
         contentMaxWidth: 920,
         customContentMaxWidth: 400,
-      } as any,
+      } as unknown as AppSettings['general'],
     })
 
     expect(normalized.general.contentMaxWidth).toBe(920)
@@ -52,18 +53,18 @@ describe('settings normalization', () => {
       agent: {
         runTimeoutSeconds: 0,
         maxRounds: 0,
-      } as any,
+      } as unknown as AppSettings['agent'],
       ai: {
         agentTemperature: 99,
         agentMaxTokens: Number.POSITIVE_INFINITY,
-      } as any,
+      } as unknown as AppSettings['ai'],
       general: {
         refreshInterval: Number.POSITIVE_INFINITY,
         fontSize: -1,
         contentMaxWidth: 999_999,
         customContentMaxWidth: 0,
         contentLineHeight: 99,
-      } as any,
+      } as unknown as AppSettings['general'],
       data: {
         entriesPerFeed: -10,
         maxEntryAgeDays: Number.NaN,
@@ -71,7 +72,7 @@ describe('settings normalization', () => {
         refreshConcurrency: 999,
         cacheSizeLimitMB: -1,
         codeCacheLimitMB: Number.POSITIVE_INFINITY,
-      } as any,
+      } as unknown as AppSettings['data'],
     })
 
     expect(normalized.agent.runTimeoutSeconds).toBe(
@@ -97,13 +98,13 @@ describe('settings normalization', () => {
     expect(
       normalizeSettings({
         agent: { runTimeoutSeconds: 45.9 },
-      } as any).agent.runTimeoutSeconds,
+      } as unknown as Partial<AppSettings>).agent.runTimeoutSeconds,
     ).toBe(45)
 
     expect(
       normalizeSettings({
         agent: { runTimeoutSeconds: Number.MAX_SAFE_INTEGER },
-      } as any).agent.runTimeoutSeconds,
+      } as unknown as Partial<AppSettings>).agent.runTimeoutSeconds,
     ).toBe(MAX_AGENT_RUN_TIMEOUT_SECONDS)
   })
 
@@ -111,13 +112,13 @@ describe('settings normalization', () => {
     expect(
       normalizeSettings({
         agent: { maxRounds: 12.9 },
-      } as any).agent.maxRounds,
+      } as unknown as Partial<AppSettings>).agent.maxRounds,
     ).toBe(12)
 
     expect(
       normalizeSettings({
         agent: { maxRounds: Number.MAX_SAFE_INTEGER },
-      } as any).agent.maxRounds,
+      } as unknown as Partial<AppSettings>).agent.maxRounds,
     ).toBe(MAX_AGENT_MAX_ROUNDS)
   })
 
@@ -126,7 +127,7 @@ describe('settings normalization', () => {
       normalizeSettings({
         agent: {
           webSearchProviders: ['bing', 'unknown', 'duckduckgo', 'bing'],
-        } as any,
+        } as unknown as AppSettings['agent'],
       }).agent.webSearchProviders,
     ).toEqual(['bing', 'duckduckgo'])
 
@@ -134,23 +135,9 @@ describe('settings normalization', () => {
       normalizeSettings({
         agent: {
           webSearchProviders: ['unknown'],
-        } as any,
+        } as unknown as AppSettings['agent'],
       }).agent.webSearchProviders,
     ).toEqual(DEFAULT_SETTINGS.agent.webSearchProviders)
-  })
-
-  it('defaults server knowledge on and repairs invalid values', () => {
-    expect(normalizeSettings().agent.enableServerKnowledge).toBe(true)
-    expect(
-      normalizeSettings({
-        agent: { enableServerKnowledge: false } as any,
-      }).agent.enableServerKnowledge,
-    ).toBe(false)
-    expect(
-      normalizeSettings({
-        agent: { enableServerKnowledge: 'nope' } as any,
-      }).agent.enableServerKnowledge,
-    ).toBe(DEFAULT_SETTINGS.agent.enableServerKnowledge)
   })
 
   it('keeps valid custom agent model parameters and caps excessive values', () => {
@@ -158,7 +145,7 @@ describe('settings normalization', () => {
       ai: {
         agentTemperature: 1.25,
         agentMaxTokens: 4096.9,
-      } as any,
+      } as unknown as AppSettings['ai'],
     })
     expect(normalized.ai.agentTemperature).toBe(1.25)
     expect(normalized.ai.agentMaxTokens).toBe(4096)
@@ -167,7 +154,7 @@ describe('settings normalization', () => {
       ai: {
         agentTemperature: Number.MAX_SAFE_INTEGER,
         agentMaxTokens: Number.MAX_SAFE_INTEGER,
-      } as any,
+      } as unknown as AppSettings['ai'],
     })
     expect(capped.ai.agentTemperature).toBe(MAX_AGENT_TEMPERATURE)
     expect(capped.ai.agentMaxTokens).toBe(MAX_AGENT_MAX_TOKENS)
@@ -175,7 +162,7 @@ describe('settings normalization', () => {
 
   it('merges nested sections without dropping unrelated keys', () => {
     const merged = mergeSettings(normalizeSettings(), {
-      translation: { enabled: true } as any,
+      translation: { enabled: true } as unknown as AppSettings['translation'],
     })
 
     expect(merged.translation.enabled).toBe(true)
@@ -196,7 +183,7 @@ describe('settings normalization', () => {
         },
         model: 'custom-model',
         models: { custom: 'custom-model', deepseek: 'deepseek-chat' },
-      } as any,
+      } as unknown as AppSettings['ai'],
     })
 
     expect(normalized.ai.apiKeys?.deepseek).toBe('sk-deepseek')

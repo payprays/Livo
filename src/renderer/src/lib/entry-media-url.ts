@@ -310,7 +310,7 @@ export function isDecorativeSocialImageUrl(url: string): boolean {
       )
         return true
       if (
-        /\/(?:logos?|icons?|favicons?|downloads?|apple-touch-icon|android-chrome|mstile|sprites?|emoji|buttons?|badges?)(?:$|[\/_\-.])/i.test(
+        /\/(?:logos?|icons?|favicons?|downloads?|apple-touch-icon|android-chrome|mstile|sprites?|emoji|buttons?|badges?)(?:$|[/_\-.])/i.test(
           path,
         )
       )

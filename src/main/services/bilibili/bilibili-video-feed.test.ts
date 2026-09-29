@@ -73,7 +73,7 @@ describe('bilibili video feed mapping', () => {
           title: '示例动态',
           link: 'https://t.bilibili.com/123',
           description:
-            '<p>视频地址：<a href=\"https://www.bilibili.com/video/BV1UGQBBJENW\">https://www.bilibili.com/video/BV1UGQBBJENW</a></p>',
+            '<p>视频地址：<a href="https://www.bilibili.com/video/BV1UGQBBJENW">https://www.bilibili.com/video/BV1UGQBBJENW</a></p>',
         },
         {
           title: '纯图文',

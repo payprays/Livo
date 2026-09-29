@@ -71,7 +71,6 @@ export function withTimeout<T>(
   }
   return new Promise<T>((resolve, reject) => {
     let settled = false
-    let timer: ReturnType<typeof setTimeout> | undefined
     const cleanup = (): void => {
       if (timer) clearTimeout(timer)
       signal?.removeEventListener('abort', onAbort)
@@ -85,7 +84,7 @@ export function withTimeout<T>(
     const onAbort = (): void => {
       rejectOnce(signal?.reason ?? new DOMException('Aborted', 'AbortError'))
     }
-    timer = setTimeout(() => {
+    const timer = setTimeout(() => {
       rejectOnce(
         new Error(`[refresh] timeout after ${timeoutMs}ms: ${context}`),
       )

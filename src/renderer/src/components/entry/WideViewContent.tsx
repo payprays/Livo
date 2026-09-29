@@ -110,6 +110,7 @@ import { useAITranslation } from '../../hooks/useAITranslation'
 import { AISummaryPanel } from './AISummaryPanel'
 import { markStartupComponentMounted } from '../../lib/startup-block-diagnostics'
 import { resolveSocialAuthorName } from './entry-list/utils/entry-social'
+import { isEditableTarget } from '../../lib/dom-target'
 
 const SharePoster = lazy(() =>
   import('../ui/SharePoster').then((module) => ({
@@ -136,14 +137,6 @@ const SocialOverlayView = lazy(() =>
     default: module.SocialOverlayView,
   })),
 )
-
-function isEditableTarget(target: EventTarget | null): boolean {
-  return (
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLTextAreaElement ||
-    (target instanceof HTMLElement && target.isContentEditable)
-  )
-}
 
 function getVideoColumnCount(containerWidth: number): number {
   return containerWidth >= 1600

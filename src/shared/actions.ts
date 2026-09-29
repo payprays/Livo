@@ -4,6 +4,8 @@
  * with conditions and automated actions for incoming entries.
  */
 
+import { isRecord } from './guards'
+
 export interface ActionRule {
   id: string
   name: string
@@ -131,10 +133,6 @@ export const ACTION_EFFECT_ICONS: Record<ActionEffectType, string> = {
   notify: 'Bell',
   readability: 'BookType',
   summarize: 'Sparkles',
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
 function isBoundedString(

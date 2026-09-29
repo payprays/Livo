@@ -375,9 +375,7 @@ export function quoteWindowsCommandArgument(value: string): string {
   if (value.length === 0) return '""'
   if (!/[\s"]/u.test(value)) return value
 
-  return `"${value
-    .replace(/(\\*)"/gu, '$1$1\\"')
-    .replace(/(\\*)$/u, '$1$1')}"`
+  return `"${value.replace(/(\\*)"/gu, '$1$1\\"').replace(/(\\*)$/u, '$1$1')}"`
 }
 
 export function buildElevatedInstallerCommand(
@@ -462,7 +460,8 @@ function startSilentInstaller(
       }
       reject(
         new Error(
-          stderr || `请求管理员权限失败（PowerShell 退出码 ${code ?? 'unknown'}）`,
+          stderr ||
+            `请求管理员权限失败（PowerShell 退出码 ${code ?? 'unknown'}）`,
         ),
       )
     })

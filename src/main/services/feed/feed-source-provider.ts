@@ -1,17 +1,10 @@
 import type RssParser from 'rss-parser'
-import { session } from 'electron'
 import type { Feed } from '../../../shared/types/index'
 import { DEFAULT_RSSHUB_INSTANCE } from '../../../shared/discover-data'
 import { settingsProvider } from '../system/settings-provider'
 import { fetchAndParseFeed, type FetchFeedOptions } from './rss-parser'
 import { isAbortError, throwIfAborted } from '../../utils/abort-signal'
-import { normalizeFeedUrl } from './rsshub-url'
-import {
-  isWechatMpBackendFeedUrl,
-  rewriteWechatMpFeedUrlToBackendProxy,
-  toWechatMpFreshBackendUrl,
-} from './wechat-mp-feed-url'
-import { sessionStore } from '../auth/session-store'
+import { normalizeFeedUrl } from '../../../shared/rsshub-url'
 import {
   getAggregatorSnapshot,
   pruneAggregatorSnapshots,
@@ -20,17 +13,11 @@ import {
   type AggregatorDiagnostics,
 } from './aggregator-store'
 import { classifyFeedRoute } from './feed-route-policy'
-import {
-  queryServerFeedCache,
-  shouldUseServerFeedCache,
-  type FeedCacheEntry,
-  type FeedCacheHit,
-} from './feed-cache-client'
 
 type ParsedFeed = RssParser.Output<Record<string, any>>
 
 export interface AggregatedFeedPayload {
-  source: 'direct' | 'local-agent' | 'private-aggregator' | 'server-cache'
+  source: 'direct' | 'local-agent' | 'private-aggregator'
   fetchedAt: number
   notModified: boolean
   etag?: string
@@ -75,14 +62,12 @@ function getFeedKey(feed: Feed, normalizedUrl: string): string {
 
 function getNormalizedFeedUrl(feed: Feed): string {
   if (feed.upstreamUrl && /^https?:\/\//i.test(feed.upstreamUrl)) {
-    return rewriteWechatMpFeedUrlToBackendProxy(feed.upstreamUrl)
+    return feed.upstreamUrl
   }
   const rsshubInstance =
     settingsProvider.get().general.rsshubInstance?.trim() ||
     DEFAULT_RSSHUB_INSTANCE
-  return rewriteWechatMpFeedUrlToBackendProxy(
-    normalizeFeedUrl(feed.url, rsshubInstance),
-  )
+  return normalizeFeedUrl(feed.url, rsshubInstance)
 }
 
 function getDesiredSource(feed: Feed): AggregatedFeedPayload['source'] {
@@ -112,7 +97,6 @@ async function fetchDirectPayload(
 ): Promise<AggregatedFeedPayload> {
   throwIfAborted(options?.signal)
   const normalizedUrl = getNormalizedFeedUrl(feed)
-  await refreshWechatMpFeedBeforeRead(normalizedUrl, options?.signal)
   const fetchOptions: FetchFeedOptions | undefined = options?.force
     ? undefined
     : {
@@ -153,36 +137,6 @@ async function fetchDirectPayload(
       cacheHit: false,
       freshnessMs: 0,
     },
-  }
-}
-
-async function refreshWechatMpFeedBeforeRead(
-  normalizedUrl: string,
-  signal?: AbortSignal,
-): Promise<void> {
-  if (!isWechatMpBackendFeedUrl(normalizedUrl)) return
-
-  const token = sessionStore.getValidToken()
-  if (!token) {
-    throw new Error('Please sign in before refreshing WeChat MP feeds')
-  }
-
-  const freshUrl = toWechatMpFreshBackendUrl(normalizedUrl)
-  if (!freshUrl) return
-
-  const response = await session.defaultSession.fetch(freshUrl, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/rss+xml, application/xml, text/xml',
-      Authorization: `Bearer ${token}`,
-    },
-    signal,
-  })
-  if (!response.ok) {
-    const text = await response.text().catch(() => '')
-    throw new Error(
-      `WeChat MP feed refresh failed: ${response.status}${text ? ` ${text}` : ''}`,
-    )
   }
 }
 
@@ -329,83 +283,13 @@ export async function resolveFeedPayload(
   feed: Feed,
   options?: {
     force?: boolean
-    serverCacheHit?: FeedCacheHit
     signal?: AbortSignal
   },
 ): Promise<AggregatedFeedPayload> {
   throwIfAborted(options?.signal)
-  // server-cache 优先级最高：admin/vip 用户的拉取优先吃后端缓存。
-  // 如果调用方已经预取（批量刷新），直接用；否则自己问一次后端。
-  // miss 时静默退回到原有 direct/local-agent 路径。
-  if (shouldUseServerFeedCache()) {
-    const normalizedUrl = getNormalizedFeedUrl(feed)
-    const hit =
-      options?.serverCacheHit ??
-      (await maybeFetchSingleServerCacheHit(normalizedUrl, options?.signal))
-    if (hit) {
-      return buildServerCachePayload(hit, normalizedUrl)
-    }
-  }
-
   const source = getDesiredSource(feed)
   if (source === 'local-agent') return fetchLocalAgentPayload(feed, options)
   return fetchDirectPayload(feed, options)
-}
-
-async function maybeFetchSingleServerCacheHit(
-  normalizedUrl: string,
-  signal?: AbortSignal,
-): Promise<FeedCacheHit | null> {
-  try {
-    const { hits } = await queryServerFeedCache([normalizedUrl], { signal })
-    return hits[0] ?? null
-  } catch (error) {
-    if (isAbortError(error)) throw error
-    // 后端不可用时静默回退到本地路径。
-    return null
-  }
-}
-
-function feedCacheEntryToParsedItem(
-  entry: FeedCacheEntry,
-): Record<string, any> {
-  // 把后端的结构化条目伪装成 rss-parser 的 item，下游 buildSingleEntry 能直接消费。
-  return {
-    guid: entry.guid,
-    title: entry.title,
-    link: entry.link ?? undefined,
-    creator: entry.author ?? undefined,
-    author: entry.author ?? undefined,
-    pubDate: entry.publishedAt ?? undefined,
-    isoDate: entry.publishedAt ?? undefined,
-    content: entry.contentHtml ?? undefined,
-    'content:encoded': entry.contentHtml ?? undefined,
-    contentSnippet: entry.summary ?? undefined,
-    summary: entry.summary ?? undefined,
-    description: entry.contentHtml ?? entry.summary ?? undefined,
-  }
-}
-
-function buildServerCachePayload(
-  hit: FeedCacheHit,
-  normalizedUrl: string,
-): AggregatedFeedPayload {
-  const parsed = {
-    items: hit.entries.map(feedCacheEntryToParsedItem),
-  } as unknown as ParsedFeed
-
-  const fetchedAt = Date.parse(hit.lastFetchedAt)
-  return {
-    source: 'server-cache',
-    fetchedAt: Number.isFinite(fetchedAt) ? fetchedAt : Date.now(),
-    notModified: false,
-    parsed,
-    diagnostics: {
-      upstreamsTried: [normalizedUrl],
-      cacheHit: true,
-      freshnessMs: Number.isFinite(fetchedAt) ? Date.now() - fetchedAt : 0,
-    },
-  }
 }
 
 export async function warmAggregatorForFeeds(feeds: Feed[]): Promise<void> {
@@ -419,44 +303,4 @@ export async function warmAggregatorForFeeds(feeds: Feed[]): Promise<void> {
       }
     })
   await Promise.all(tasks)
-}
-
-/**
- * 批量预取后端缓存：返回 url → hit 的映射。
- * 仅当 admin/vip 用户登录时才会真正打后端，其他情况直接返回空 Map。
- * 调用方把命中结果通过 resolveFeedPayload 的 serverCacheHit 参数注入。
- */
-export async function prefetchServerFeedCache(
-  feeds: Feed[],
-  options: { signal?: AbortSignal } = {},
-): Promise<Map<string, FeedCacheHit>> {
-  throwIfAborted(options.signal)
-  const result = new Map<string, FeedCacheHit>()
-  if (!shouldUseServerFeedCache() || feeds.length === 0) return result
-
-  // 用 normalize 后的 url 去问，和后端 BuiltinFeedSource.url 对齐。
-  const urlByFeedId = new Map<string, string>()
-  const uniqueUrls = new Set<string>()
-  for (const feed of feeds) {
-    const url = getNormalizedFeedUrl(feed)
-    urlByFeedId.set(feed.id, url)
-    uniqueUrls.add(url)
-  }
-
-  try {
-    const { hits } = await queryServerFeedCache(Array.from(uniqueUrls), {
-      signal: options.signal,
-    })
-    for (const hit of hits) {
-      result.set(hit.url, hit)
-    }
-  } catch (error) {
-    if (isAbortError(error)) throw error
-    // 静默失败：批量预取失败不应阻塞整体刷新流程。
-  }
-  return result
-}
-
-export function getNormalizedFeedUrlForCache(feed: Feed): string {
-  return getNormalizedFeedUrl(feed)
 }

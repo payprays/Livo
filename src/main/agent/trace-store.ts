@@ -6,6 +6,7 @@ import type {
   AgentTraceStatus,
   AgentTraceToolCall,
 } from '../../shared/types'
+import { isRecord } from '../../shared/guards'
 
 export type { AgentTraceRecord, AgentTraceStatus, AgentTraceToolCall }
 
@@ -38,10 +39,6 @@ function writeTraces(traces: AgentTraceRecord[]): void {
   const path = getTracesPath()
   ensureTraceDir(path)
   writeFileSync(path, JSON.stringify(traces, null, 2))
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function redactUrl(rawUrl: string): string {

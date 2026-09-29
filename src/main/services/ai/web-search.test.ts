@@ -1,4 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const sessionFetch = vi.hoisted(() => vi.fn())
+
+vi.mock('electron', () => ({
+  session: { defaultSession: { fetch: sessionFetch } },
+}))
+
 import {
   clearWebSearchCacheForTests,
   formatWebSearchResultsForAI,
@@ -17,7 +24,7 @@ describe('web search result formatting', () => {
   })
 
   afterEach(() => {
-    vi.unstubAllGlobals()
+    sessionFetch.mockReset()
   })
 
   it('strips prompt-like text from snippets before model formatting', () => {
@@ -105,7 +112,7 @@ describe('web search result formatting', () => {
           </html>
         `),
       )
-    vi.stubGlobal('fetch', fetchMock)
+    sessionFetch.mockImplementation(fetchMock)
 
     const response = await webSearchWithMetadata('fallback query', {
       providers: ['duckduckgo', 'bing'],
@@ -148,7 +155,7 @@ describe('web search result formatting', () => {
           </html>
         `),
       )
-    vi.stubGlobal('fetch', fetchMock)
+    sessionFetch.mockImplementation(fetchMock)
 
     const response = await webSearchWithMetadata('unsafe fallback query', {
       providers: ['duckduckgo', 'bing'],
@@ -178,7 +185,7 @@ describe('web search result formatting', () => {
         </html>
       `),
     )
-    vi.stubGlobal('fetch', fetchMock)
+    sessionFetch.mockImplementation(fetchMock)
 
     const first = await webSearchWithMetadata('cached query', {
       providers: ['duckduckgo'],
@@ -208,7 +215,7 @@ describe('web search result formatting', () => {
       .fn()
       .mockResolvedValueOnce(htmlResponse('', 429))
       .mockResolvedValueOnce(htmlResponse('', 503))
-    vi.stubGlobal('fetch', fetchMock)
+    sessionFetch.mockImplementation(fetchMock)
 
     const response = await webSearchWithMetadata('limited query', {
       providers: ['duckduckgo', 'bing'],

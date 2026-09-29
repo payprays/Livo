@@ -1,4 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
+const sessionFetch = vi.hoisted(() => vi.fn())
+
+vi.mock('electron', () => ({
+  session: { defaultSession: { fetch: sessionFetch } },
+}))
+
 import {
   extractReadableContent,
   fetchReadableContent,
@@ -7,7 +14,7 @@ import {
 
 describe('readability service', () => {
   afterEach(() => {
-    vi.unstubAllGlobals()
+    sessionFetch.mockReset()
   })
 
   it('extracts sanitized article content and metadata', () => {
@@ -48,7 +55,7 @@ describe('readability service', () => {
 
   it('blocks loopback article fetches before making a network request', async () => {
     const fetch = vi.fn()
-    vi.stubGlobal('fetch', fetch)
+    sessionFetch.mockImplementation(fetch)
 
     await expect(
       fetchReadableContent('http://127.0.0.1:8080/article'),

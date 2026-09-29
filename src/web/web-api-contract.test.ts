@@ -84,7 +84,6 @@ function stubLocalStorage(initial: Record<string, string> = {}) {
 }
 
 const ELECTRON_API_SHAPE = {
-  serverUrl: 'string',
   feeds: {
     add: true,
     remove: true,
@@ -95,10 +94,6 @@ const ELECTRON_API_SHAPE = {
     importOPML: true,
     exportOPML: true,
     refreshImportedFeeds: true,
-    syncNow: true,
-    syncToCloud: true,
-    syncFromCloud: true,
-    syncStatus: true,
   },
   entries: {
     list: true,
@@ -163,15 +158,10 @@ const ELECTRON_API_SHAPE = {
   readability: {
     fetch: true,
   },
-  readingActivity: {
-    sync: true,
-  },
   discover: {
     categories: true,
     popular: true,
     search: true,
-    searchWechatMp: true,
-    ensureWechatMpFeed: true,
     rsshubRoutes: true,
     rsshubInstance: true,
     validateFeed: true,
@@ -224,39 +214,7 @@ const ELECTRON_API_SHAPE = {
   video: {
     resolve: true,
     openInApp: true,
-    ytLogin: true,
     ytStatus: true,
-    ytLogout: true,
-  },
-  accounts: {
-    status: true,
-    link: true,
-    unlink: true,
-    setDisplayName: true,
-    bilibiliFollowings: true,
-  },
-  auth: {
-    bindGoogle: true,
-    bindWechat: true,
-    loginGoogle: true,
-    loginWechat: true,
-    getCurrentUser: true,
-    logout: true,
-    checkSession: true,
-    onLoginProgress: true,
-    wechatMpLogin: true,
-  },
-  notifications: {
-    list: true,
-    unreadCount: true,
-    markRead: true,
-    markUnread: true,
-    markAllRead: true,
-  },
-  websocket: {
-    connect: true,
-    disconnect: true,
-    status: true,
   },
   fever: {
     listAccounts: true,
