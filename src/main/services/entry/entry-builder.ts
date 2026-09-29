@@ -50,6 +50,22 @@ function normalizeSocialHandle(value: unknown): string {
     .toLowerCase()
 }
 
+/**
+ * Coerce an RSS author field to text. rss-parser yields an object when the
+ * element has child elements (e.g. `<author><name>..</name><title>..</title></author>`
+ * in Google Cloud blog feeds). Passing that object to better-sqlite3 as a
+ * positional parameter throws "Too few parameter values were provided".
+ */
+function authorText(value: unknown): string {
+  if (typeof value === 'string') return value.trim()
+  if (Array.isArray(value)) return authorText(value[0])
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    return authorText(record['name'] ?? record['_'])
+  }
+  return ''
+}
+
 function parseNitterRetweetTitle(rawTitle: string): {
   retweetedBy: string
   title: string
@@ -223,7 +239,7 @@ function buildSingleEntry(
   const firstPhoto = extractedMedia.find((m) => m.type === 'photo' && m.url)
   const rawTitle = item.title || ''
   const nitterRetweet = parseNitterRetweetTitle(rawTitle)
-  const rawAuthor = item.creator || item.author || ''
+  const rawAuthor = authorText(item.creator) || authorText(item.author)
   const isNitterPureRetweet = isNitterPureRetweetTitle(rawTitle, rawAuthor)
   const title = isNitterPureRetweet
     ? `RT ${formatHandle(rawAuthor)}`

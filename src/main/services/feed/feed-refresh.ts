@@ -439,7 +439,11 @@ async function runRefreshSingleFeed(
     })
     return newCount
   } catch (error) {
-    if (isAbortError(error)) throw error
+    // Only a real caller abort skips bookkeeping. withTimeout() rejects with a
+    // message containing "timeout", which isAbortError() also matches; a timed-out
+    // feed must still be marked failed, otherwise lastFetched stays 0 and the
+    // auto-refresh scheduler retries it immediately, forever.
+    if (isAbortError(error) && options?.signal?.aborted) throw error
     const knownInstagramFailure =
       isInstagramUserFeedUrl(feed.url) && isKnownInstagramUpstreamFailure(error)
     const refreshMessage = `[refresh] failed: ${feed.title} (${normalizedFeedUrl})`

@@ -41,6 +41,30 @@ describe('entry builder', () => {
     expect(entry.content).not.toContain('RT by @elonmusk')
   })
 
+  it('flattens a nested <author> element to its name text', async () => {
+    const [entry] = await buildEntriesFromParsedItems(
+      'feed-1',
+      [
+        {
+          title: 'Strengthen your CI/CD pipeline',
+          link: 'https://cloud.google.com/blog/post',
+          guid: 'post-1',
+          author: {
+            name: ['Jane Doe'],
+            title: ['Product Manager'],
+            company: ['Google Cloud'],
+          },
+          content: '<p>body</p>',
+        },
+      ],
+      undefined,
+      FeedViewType.Articles,
+      1_700_000_000_000,
+    )
+
+    expect(entry.author).toBe('Jane Doe')
+  })
+
   it('builds podcast content from iTunes summary and audio enclosure', async () => {
     const [entry] = await buildEntriesFromParsedItems(
       'feed-1',
