@@ -33,3 +33,24 @@ export function configureAppIdentity(
 
   return { isDev }
 }
+
+// Desktops Chromium already maps to a real keyring (kwallet / libsecret).
+const KEYRING_AWARE_DESKTOP =
+  /GNOME|KDE|Plasma|Cinnamon|Deepin|Pantheon|UKUI|Unity|XFCE/i
+
+/**
+ * Chromium picks the Linux Safe Storage backend from a hardcoded desktop list.
+ * On anything else (niri, Hyprland, sway, …) it falls back to `basic_text`,
+ * `safeStorage.isEncryptionAvailable()` turns false and API keys can't be
+ * saved, even when a Secret Service (gnome-keyring, KWallet) is running.
+ * For those desktops, ask for libsecret explicitly. Known desktops are left
+ * alone so existing kwallet-encrypted secrets stay readable.
+ */
+export function shouldForceLibsecret(
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+): boolean {
+  if (platform !== 'linux' || env['KDE_FULL_SESSION']) return false
+  const desktop = `${env['XDG_CURRENT_DESKTOP'] ?? ''}:${env['DESKTOP_SESSION'] ?? ''}`
+  return !KEYRING_AWARE_DESKTOP.test(desktop)
+}

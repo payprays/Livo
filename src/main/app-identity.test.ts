@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { configureAppIdentity } from './app-identity'
+import { configureAppIdentity, shouldForceLibsecret } from './app-identity'
 
 function createApp(isPackaged: boolean) {
   return {
@@ -53,5 +53,29 @@ describe('configureAppIdentity', () => {
     expect(app.setName).not.toHaveBeenCalled()
     expect(app.setPath).not.toHaveBeenCalled()
     expect(app.getPath).not.toHaveBeenCalled()
+  })
+})
+
+describe('shouldForceLibsecret', () => {
+  it('forces libsecret only on Linux desktops Chromium does not recognise', () => {
+    expect(shouldForceLibsecret({ XDG_CURRENT_DESKTOP: 'niri' }, 'linux')).toBe(
+      true,
+    )
+    expect(shouldForceLibsecret({}, 'linux')).toBe(true)
+    expect(shouldForceLibsecret({ XDG_CURRENT_DESKTOP: 'KDE' }, 'linux')).toBe(
+      false,
+    )
+    expect(
+      shouldForceLibsecret({ XDG_CURRENT_DESKTOP: 'ubuntu:GNOME' }, 'linux'),
+    ).toBe(false)
+    expect(shouldForceLibsecret({ DESKTOP_SESSION: 'plasma' }, 'linux')).toBe(
+      false,
+    )
+    expect(shouldForceLibsecret({ KDE_FULL_SESSION: 'true' }, 'linux')).toBe(
+      false,
+    )
+    expect(
+      shouldForceLibsecret({ XDG_CURRENT_DESKTOP: 'niri' }, 'darwin'),
+    ).toBe(false)
   })
 })

@@ -1,5 +1,5 @@
 import { app } from 'electron'
-import { configureAppIdentity } from './app-identity'
+import { configureAppIdentity, shouldForceLibsecret } from './app-identity'
 
 const { isDev } = configureAppIdentity(app, process.env['LIVO_E2E_USER_DATA'])
 
@@ -19,6 +19,10 @@ if (!gotSingleInstanceLock) {
 // stderr for some upstreams we probe during startup/refresh. Keep those noisy
 // internal messages out of the terminal while preserving our own app logs.
 app.commandLine.appendSwitch('log-level', '3')
+
+if (!app.commandLine.hasSwitch('password-store') && shouldForceLibsecret()) {
+  app.commandLine.appendSwitch('password-store', 'gnome-libsecret')
+}
 
 if (isDev) {
   process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
