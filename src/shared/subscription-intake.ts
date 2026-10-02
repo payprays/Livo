@@ -30,6 +30,9 @@ export function canonicalizeDiscoverRoute(inputUrl: string): string {
   if (!raw) return ''
 
   let routeWithQuery = ''
+  // RSSHub routes are the same feed on any instance, so their host is dropped.
+  // Plain feed URLs keep the host: blog-a.com/rss/ and blog-b.com/rss/ differ.
+  let hostPrefix = ''
   const rsshubMatch = raw.match(/^rsshub:\/\/+(.+)$/i)
   if (rsshubMatch?.[1]) {
     routeWithQuery = rsshubMatch[1].replace(/^\/+/, '')
@@ -37,6 +40,8 @@ export function canonicalizeDiscoverRoute(inputUrl: string): string {
     try {
       const parsed = new URL(raw)
       routeWithQuery = `${parsed.pathname.replace(/^\/+/, '')}${parsed.search || ''}`
+      const host = parsed.hostname.toLowerCase()
+      if (!host.includes('rsshub')) hostPrefix = `${host}/`
     } catch {
       return raw.toLowerCase()
     }
@@ -59,9 +64,9 @@ export function canonicalizeDiscoverRoute(inputUrl: string): string {
     const search = new URLSearchParams(queryPart || '')
     search.delete('limit')
     const query = search.toString()
-    return `${path}${query ? `?${query}` : ''}`
+    return `${hostPrefix}${path}${query ? `?${query}` : ''}`
   }
-  return `${path}${queryPart ? `?${queryPart}` : ''}`
+  return `${hostPrefix}${path}${queryPart ? `?${queryPart}` : ''}`
 }
 
 // ── Instagram username extraction ────────────────────────────────────────────

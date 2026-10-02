@@ -375,7 +375,13 @@ export async function discoverSearch(
     results.push(...local)
   }
 
-  await runPlatformProbes(query, rsshubInstance, platform, results)
+  // A pasted URL is resolved directly below (profile links and feed URLs).
+  // Keyword probes on X / Instagram / video sites would only add unrelated hits
+  // and wait on slow Nitter mirrors (~40s), so skip them for the "all" tab.
+  const isExplicitUrl = /^(?:https?|rsshub):\/\//i.test(query.trim())
+  if (!(platform === 'all' && isExplicitUrl)) {
+    await runPlatformProbes(query, rsshubInstance, platform, results)
+  }
   appendProfileResolutionCandidates(query, rsshubInstance, platform, results)
 
   if (looksLikeDirectUrl(query, platform)) {

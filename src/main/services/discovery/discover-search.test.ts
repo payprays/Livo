@@ -82,4 +82,19 @@ describe('discoverSearch', () => {
     await discoverSearch('igtest', 'instagram', 'https://rsshub.app')
     expect(probeInstagramUsersByKeyword).toHaveBeenCalledTimes(2)
   })
+
+  it('resolves a pasted URL directly without keyword probes on "all"', async () => {
+    const results = await discoverSearch(
+      'https://blog.example.com/rss/',
+      'all',
+      'https://rsshub.app',
+    )
+    expect(searchYouTubeChannelsByKeyword).not.toHaveBeenCalled()
+    expect(probeBilibiliUsersByKeyword).not.toHaveBeenCalled()
+    expect(probeXUsersByKeyword).not.toHaveBeenCalled()
+    expect(probeInstagramUsersByKeyword).not.toHaveBeenCalled()
+    expect(results.map((result) => result.url)).toContain(
+      'https://blog.example.com/rss/',
+    )
+  })
 })

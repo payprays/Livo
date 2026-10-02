@@ -110,6 +110,15 @@ describe('canonicalizeDiscoverRoute', () => {
   it('returns empty for empty input', () => {
     expect(canonicalizeDiscoverRoute('')).toBe('')
   })
+
+  it('keeps the host for plain feeds so same-path blogs do not collide', () => {
+    expect(
+      canonicalizeDiscoverRoute('https://blog.cloudflare.com/rss/'),
+    ).not.toBe(canonicalizeDiscoverRoute('https://blog.gitguardian.com/rss/'))
+    expect(canonicalizeDiscoverRoute('https://rsshub.app/cncf')).toBe(
+      canonicalizeDiscoverRoute('rsshub://cncf'),
+    )
+  })
 })
 
 describe('extractInstagramUsername', () => {
