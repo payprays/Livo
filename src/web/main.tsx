@@ -4,7 +4,8 @@ import { RouterProvider } from 'react-router-dom'
 import { router } from '@renderer/router'
 import { ErrorBoundary } from '@renderer/components/ErrorBoundary'
 import { RootProviders } from '@renderer/providers/RootProviders'
-import { setAppIsReady } from '@renderer/store/app-store'
+import { hydrateDataToMemory } from '@renderer/initialize/hydrate'
+import { setAppIsHydrated, setAppIsReady } from '@renderer/store/app-store'
 import '@renderer/styles/tokens.css'
 import '@renderer/styles/globals.css'
 import { initWebPlatform } from './web-api'
@@ -189,6 +190,11 @@ async function main() {
 
   // app-runtime gates the shell on this flag; the Electron entry sets it in main.tsx.
   setAppIsReady(true)
+  // Load settings and feeds from the desktop backend, as the Electron entry does.
+  // Without this the web client only sees the redacted localStorage settings.
+  void hydrateDataToMemory()
+    .then(() => setAppIsHydrated(true))
+    .catch((err) => console.error('[Livo Web] Hydration failed:', err))
   console.log('[Livo Web] App mounted successfully')
 }
 

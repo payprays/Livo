@@ -10,6 +10,12 @@ export type TranslationErrorMap = Record<number, string>
 export interface AITranslationState {
   /** Translated HTML per paragraph (same length as input after translate()) */
   translatedParagraphs: string[]
+  /**
+   * Source paragraphs the translations belong to. A session restored from the
+   * database may come from different content (feed excerpt vs readability
+   * full text), so callers compare this with what they display.
+   */
+  sourceParagraphs: string[]
   /** Whether a translation request is in flight */
   isTranslating: boolean
   /** Whether the bilingual view is currently shown */
@@ -36,20 +42,23 @@ export interface AITranslationOptions {
 
 function sessionToState(session: EntryAITranslationSession): {
   translatedParagraphs: string[]
+  sourceParagraphs: string[]
   errorMap: TranslationErrorMap
 } {
   const translatedParagraphs: string[] = []
+  const sourceParagraphs: string[] = []
   const errorMap: TranslationErrorMap = {}
   const segments = [...session.segments].sort(
     (left, right) => left.index - right.index,
   )
   for (const segment of segments) {
     translatedParagraphs[segment.index] = segment.translatedText || ''
+    sourceParagraphs[segment.index] = segment.sourceText
     if (segment.status === 'failed' && segment.errorMessage) {
       errorMap[segment.index] = segment.errorMessage
     }
   }
-  return { translatedParagraphs, errorMap }
+  return { translatedParagraphs, sourceParagraphs, errorMap }
 }
 
 /**
@@ -64,6 +73,7 @@ export function useAITranslation(
 ): AITranslationState {
   const { entryId } = options
   const [translatedParagraphs, setTranslatedParagraphs] = useState<string[]>([])
+  const [sourceParagraphs, setSourceParagraphs] = useState<string[]>([])
   const [isTranslating, setIsTranslating] = useState(false)
   const [showTranslation, setShowTranslation] = useState(false)
   const [errorMap, setErrorMap] = useState<TranslationErrorMap>({})
@@ -83,6 +93,7 @@ export function useAITranslation(
         if (canceled || !session) return
         const next = sessionToState(session)
         setTranslatedParagraphs(next.translatedParagraphs)
+        setSourceParagraphs(next.sourceParagraphs)
         setErrorMap(next.errorMap)
         setShowTranslation(
           next.translatedParagraphs.some((text) => text.length > 0) ||
@@ -104,6 +115,7 @@ export function useAITranslation(
       if (!session) return
       const next = sessionToState(session)
       setTranslatedParagraphs(next.translatedParagraphs)
+      setSourceParagraphs(next.sourceParagraphs)
       setErrorMap(next.errorMap)
       setShowTranslation(true)
     },
@@ -115,6 +127,7 @@ export function useAITranslation(
       const requestId = ++requestIdRef.current
       contextRef.current = { paragraphs, targetLang }
       setTranslatedParagraphs(paragraphs.map(() => ''))
+      setSourceParagraphs(paragraphs)
       setErrorMap({})
       setIsTranslating(true)
       setShowTranslation(true)
@@ -186,6 +199,7 @@ export function useAITranslation(
     requestIdRef.current++
     contextRef.current = null
     setTranslatedParagraphs([])
+    setSourceParagraphs([])
     setIsTranslating(false)
     setShowTranslation(false)
     setErrorMap({})
@@ -193,6 +207,7 @@ export function useAITranslation(
 
   return {
     translatedParagraphs,
+    sourceParagraphs,
     isTranslating,
     showTranslation,
     errorMap,

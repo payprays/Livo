@@ -32,7 +32,12 @@ export function useFocusableHotkeyScope(
 
     const handleFocusOut = () => {
       window.setTimeout(() => {
-        if (!element.contains(document.activeElement)) {
+        const active = document.activeElement
+        // Focus falls back to <body> when the focused control gets disabled or
+        // unmounted (e.g. the AI summary button while it runs). The user has not
+        // moved elsewhere, so keep the scope and its shortcuts (J/K) alive.
+        if (!active || active === document.body) return
+        if (!element.contains(active)) {
           if (getFocusedHotkeyScope() === scope) {
             setFocusedHotkeyScope(null)
           }

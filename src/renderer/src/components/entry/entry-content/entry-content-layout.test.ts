@@ -3,16 +3,21 @@ import { getEntryContentLayout } from './entry-content-layout'
 
 describe('getEntryContentLayout', () => {
   it('prioritizes readability content over feed content', () => {
-    expect(
-      getEntryContentLayout({
-        isReadabilityMode: true,
-        hasReadableContent: true,
-        hasArticleContent: true,
-        showTranslation: true,
-        hasAudio: false,
-        showEntryDetailFallback: false,
-      }),
-    ).toBe('readability')
+    const base = {
+      isReadabilityMode: true,
+      hasReadableContent: true,
+      hasArticleContent: true,
+      hasAudio: false,
+      showEntryDetailFallback: false,
+    }
+
+    expect(getEntryContentLayout({ ...base, showTranslation: false })).toBe(
+      'readability',
+    )
+    // Translation of the readability text is shown bilingual, not hidden.
+    expect(getEntryContentLayout({ ...base, showTranslation: true })).toBe(
+      'bilingual',
+    )
   })
 
   it('selects bilingual or plain html for normal article content', () => {

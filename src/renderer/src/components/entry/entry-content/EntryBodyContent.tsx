@@ -61,19 +61,20 @@ export function EntryBodyContent({
     showEntryDetailFallback,
   })
 
+  const readabilityBanner = isReadabilityMode && readableContent && (
+    <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+      <BookType size={14} />
+      <span>{t('entry.readabilityMode')}</span>
+      <button onClick={onExitReadability} className="ml-auto hover:underline">
+        {t('entry.readabilityBack2')}
+      </button>
+    </div>
+  )
+
   if (layout === 'readability') {
     return (
       <div>
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
-          <BookType size={14} />
-          <span>{t('entry.readabilityMode')}</span>
-          <button
-            onClick={onExitReadability}
-            className="ml-auto hover:underline"
-          >
-            {t('entry.readabilityBack2')}
-          </button>
-        </div>
+        {readabilityBanner}
         <div
           className="entry-content"
           style={{
@@ -88,16 +89,19 @@ export function EntryBodyContent({
 
   if (layout === 'bilingual') {
     return (
-      <BilingualContent
-        paragraphs={paragraphs}
-        translations={translatedParagraphs}
-        isTranslating={isTranslating}
-        errorMap={errorMap}
-        onRetrySegment={onRetrySegment}
-        fontSize={fontSize}
-        lineHeight={lineHeight}
-        fontFamily={fontFamily}
-      />
+      <div>
+        {readabilityBanner}
+        <BilingualContent
+          paragraphs={paragraphs}
+          translations={translatedParagraphs}
+          isTranslating={isTranslating}
+          errorMap={errorMap}
+          onRetrySegment={onRetrySegment}
+          fontSize={fontSize}
+          lineHeight={lineHeight}
+          fontFamily={fontFamily}
+        />
+      </div>
     )
   }
 

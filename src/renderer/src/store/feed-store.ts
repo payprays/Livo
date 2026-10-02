@@ -175,6 +175,10 @@ interface FeedState {
   refreshAll: () => Promise<void>
   setSelectedFeed: (feedId: string | null) => void
   setActiveView: (view: FeedViewType | null) => void
+  /** Shift one feed's unread badge after a local read-state change. */
+  adjustUnreadCount: (feedId: string, delta: number) => void
+  /** Re-read unread counts from the backend after bulk read-state changes. */
+  syncUnreadCounts: () => Promise<void>
   updateFeed: (feedId: string, updates: FeedEditablePatch) => Promise<void>
   importOPML: () => Promise<{
     success: boolean
@@ -447,6 +451,30 @@ export const useFeedStore = createAppStore<FeedState>((set, get) => ({
     const { activeView, selectedFeedId } = get()
     if (activeView === view && selectedFeedId === null) return
     set({ activeView: view, selectedFeedId: null })
+  },
+
+  adjustUnreadCount: (feedId, delta) => {
+    if (!delta) return
+    set((state) => ({
+      feeds: state.feeds.map((feed) =>
+        feed.id === feedId
+          ? { ...feed, unreadCount: Math.max(0, feed.unreadCount + delta) }
+          : feed,
+      ),
+    }))
+  },
+
+  syncUnreadCounts: async () => {
+    const fresh = await window.api.feeds.list()
+    const counts = new Map(fresh.map((feed) => [feed.id, feed.unreadCount]))
+    set((state) => ({
+      feeds: state.feeds.map((feed) => {
+        const count = counts.get(feed.id)
+        return count === undefined || count === feed.unreadCount
+          ? feed
+          : { ...feed, unreadCount: count }
+      }),
+    }))
   },
 
   updateFeed: async (feedId, updates) => {

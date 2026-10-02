@@ -84,6 +84,8 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     entries,
     selectEntry,
     prefetchEntryDetails,
+    hasMoreEntries,
+    loadMoreEntries,
   } = useStoreShallow(useEntryStore, (s) => ({
     selectedEntry: s.selectedEntry,
     isSelectedEntryHydrating: s.isSelectedEntryHydrating,
@@ -93,6 +95,8 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     entries: s.entries,
     selectEntry: s.selectEntry,
     prefetchEntryDetails: s.prefetchEntryDetails,
+    hasMoreEntries: s.hasMoreEntries,
+    loadMoreEntries: s.loadMoreEntries,
   }))
   const feeds = useFeedStore((s) => s.feeds)
   const general = useGeneralSettingsShallowSelector((settings) => ({
@@ -149,6 +153,7 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
   })
   const {
     translatedParagraphs,
+    sourceParagraphs,
     isTranslating,
     showTranslation,
     errorMap,
@@ -315,11 +320,23 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     return selectedEntry.content
   }, [selectedEntry?.content, selectedEntry?.media])
 
-  // Content paragraphs (memoized)
+  // Content paragraphs (memoized). In readability mode translate the fetched
+  // full text the reader is looking at, not the feed excerpt.
   const paragraphs = useMemo(() => {
-    if (!articleContent) return []
-    return splitHtmlIntoParagraphs(articleContent)
-  }, [articleContent])
+    const source =
+      isReadabilityMode && readableContent
+        ? sanitizeHTML(readableContent)
+        : articleContent
+    return source ? splitHtmlIntoParagraphs(source) : []
+  }, [articleContent, isReadabilityMode, readableContent])
+
+  // A saved translation only applies if it was made from the same paragraphs.
+  const translationMatchesContent =
+    sourceParagraphs.length === paragraphs.length &&
+    sourceParagraphs.every(
+      (paragraph, index) => paragraph === paragraphs[index],
+    )
+  const showBilingual = showTranslation && translationMatchesContent
 
   const handleSummarize = useCallback(() => {
     if (!articleContent) return
@@ -327,10 +344,10 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
   }, [articleContent, general.language, summarize])
 
   const handleTranslate = useCallback(() => {
-    if (!articleContent) return
-    const hasTranslatedContent = translatedParagraphs.some(
-      (paragraph) => paragraph.length > 0,
-    )
+    if (paragraphs.length === 0) return
+    const hasTranslatedContent =
+      translationMatchesContent &&
+      translatedParagraphs.some((paragraph) => paragraph.length > 0)
     // Toggle off if currently showing
     if (showTranslation && hasTranslatedContent) {
       toggleTranslation()
@@ -345,8 +362,8 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     const targetLang = translationTargetLanguage || 'zh-CN'
     void translate(paragraphs, targetLang)
   }, [
-    articleContent,
     paragraphs,
+    translationMatchesContent,
     translationTargetLanguage,
     translate,
     showTranslation,
@@ -604,7 +621,9 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     ? entries.findIndex((e) => e.id === selectedEntry.id)
     : -1
   const hasPrev = currentIndex > 0
-  const hasNext = currentIndex >= 0 && currentIndex < entries.length - 1
+  // The list is paginated: at the last loaded entry, "next" loads another page.
+  const hasNext =
+    currentIndex >= 0 && (currentIndex < entries.length - 1 || hasMoreEntries)
   const showEntryDetailFallback =
     isSelectedEntryHydrating &&
     !embeddedPageUrl &&
@@ -616,9 +635,17 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
   const goToEntry = useCallback(
     (dir: 'prev' | 'next') => {
       if (dir === 'prev' && hasPrev) selectEntry(entries[currentIndex - 1])
-      if (dir === 'next' && hasNext) selectEntry(entries[currentIndex + 1])
+      if (dir !== 'next' || !hasNext) return
+      if (currentIndex < entries.length - 1) {
+        selectEntry(entries[currentIndex + 1])
+        return
+      }
+      void loadMoreEntries().then(() => {
+        const next = useEntryStore.getState().entries[currentIndex + 1]
+        if (next) selectEntry(next)
+      })
     },
-    [currentIndex, entries, hasPrev, hasNext, selectEntry],
+    [currentIndex, entries, hasPrev, hasNext, loadMoreEntries, selectEntry],
   )
   const { showKeepScrollingHint, dismissKeepScrollingHint } =
     useEntryScrollNavigation({
@@ -877,7 +904,7 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
             onTranslate={handleTranslate}
             isSummarizing={isSummarizing}
             isTranslating={isTranslating}
-            showTranslation={showTranslation}
+            showTranslation={showBilingual}
             translationTargetLanguage={translationTargetLanguage}
             onLanguageChange={(lang) =>
               updateSettingsSection('translation', { targetLanguage: lang })
@@ -1045,7 +1072,7 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
                 media={selectedEntry.media}
                 timeAgo={timeAgo}
                 onAvatarError={() => setSocialAvatarImageFailed(true)}
-                showTranslation={showTranslation}
+                showTranslation={showBilingual}
                 translatedParagraphs={translatedParagraphs}
                 isTranslating={isTranslating}
                 isSummarizing={isSummarizing}
@@ -1130,7 +1157,7 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
                   readableContent={readableContent}
                   sanitizedReadable={sanitizedReadable}
                   articleContent={articleContent}
-                  showTranslation={showTranslation}
+                  showTranslation={showBilingual}
                   paragraphs={paragraphs}
                   translatedParagraphs={translatedParagraphs}
                   isTranslating={isTranslating}

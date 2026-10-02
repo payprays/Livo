@@ -1,4 +1,5 @@
 import { createAppStore } from './helpers'
+import { useFeedStore } from './feed-store'
 import type {
   Entry,
   ReaderSnapshot,
@@ -610,6 +611,7 @@ export const useEntryStore = createAppStore<EntryState>((set, get) => ({
       // Update local state
       set((state) => patchEntryState(state, entry.id, { isRead: true }))
       patchCachedEntry(entry.id, { isRead: true })
+      useFeedStore.getState().adjustUnreadCount(entry.feedId, -1)
     }
     const fullEntry = await fetchEntryDetail(entry.id)
     set((state) => {
@@ -637,11 +639,15 @@ export const useEntryStore = createAppStore<EntryState>((set, get) => ({
   },
 
   markRead: async (entryId, isRead) => {
-    const wasRead = get().getEntryById(entryId)?.isRead
+    const entry = get().getEntryById(entryId)
+    const wasRead = entry?.isRead
     await window.api.entries.markRead(entryId, isRead)
     if (isRead && !wasRead) recordReadActivity(1)
     set((state) => patchEntryState(state, entryId, { isRead }))
     patchCachedEntry(entryId, { isRead })
+    if (entry && wasRead !== isRead) {
+      useFeedStore.getState().adjustUnreadCount(entry.feedId, isRead ? -1 : 1)
+    }
   },
 
   markAllRead: async (feedId) => {
@@ -662,6 +668,7 @@ export const useEntryStore = createAppStore<EntryState>((set, get) => ({
         patchCachedEntry(entry.id, { isRead: true })
       }
     }
+    void useFeedStore.getState().syncUnreadCounts()
   },
 
   markAboveRead: async (entryId) => {
@@ -677,6 +684,7 @@ export const useEntryStore = createAppStore<EntryState>((set, get) => ({
         ids.has(e.id) ? { ...e, isRead: true } : e,
       ),
     }))
+    void useFeedStore.getState().syncUnreadCounts()
   },
 
   markBelowRead: async (entryId) => {
@@ -692,6 +700,7 @@ export const useEntryStore = createAppStore<EntryState>((set, get) => ({
         ids.has(e.id) ? { ...e, isRead: true } : e,
       ),
     }))
+    void useFeedStore.getState().syncUnreadCounts()
   },
 
   toggleStar: async (entryId) => {

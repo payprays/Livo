@@ -21,7 +21,11 @@ export function getEntryContentLayout({
   hasAudio: boolean
   showEntryDetailFallback: boolean
 }): EntryContentLayout {
-  if (isReadabilityMode && hasReadableContent) return 'readability'
+  // Translation follows the displayed source (see EntryContent paragraphs), so
+  // it may sit on top of readability content too.
+  if (isReadabilityMode && hasReadableContent) {
+    return showTranslation ? 'bilingual' : 'readability'
+  }
   if (hasArticleContent) return showTranslation ? 'bilingual' : 'html'
   if (hasAudio) return 'audio-only'
   if (showEntryDetailFallback) return 'detail-fallback'

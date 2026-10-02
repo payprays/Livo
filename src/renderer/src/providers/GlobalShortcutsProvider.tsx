@@ -162,8 +162,12 @@ export function GlobalShortcutsProvider({ children }: PropsWithChildren) {
     }
 
     window.addEventListener('keydown', handleGlobalShortcut)
+    // This provider is lazy-loaded, so shortcuts start working shortly after
+    // the shell renders. Expose readiness for e2e tests.
+    document.documentElement.dataset.shortcutsReady = 'true'
 
     return () => {
+      delete document.documentElement.dataset.shortcutsReady
       window.removeEventListener('keydown', handleGlobalShortcut)
       unregisterRefreshAll()
       unregisterDiscover()
