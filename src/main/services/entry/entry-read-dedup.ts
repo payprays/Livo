@@ -73,6 +73,12 @@ export function isMirrorSingleForRead(entry: Entry): boolean {
   )
 }
 
+function isSocialMirrorEntry(entry: Entry): boolean {
+  if (isMirrorSingleForRead(entry)) return true
+  return /instagram\.com|cdninstagram|fbcdn|picnob|pixnoy|piokok|pixwox|dumpor/i.test(
+    `${entry.url || ''} ${entry.imageUrl || ''}`,
+  )
+}
 export function isRichGalleryForRead(entry: Entry): boolean {
   const mediaCount = getMediaIdentityKeysForRead(entry).length
   if (mediaCount >= 2) return true
@@ -135,7 +141,12 @@ export function entryRichnessForRead(entry: Entry): number {
 function dedupeMirrorPairsForRead(entries: Entry[]): Entry[] {
   const tsBuckets = new Map<string, Entry>()
   for (const entry of entries) {
-    const tsKey = `${entry.feedId}|${entry.publishedAt || 0}`
+    // A shared timestamp identifies one post across Instagram mirrors. Feeds
+    // that stamp items with a date (00:00) put several posts on one timestamp,
+    // so ordinary entries also need the same title to count as one post.
+    const tsKey = isSocialMirrorEntry(entry)
+      ? `${entry.feedId}|${entry.publishedAt || 0}`
+      : `${entry.feedId}|${entry.publishedAt || 0}|${getLooseNormalizedTitle(entry.title)}`
     const existing = tsBuckets.get(tsKey)
     if (!existing) {
       tsBuckets.set(tsKey, entry)
@@ -284,6 +295,16 @@ function dedupeNearDuplicateContentForRead(entries: Entry[]): Entry[] {
       )
       if (delta > NEAR_DUPLICATE_WINDOW_MS) continue
       if (!areEntrySimHashesNearDuplicate(candidate.hash, hash)) continue
+      // Within one feed a different title means a different post, even when
+      // the body is templated (digest issues, CVE notices). Only reposts across
+      // feeds may carry a new title over the same body.
+      if (
+        existing.feedId === entry.feedId &&
+        getLooseNormalizedTitle(existing.title) !==
+          getLooseNormalizedTitle(entry.title)
+      ) {
+        continue
+      }
       matchIndex = candidate.entryIndex
       break
     }

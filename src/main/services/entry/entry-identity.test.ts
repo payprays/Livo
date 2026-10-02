@@ -52,6 +52,25 @@ describe('entry identity helpers', () => {
     expect(identityKey).toBe('asset:feed-1:9876543210123456')
   })
 
+  it('keeps blog posts under /post/<year>/ distinct', () => {
+    expect(
+      extractInstagramAssetId('https://blog.example.com/post/2026/first/'),
+    ).toBe('')
+    expect(
+      makeEntryIdentityKey(
+        createEntry({ url: 'https://blog.example.com/post/2026/first/' }),
+      ),
+    ).not.toBe(
+      makeEntryIdentityKey(
+        createEntry({ url: 'https://blog.example.com/post/2026/second/' }),
+      ),
+    )
+    // Mirrors still resolve to the shared post id.
+    expect(extractInstagramAssetId('https://picnob.com/post/ABC123/')).toBe(
+      'post:ABC123',
+    )
+  })
+
   it('matches loosely equivalent titles for mirror dedupe', () => {
     expect(titlesLikelySameForRead('Hello, World!', 'hello world')).toBe(true)
     expect(titlesLikelySameForRead('完全不同', 'another title')).toBe(false)

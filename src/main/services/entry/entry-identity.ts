@@ -77,6 +77,20 @@ function getPrimaryMediaUrl(entry: Entry): string {
   return mediaUrl || entry.imageUrl || ''
 }
 
+// Shortcode paths (/p/, /reel/, /post/) only name a post on Instagram and its
+// mirrors. On ordinary blogs /post/<segment> is a slug or a year folder
+// (/post/2026/...), and reading it as an id merges unrelated articles.
+function isInstagramLikeUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return (
+      /instagram|fbcdn|picnob|pixnoy|pixwox|piokok|dumpor/.test(host) ||
+      isPicnobMirrorHost(host)
+    )
+  } catch {
+    return false
+  }
+}
 export function extractInstagramAssetId(input: string | undefined): string {
   const raw = (input || '').trim()
   if (!raw) return ''
@@ -118,15 +132,13 @@ export function extractInstagramAssetId(input: string | undefined): string {
   const directNumericMatch = raw.match(/_(\d{14,})_/)
   if (directNumericMatch?.[1]) return directNumericMatch[1]
 
-  const shortcodeMatch = nested.match(/\/(?:p|reel)\/([a-zA-Z0-9_-]+)/i)
-  if (shortcodeMatch?.[1]) return shortcodeMatch[1]
-  const directShortcodeMatch = raw.match(/\/(?:p|reel)\/([a-zA-Z0-9_-]+)/i)
-  if (directShortcodeMatch?.[1]) return directShortcodeMatch[1]
-
-  const postMatch = nested.match(/\/post\/([a-zA-Z0-9_-]+)/i)
-  if (postMatch?.[1]) return `post:${postMatch[1]}`
-  const directPostMatch = raw.match(/\/post\/([a-zA-Z0-9_-]+)/i)
-  if (directPostMatch?.[1]) return `post:${directPostMatch[1]}`
+  for (const url of [nested, raw]) {
+    if (!isInstagramLikeUrl(url)) continue
+    const shortcodeMatch = url.match(/\/(?:p|reel)\/([a-zA-Z0-9_-]+)/i)
+    if (shortcodeMatch?.[1]) return shortcodeMatch[1]
+    const postMatch = url.match(/\/post\/([a-zA-Z0-9_-]+)/i)
+    if (postMatch?.[1]) return `post:${postMatch[1]}`
+  }
 
   return ''
 }

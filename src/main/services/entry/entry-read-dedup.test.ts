@@ -74,6 +74,29 @@ describe('entry read dedup', () => {
     expect(result[0].isStarred).toBe(true)
   })
 
+  it('keeps templated posts of the same feed apart when titles differ', () => {
+    const now = Date.now()
+    // Same boilerplate body; only the title tells the issues apart.
+    const body =
+      'Welcome to the weekly cloud security digest. This week we cover new IAM features, detection rules, threat research, open source tooling, conference talks and the usual roundup of links from around the community.'
+    const entries = [167, 179].map((issue, index) =>
+      createEntry({
+        id: `issue-${issue}`,
+        title: `AWS Security Digest Issue ${issue}`,
+        url: `https://example.com/issues/${issue}`,
+        content: body,
+        publishedAt: now + index * 60_000,
+      }),
+    )
+
+    const result = dedupeEntriesForRead(entries, () => {})
+
+    expect(result.map((entry) => entry.id).sort()).toEqual([
+      'issue-167',
+      'issue-179',
+    ])
+  })
+
   it('keeps read dedupe keys aligned with canonical urls', () => {
     const direct = getEntryReadDedupKey(
       createEntry({
@@ -87,5 +110,28 @@ describe('entry read dedup', () => {
     )
 
     expect(direct).toBe(mirrored)
+  })
+})
+
+describe('entry read dedup for date-only feeds', () => {
+  it('keeps posts that share a midnight timestamp apart', () => {
+    const midnight = Date.UTC(2026, 8, 30)
+    const entries = ['first', 'second', 'third'].map((slug) =>
+      createEntry({
+        id: slug,
+        title: `Post ${slug}`,
+        url: `https://blog.example.com/${slug}/`,
+        content: `Body of the ${slug} post with its own words.`,
+        media: [
+          { url: `https://blog.example.com/${slug}-a.png`, type: 'photo' },
+          { url: `https://blog.example.com/${slug}-b.png`, type: 'photo' },
+        ],
+        publishedAt: midnight,
+      }),
+    )
+
+    const result = dedupeEntriesForRead(entries, () => {})
+
+    expect(result).toHaveLength(3)
   })
 })
