@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { getDigestSourceEntryRoute } from './digest-source-navigation'
+import {
+  getDigestSourceEntryRoute,
+  numberDigestCitations,
+} from './digest-source-navigation'
 
 describe('getDigestSourceEntryRoute', () => {
   it('returns encoded entry route for available digest sources', () => {
@@ -18,5 +21,16 @@ describe('getDigestSourceEntryRoute', () => {
         status: 'missing',
       }),
     ).toBeNull()
+  })
+})
+
+describe('numberDigestCitations', () => {
+  it('replaces cited source ids with their 1-based list number', () => {
+    expect(
+      numberDigestCitations('趋势 A（aa-1、bb-2）。趋势 B（bb-2）', [
+        'aa-1',
+        'bb-2',
+      ]),
+    ).toBe('趋势 A（[1]、[2]）。趋势 B（[2]）')
   })
 })

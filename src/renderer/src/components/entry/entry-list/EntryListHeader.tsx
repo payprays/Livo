@@ -121,7 +121,7 @@ export function EntryListHeader({
       {isRefreshing && refreshProgress && refreshProgress.total > 0 && (
         <div className="space-y-1">
           <div className="text-text-tertiary flex items-center justify-between text-[11px]">
-            <span>{`Refreshing ${refreshProgress.completed}/${refreshProgress.total}`}</span>
+            <span>{`${t('common.refreshing')} ${refreshProgress.completed}/${refreshProgress.total}`}</span>
             <span>{`${refreshProgress.percent}%`}</span>
           </div>
           <div className="bg-surface-tertiary dark:bg-surface-dark-tertiary h-1.5 w-full overflow-hidden rounded-full">

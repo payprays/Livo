@@ -17,7 +17,10 @@ import type {
   Entry,
 } from '../../../../shared/types'
 import { AIChatMarkdown } from '../ai/AIChatMarkdown'
-import { getDigestSourceEntryRoute } from '../../lib/digest-source-navigation'
+import {
+  getDigestSourceEntryRoute,
+  numberDigestCitations,
+} from '../../lib/digest-source-navigation'
 
 type DigestSourceItem =
   | { id: string; status: 'available'; entry: Entry | AIDigestCandidate }
@@ -221,7 +224,12 @@ export function DigestContent() {
 
               {activeRun.content ? (
                 <div className="border-border dark:border-border-dark dark:bg-surface-dark-secondary rounded-lg border bg-white p-5 shadow-sm">
-                  <AIChatMarkdown content={activeRun.content} />
+                  <AIChatMarkdown
+                    content={numberDigestCitations(
+                      activeRun.content,
+                      activeRun.sourceEntryIds,
+                    )}
+                  />
                 </div>
               ) : (
                 <div className="border-border text-text-secondary dark:border-border-dark dark:text-text-dark-secondary rounded-lg border border-dashed px-5 py-16 text-center text-sm">
@@ -253,7 +261,7 @@ export function DigestContent() {
               </p>
             ) : (
               <div className="space-y-2">
-                {sources.map((source) => (
+                {sources.map((source, index) => (
                   <div key={source.id}>
                     {source.status === 'available' ? (
                       <button
@@ -264,6 +272,9 @@ export function DigestContent() {
                         className="border-border hover:border-accent/50 hover:bg-accent/5 dark:border-border-dark dark:bg-surface-dark dark:hover:border-accent/50 w-full rounded-lg border bg-white px-3 py-2 text-left transition"
                       >
                         <div className="line-clamp-2 text-sm font-medium">
+                          <span className="text-accent mr-1">
+                            [{index + 1}]
+                          </span>
                           {source.entry.title}
                         </div>
                         <div className="text-text-tertiary mt-1 flex items-center gap-2 text-xs">

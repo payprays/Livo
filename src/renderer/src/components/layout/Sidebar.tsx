@@ -878,7 +878,7 @@ export function Sidebar({ width }: { width?: number }) {
                 title: `@${urlUsername}`,
                 description: t('sidebar.instagramUserNotFound', {
                   defaultValue: i18nDefault(
-                    'User not found, or current instance is blocked',
+                    '未找到该用户，或当前实例被屏蔽',
                     'User not found, or current instance is blocked',
                   ),
                 }),
@@ -919,7 +919,7 @@ export function Sidebar({ width }: { width?: number }) {
                 ? picked.description || ''
                 : t('sidebar.instagramSubscribeFailed', {
                     defaultValue: i18nDefault(
-                      'Subscribe failed, check URL or network',
+                      '订阅失败，请检查链接或网络',
                       'Subscribe failed, check URL or network',
                     ),
                   }),
@@ -942,7 +942,7 @@ export function Sidebar({ width }: { width?: number }) {
               valid: false,
               description: t('sidebar.instagramValidationError', {
                 defaultValue: i18nDefault(
-                  'Validation failed, try again',
+                  '校验失败，请重试',
                   'Validation failed, try again',
                 ),
               }),
@@ -969,7 +969,7 @@ export function Sidebar({ width }: { width?: number }) {
         ),
         description: t('sidebar.instagramDirectUrlHint', {
           defaultValue: i18nDefault(
-            'Detected RSS URL, you can subscribe directly',
+            '检测到 RSS 地址，可以直接订阅',
             'Detected RSS URL, you can subscribe directly',
           ),
         }),
@@ -991,7 +991,7 @@ export function Sidebar({ width }: { width?: number }) {
         title: `@${raw}`,
         description: t('sidebar.instagramInvalidUser', {
           defaultValue: i18nDefault(
-            'Please enter a valid Instagram username',
+            '请输入有效的 Instagram 用户名',
             'Please enter a valid Instagram username',
           ),
         }),
@@ -1381,7 +1381,7 @@ export function Sidebar({ width }: { width?: number }) {
         msg: t('sidebar.instagramUnsubscribeSuccess', {
           user: normalized,
           defaultValue: i18nDefault(
-            'Unsubscribed from this RSS source',
+            '已取消订阅该 RSS 源',
             'Unsubscribed from this RSS source',
           ),
         }),
@@ -1407,7 +1407,7 @@ export function Sidebar({ width }: { width?: number }) {
       msg: t('sidebar.instagramUnsubscribeSuccess', {
         user: username,
         defaultValue: i18nDefault(
-          'Unsubscribed from @{{user}}',
+          '已取消订阅 @{{user}}',
           'Unsubscribed from @{{user}}',
         ),
       }),
@@ -1462,7 +1462,7 @@ export function Sidebar({ width }: { width?: number }) {
             msg: t('sidebar.instagramSubscribeSuccess', {
               user: input,
               defaultValue: i18nDefault(
-                'Subscribed to this RSS source',
+                '已订阅该 RSS 源',
                 'Subscribed to this RSS source',
               ),
             }),
@@ -1474,7 +1474,7 @@ export function Sidebar({ width }: { width?: number }) {
         }
         setInstagramSearchResult({
           msg: t('sidebar.instagramAlreadySubscribed', {
-            defaultValue: i18nDefault('Subscribed', 'Subscribed'),
+            defaultValue: i18nDefault('已订阅', 'Subscribed'),
           }),
           ok: false,
         })
@@ -1495,7 +1495,7 @@ export function Sidebar({ width }: { width?: number }) {
           msg: t('sidebar.instagramSubscribeSuccess', {
             user: input,
             defaultValue: i18nDefault(
-              'Subscribed to this RSS source',
+              '已订阅该 RSS 源',
               'Subscribed to this RSS source',
             ),
           }),
@@ -1521,7 +1521,7 @@ export function Sidebar({ width }: { width?: number }) {
             msg: t('sidebar.instagramSubscribeSuccess', {
               user: input,
               defaultValue: i18nDefault(
-                'Subscribed to this RSS source',
+                '已订阅该 RSS 源',
                 'Subscribed to this RSS source',
               ),
             }),
@@ -1534,7 +1534,7 @@ export function Sidebar({ width }: { width?: number }) {
               result.error ||
               t('sidebar.instagramSubscribeFailed', {
                 defaultValue: i18nDefault(
-                  'Subscribe failed, check URL or network',
+                  '订阅失败，请检查链接或网络',
                   'Subscribe failed, check URL or network',
                 ),
               }),
@@ -1545,7 +1545,7 @@ export function Sidebar({ width }: { width?: number }) {
         setInstagramSearchResult({
           msg: t('sidebar.instagramSubscribeFailed', {
             defaultValue: i18nDefault(
-              'Subscribe failed, check URL or network',
+              '订阅失败，请检查链接或网络',
               'Subscribe failed, check URL or network',
             ),
           }),
@@ -1563,7 +1563,7 @@ export function Sidebar({ width }: { width?: number }) {
       setInstagramSearchResult({
         msg: t('sidebar.instagramInvalidUser', {
           defaultValue: i18nDefault(
-            'Please enter a valid Instagram username',
+            '请输入有效的 Instagram 用户名',
             'Please enter a valid Instagram username',
           ),
         }),
@@ -1585,7 +1585,7 @@ export function Sidebar({ width }: { width?: number }) {
     if (existingInTargetView) {
       setInstagramSearchResult({
         msg: t('sidebar.instagramAlreadySubscribed', {
-          defaultValue: i18nDefault('Subscribed', 'Subscribed'),
+          defaultValue: i18nDefault('已订阅', 'Subscribed'),
         }),
         ok: false,
       })
@@ -1638,7 +1638,7 @@ export function Sidebar({ width }: { width?: number }) {
           msg: t('sidebar.instagramSubscribeSuccess', {
             user: raw,
             defaultValue: i18nDefault(
-              'Subscribed to @{{user}}',
+              '已订阅 @{{user}}',
               'Subscribed to @{{user}}',
             ),
           }),
@@ -1664,7 +1664,7 @@ export function Sidebar({ width }: { width?: number }) {
           msg: t('sidebar.instagramSubscribeSuccess', {
             user: raw,
             defaultValue: i18nDefault(
-              'Subscribed to @{{user}}',
+              '已订阅 @{{user}}',
               'Subscribed to @{{user}}',
             ),
           }),
@@ -1692,7 +1692,7 @@ export function Sidebar({ width }: { width?: number }) {
             msg: t('sidebar.instagramSubscribeSuccess', {
               user: raw,
               defaultValue: i18nDefault(
-                'Subscribed to @{{user}}',
+                '已订阅 @{{user}}',
                 'Subscribed to @{{user}}',
               ),
             }),
@@ -1715,7 +1715,7 @@ export function Sidebar({ width }: { width?: number }) {
           msg: t('sidebar.instagramSubscribeSuccess', {
             user: raw,
             defaultValue: i18nDefault(
-              'Subscribed to @{{user}}',
+              '已订阅 @{{user}}',
               'Subscribed to @{{user}}',
             ),
           }),
@@ -1728,7 +1728,7 @@ export function Sidebar({ width }: { width?: number }) {
             result.error ||
             t('sidebar.instagramSubscribeFailed', {
               defaultValue: i18nDefault(
-                'Subscribe failed, check username or network',
+                '订阅失败，请检查用户名或网络',
                 'Subscribe failed, check username or network',
               ),
             }),
@@ -1739,7 +1739,7 @@ export function Sidebar({ width }: { width?: number }) {
       setInstagramSearchResult({
         msg: t('sidebar.instagramSubscribeFailed', {
           defaultValue: i18nDefault(
-            'Subscribe failed, check username or network',
+            '订阅失败，请检查用户名或网络',
             'Subscribe failed, check username or network',
           ),
         }),
@@ -1865,7 +1865,7 @@ export function Sidebar({ width }: { width?: number }) {
                   onChange={(e) => setAllFeedsSearch(e.target.value)}
                   placeholder={t('sidebar.searchFeeds', {
                     defaultValue: i18nDefault(
-                      'Search subscribed feeds in this column',
+                      '搜索本栏订阅源',
                       'Search subscribed feeds in this column',
                     ),
                   })}
@@ -1930,7 +1930,7 @@ export function Sidebar({ width }: { width?: number }) {
                 <p>
                   {t('common.noResults', {
                     defaultValue: i18nDefault(
-                      'No matching subscriptions',
+                      '没有匹配的订阅',
                       'No matching subscriptions',
                     ),
                   })}
@@ -2128,7 +2128,7 @@ export function Sidebar({ width }: { width?: number }) {
                   showRefreshHint(
                     tWithDefault(
                       'sidebar.refreshingFeed',
-                      'Refreshing feed...',
+                      '正在刷新订阅源...',
                       'Refreshing feed...',
                     ),
                     true,
@@ -2139,7 +2139,7 @@ export function Sidebar({ width }: { width?: number }) {
                       showRefreshHint(
                         tWithDefault(
                           'sidebar.refreshFeedDone',
-                          'Refresh complete: {{title}}',
+                          '刷新完成：{{title}}',
                           'Refresh complete: {{title}}',
                           { title: feedTitle || feedId },
                         ),
@@ -2150,7 +2150,7 @@ export function Sidebar({ width }: { width?: number }) {
                       showRefreshHint(
                         tWithDefault(
                           'sidebar.refreshFeedFailed',
-                          'Refresh failed. Please try again.',
+                          '刷新失败，请重试',
                           'Refresh failed. Please try again.',
                         ),
                         false,
@@ -2210,7 +2210,7 @@ export function Sidebar({ width }: { width?: number }) {
                   showRefreshHint(
                     tWithDefault(
                       'sidebar.refreshingFeed',
-                      'Refreshing feed...',
+                      '正在刷新订阅源...',
                       'Refreshing feed...',
                     ),
                     true,
@@ -2221,7 +2221,7 @@ export function Sidebar({ width }: { width?: number }) {
                       showRefreshHint(
                         tWithDefault(
                           'sidebar.refreshFeedDone',
-                          'Refresh complete: {{title}}',
+                          '刷新完成：{{title}}',
                           'Refresh complete: {{title}}',
                           { title: feedTitle || feedId },
                         ),
@@ -2232,7 +2232,7 @@ export function Sidebar({ width }: { width?: number }) {
                       showRefreshHint(
                         tWithDefault(
                           'sidebar.refreshFeedFailed',
-                          'Refresh failed. Please try again.',
+                          '刷新失败，请重试',
                           'Refresh failed. Please try again.',
                         ),
                         false,
@@ -2305,7 +2305,7 @@ export function Sidebar({ width }: { width?: number }) {
               showRefreshHint(
                 tWithDefault(
                   'sidebar.refreshingCategory',
-                  'Refreshing category feeds...',
+                  '正在刷新该分类的订阅源...',
                   'Refreshing category feeds...',
                 ),
                 true,
@@ -2316,7 +2316,7 @@ export function Sidebar({ width }: { width?: number }) {
                   showRefreshHint(
                     tWithDefault(
                       'sidebar.refreshCategoryDone',
-                      'Category refresh complete',
+                      '分类刷新完成',
                       'Category refresh complete',
                     ),
                     true,
@@ -2326,7 +2326,7 @@ export function Sidebar({ width }: { width?: number }) {
                   showRefreshHint(
                     tWithDefault(
                       'sidebar.refreshFeedFailed',
-                      'Refresh failed. Please try again.',
+                      '刷新失败，请重试',
                       'Refresh failed. Please try again.',
                     ),
                     false,
@@ -2550,7 +2550,10 @@ export function Sidebar({ width }: { width?: number }) {
               <label className="bg-surface-secondary/50 dark:border-border-dark dark:bg-surface-dark-tertiary/50 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
                 <span className="text-text-primary dark:text-text-dark-primary">
                   {t('sidebar.editFeedShowInAll', {
-                    defaultValue: i18nDefault('Show in All', 'Show in All'),
+                    defaultValue: i18nDefault(
+                      '在「全部」中显示',
+                      'Show in All',
+                    ),
                   })}
                 </span>
                 <input
