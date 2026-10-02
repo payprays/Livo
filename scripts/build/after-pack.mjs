@@ -20,7 +20,11 @@ function resolveElectronBinaryPath(context) {
     case 'win32':
       return join(context.appOutDir, `${productName}.exe`)
     default:
-      return join(context.appOutDir, productName)
+      // Linux uses the lowercased package name (`livo`), not productName.
+      return join(
+        context.appOutDir,
+        context.packager.executableName ?? productName,
+      )
   }
 }
 
