@@ -4,10 +4,10 @@ import { logWarn } from './logger'
 import { __internal } from './update-check-internal'
 
 const RELEASE_API_URL =
-  'https://api.github.com/repos/kaieye/Livo/releases/latest'
-const RELEASE_ATOM_URL = 'https://github.com/kaieye/Livo/releases.atom'
+  'https://api.github.com/repos/payprays/Livo/releases/latest'
+const RELEASE_ATOM_URL = 'https://github.com/payprays/Livo/releases.atom'
 const RELEASE_ASSETS_URL =
-  'https://github.com/kaieye/Livo/releases/expanded_assets'
+  'https://github.com/payprays/Livo/releases/expanded_assets'
 const RELEASE_DOWNLOAD_ORIGIN = 'https://github.com'
 const CHECK_CACHE_MS = 5 * 60 * 1000
 
@@ -71,7 +71,7 @@ function parseLatestReleaseAtom(xml: string): GitHubReleasePayload | null {
   if (!entry) return null
 
   const encodedReleaseUrl = entry.match(
-    /<link\b[^>]*\bhref="(https:\/\/github\.com\/kaieye\/Livo\/releases\/tag\/[^"]+)"[^>]*\/?\s*>/i,
+    /<link\b[^>]*\bhref="(https:\/\/github\.com\/payprays\/Livo\/releases\/tag\/[^"]+)"[^>]*\/?\s*>/i,
   )?.[1]
   if (!encodedReleaseUrl) return null
 
@@ -79,7 +79,7 @@ function parseLatestReleaseAtom(xml: string): GitHubReleasePayload | null {
   let tagName = ''
   try {
     const pathname = new URL(releaseUrl).pathname
-    const prefix = '/kaieye/Livo/releases/tag/'
+    const prefix = '/payprays/Livo/releases/tag/'
     if (!pathname.startsWith(prefix)) return null
     tagName = decodeURIComponent(pathname.slice(prefix.length))
   } catch {
@@ -103,7 +103,7 @@ function parseReleaseAssetsHtml(html: string): GitHubReleaseAssetPayload[] {
   const assets: GitHubReleaseAssetPayload[] = []
   const seenUrls = new Set<string>()
   const hrefPattern =
-    /href="([^"#]*\/kaieye\/Livo\/releases\/download\/[^"#]+)"/gi
+    /href="([^"#]*\/payprays\/Livo\/releases\/download\/[^"#]+)"/gi
 
   for (const match of html.matchAll(hrefPattern)) {
     try {

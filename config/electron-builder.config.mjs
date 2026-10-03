@@ -54,7 +54,7 @@ export default {
   publish: [
     {
       provider: 'github',
-      owner: 'kaieye',
+      owner: 'payprays',
       repo: 'Livo',
       releaseType: 'draft',
     },

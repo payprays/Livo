@@ -15,7 +15,7 @@ import { checkForAppUpdates } from './update-check'
 
 const MAX_INSTALLER_BYTES = 300 * 1024 * 1024
 const DOWNLOAD_TEMP_SUFFIX = '.download'
-const GITHUB_RELEASE_OWNER = 'kaieye'
+const GITHUB_RELEASE_OWNER = 'payprays'
 const GITHUB_RELEASE_REPO = 'Livo'
 
 type InstallerKind = 'exe' | 'zip'

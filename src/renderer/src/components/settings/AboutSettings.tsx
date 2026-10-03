@@ -253,12 +253,12 @@ export function AboutSettings() {
       {/* Links */}
       <div className="flex justify-center gap-4 pt-2">
         <a
-          href="https://github.com/kaieye/Livo"
+          href="https://github.com/payprays/Livo"
           target="_blank"
           rel="noopener noreferrer"
           onClick={(event) => {
             event.preventDefault()
-            void openExternalUrlSafe('https://github.com/kaieye/Livo')
+            void openExternalUrlSafe('https://github.com/payprays/Livo')
           }}
           className="text-text-secondary hover:text-accent flex items-center gap-1.5 text-sm transition-colors"
         >

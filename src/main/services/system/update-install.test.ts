@@ -68,7 +68,7 @@ function setPlatform(value: NodeJS.Platform): void {
 }
 
 function githubInstallerUrl(version = '1.2.0'): string {
-  return `https://github.com/kaieye/Livo/releases/download/v${version}/Livo-Setup-${version}.exe`
+  return `https://github.com/payprays/Livo/releases/download/v${version}/Livo-Setup-${version}.exe`
 }
 
 function mockUpdateInfo(

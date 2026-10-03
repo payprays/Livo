@@ -87,13 +87,13 @@ describe('checkForAppUpdates', () => {
       new Response(
         JSON.stringify({
           tag_name: 'v1.2.0',
-          html_url: 'https://github.com/kaieye/Livo/releases/tag/v1.2.0',
+          html_url: 'https://github.com/payprays/Livo/releases/tag/v1.2.0',
           published_at: '2026-07-03T01:57:06Z',
           assets: [
             {
               name: 'Livo-Setup-1.2.0-win-x64.exe',
               browser_download_url:
-                'https://github.com/kaieye/Livo/releases/download/v1.2.0/Livo-Setup-1.2.0-win-x64.exe',
+                'https://github.com/payprays/Livo/releases/download/v1.2.0/Livo-Setup-1.2.0-win-x64.exe',
               size: 123456,
             },
           ],
@@ -136,7 +136,7 @@ describe('checkForAppUpdates', () => {
             <entry>
               <id>tag:github.com,2008:Repository/1/v1.2.0</id>
               <updated>2026-07-03T01:57:06Z</updated>
-              <link rel="alternate" type="text/html" href="https://github.com/kaieye/Livo/releases/tag/v1.2.0"/>
+              <link rel="alternate" type="text/html" href="https://github.com/payprays/Livo/releases/tag/v1.2.0"/>
               <title>Livo v1.2.0</title>
             </entry>
           </feed>`,
@@ -145,7 +145,7 @@ describe('checkForAppUpdates', () => {
       )
       .mockResolvedValueOnce(
         new Response(
-          `<a href="/kaieye/Livo/releases/download/v1.2.0/Livo-Setup-1.2.0-win-x64.exe">
+          `<a href="/payprays/Livo/releases/download/v1.2.0/Livo-Setup-1.2.0-win-x64.exe">
             Livo-Setup-1.2.0-win-x64.exe
           </a>`,
           { status: 200, headers: { 'content-type': 'text/html' } },
@@ -164,10 +164,10 @@ describe('checkForAppUpdates', () => {
       hasUpdate: true,
       currentVersion: '0.0.9',
       latestVersion: '1.2.0',
-      releaseUrl: 'https://github.com/kaieye/Livo/releases/tag/v1.2.0',
+      releaseUrl: 'https://github.com/payprays/Livo/releases/tag/v1.2.0',
       installerAssetName: 'Livo-Setup-1.2.0-win-x64.exe',
       installerDownloadUrl:
-        'https://github.com/kaieye/Livo/releases/download/v1.2.0/Livo-Setup-1.2.0-win-x64.exe',
+        'https://github.com/payprays/Livo/releases/download/v1.2.0/Livo-Setup-1.2.0-win-x64.exe',
       installerSize: 123456,
       publishedAt: '2026-07-03T01:57:06Z',
     })

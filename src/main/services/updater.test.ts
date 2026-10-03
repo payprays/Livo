@@ -250,7 +250,7 @@ describe('UpdaterService', () => {
       currentVersion: '1.0.0',
       latestVersion: '1.2.0',
       installerDownloadUrl:
-        'https://github.com/kaieye/Livo/releases/download/v1.2.0/Livo-Setup-1.2.0.exe',
+        'https://github.com/payprays/Livo/releases/download/v1.2.0/Livo-Setup-1.2.0.exe',
     })
 
     const service = new UpdaterService(false)
@@ -330,7 +330,7 @@ describe('UpdaterService', () => {
       platform: 'darwin',
       currentVersion: '1.0.0',
       latestVersion: '1.2.0',
-      releaseUrl: 'https://github.com/kaieye/Livo/releases/latest',
+      releaseUrl: 'https://github.com/payprays/Livo/releases/latest',
       publishedAt: '2026-07-14T01:02:03.000Z',
       notes: 'Signed macOS update',
     })

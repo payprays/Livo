@@ -12,7 +12,7 @@ import { installAppUpdate as installWindowsUpdate } from './system/update-instal
 import { canInstallMacUpdateInPlace } from './system/mac-update-capability'
 
 const { autoUpdater } = updaterPkg
-const RELEASES_URL = 'https://github.com/kaieye/Livo/releases/latest'
+const RELEASES_URL = 'https://github.com/payprays/Livo/releases/latest'
 const MAC_UPDATE_CHECK_MAX_ATTEMPTS = 3
 const MAC_INSTALL_HANDOFF_TIMEOUT_MS = 30_000
 const MAC_MANUAL_INSTALL_ERROR =
