@@ -585,7 +585,9 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
       handleSummarize()
     }
     if (translationSettings.enabled && translationSettings.autoTranslate) {
-      handleTranslate()
+      // translate(), not the toggle: an article translated earlier must stay
+      // shown. Already translated paragraphs are skipped by the main process.
+      void translate(paragraphs, translationTargetLanguage || 'zh-CN')
     }
   }, [
     selectedEntry?.id,
@@ -597,7 +599,9 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     translationSettings.enabled,
     translationSettings.autoTranslate,
     handleSummarize,
-    handleTranslate,
+    translate,
+    paragraphs,
+    translationTargetLanguage,
   ])
   const socialAuthorName = useMemo(
     () =>

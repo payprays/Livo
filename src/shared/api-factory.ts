@@ -206,6 +206,24 @@ export function createApi(transport: ApiTransport) {
         transport.on('ai:chat-stream-chunk', (data) =>
           callback(data as { requestId: string; content: string }),
         ),
+      onTranslationProgress: (
+        callback: (data: {
+          entryId: string
+          index: number
+          translation: string
+          error?: string
+        }) => void,
+      ) =>
+        transport.on('ai:translation-progress', (data) =>
+          callback(
+            data as {
+              entryId: string
+              index: number
+              translation: string
+              error?: string
+            },
+          ),
+        ),
       onStreamDone: (callback: (data: { requestId: string }) => void) =>
         transport.on('ai:chat-stream-done', (data) =>
           callback(data as { requestId: string }),

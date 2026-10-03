@@ -154,6 +154,18 @@ test('auto translate setting translates an article on open', async () => {
   await expect(
     page.locator('.entry-content.text-accent\\/80').first(),
   ).toContainText(TRANSLATION_MARK)
+  // Coming back to an article translated earlier shows the saved translation
+  // without asking the AI again.
+  await openEntry(`${FEEDS.big.prefix} 6`)
+  await expect(
+    page.locator('.entry-content.text-accent\\/80').first(),
+  ).toContainText(TRANSLATION_MARK)
+  const requestsBefore = upstream.translationRequests()
+  await openEntry(`${FEEDS.big.prefix} 5`)
+  await expect(
+    page.locator('.entry-content.text-accent\\/80').first(),
+  ).toContainText(TRANSLATION_MARK)
+  expect(upstream.translationRequests()).toBe(requestsBefore)
 })
 
 test('AI digest cites sources by number, not raw ids', async () => {

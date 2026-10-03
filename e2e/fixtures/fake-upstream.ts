@@ -92,8 +92,11 @@ function completion(text: string, stream: boolean): string {
 export async function startFakeUpstream(): Promise<{
   origin: string
   feedUrl: (name: keyof typeof FEEDS) => string
+  /** Translation requests received so far. */
+  translationRequests: () => number
   close: () => Promise<void>
 }> {
+  let translations = 0
   const server: Server = createServer((req, res) => {
     const origin = `http://${req.headers.host}`
     const feedMatch = req.url?.match(/^\/feed\/(big|small)\.xml/)
@@ -106,6 +109,7 @@ export async function startFakeUpstream(): Promise<{
       let body = ''
       req.on('data', (part) => (body += part))
       req.on('end', () => {
+        if (body.includes('professional translator')) translations++
         const stream = (JSON.parse(body) as { stream?: boolean }).stream
         res.writeHead(200, {
           'Content-Type': stream ? 'text/event-stream' : 'application/json',
@@ -121,6 +125,7 @@ export async function startFakeUpstream(): Promise<{
   return {
     origin,
     feedUrl: (name) => `${origin}/feed/${name}.xml`,
+    translationRequests: () => translations,
     close: () => new Promise((resolve) => server.close(() => resolve())),
   }
 }

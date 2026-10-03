@@ -6,10 +6,17 @@ import type {
   EntryAITranslationSessionStatus,
 } from '../../../shared/types'
 import { getDb } from '../../database'
+import { getEventBus } from '../system/event-bus'
 import { settingsProvider } from '../system/settings-provider'
 import { runAITranslateTask } from './ai-pipeline'
 
-const TRANSLATION_CONCURRENCY = 3
+const TRANSLATION_CONCURRENCY = 10
+const TRANSLATION_PROGRESS_EVENT = 'ai:translation-progress'
+
+// Bumped by every run; an older run stops picking up paragraphs once a newer
+// one starts (e.g. auto translate on the next article).
+// ponytail: one global run, a per-window token if parallel windows matter.
+let latestRunId = 0
 const CONFIG_CHANGED_ERROR = 'AI 配置已变更，翻译已中止'
 
 function getTranslationConfigFingerprint(): string {
@@ -29,30 +36,86 @@ function getTranslationModel(): string | undefined {
   return settingsProvider.get().ai.model
 }
 
-function shouldTranslateParagraph(paragraph: string): boolean {
+const HAN_RE = /\p{Script=Han}/gu
+const KANA_RE = /[\p{Script=Hiragana}\p{Script=Katakana}]/gu
+const HANGUL_RE = /\p{Script=Hangul}/gu
+// A Latin word weighs about as much as one CJK character.
+const LATIN_WORD_RE = /\p{Script=Latin}+/gu
+
+const count = (text: string, re: RegExp) => text.match(re)?.length ?? 0
+
+/**
+ * Whether a paragraph is already written in the target language, judged by
+ * script: CJK characters must outnumber Latin words (so Chinese text with
+ * English terms such as "Kubernetes 的 RBAC" still counts as Chinese).
+ * ponytail: Latin-script targets (en, fr, ...) are always translated; add a
+ * language detector if that wastes requests.
+ */
+export function isInTargetLanguage(text: string, targetLanguage: string) {
+  const lang = targetLanguage.toLowerCase()
+  const latinWords = count(text, LATIN_WORD_RE)
+  const han = count(text, HAN_RE)
+  const kana = count(text, KANA_RE)
+  if (lang.startsWith('zh')) return kana === 0 && han > latinWords
+  if (lang.startsWith('ja')) return kana > 0 && kana + han > latinWords
+  if (lang.startsWith('ko')) return count(text, HANGUL_RE) > latinWords
+  return false
+}
+
+const LINK_RE = /<a\b[^>]*>([\s\S]*?)<\/a>/gi
+const HEADING_RE = /^\s*<h[1-6]\b/i
+const BOLD_RE = /<(strong|b)\b[^>]*>([\s\S]*?)<\/\1>/gi
+const squash = (html: string) =>
+  html.replace(/<[^>]*>/g, '').replace(/\s+/g, '')
+
+/**
+ * Blocks a reader does not need translated: table of contents / navigation
+ * entries (the whole block is a link) and short section headings such as
+ * "Introduction" or "Lab Demonstration".
+ */
+function isNavigationOrShortHeading(html: string, plainText: string): boolean {
+  const text = squash(plainText)
+  const textOf = (re: RegExp, group: number) =>
+    [...html.matchAll(re)].map((match) => squash(match[group])).join('')
+  if (textOf(LINK_RE, 1) === text) return true
+  // A real heading, or a paragraph that is bold from end to end.
+  const headingLike = HEADING_RE.test(html) || textOf(BOLD_RE, 2) === text
+  return headingLike && count(plainText, LATIN_WORD_RE) <= 3
+}
+
+function shouldTranslateParagraph(
+  paragraph: string,
+  targetLanguage: string,
+): boolean {
   const plainText = paragraph.replace(/<[^>]*>/g, '').trim()
-  return plainText.length >= 5
+  return (
+    plainText.length >= 5 &&
+    !isInTargetLanguage(plainText, targetLanguage) &&
+    !isNavigationOrShortHeading(paragraph, plainText)
+  )
 }
 
 function buildSegments(
   paragraphs: string[],
+  targetLanguage: string,
   results: string[],
   errors: Record<number, string>,
   runningIndex?: number,
 ): EntryAITranslationSegment[] {
   return paragraphs.map((paragraph, index) => {
+    const skipped = !shouldTranslateParagraph(paragraph, targetLanguage)
     const errorMessage = errors[index]
-    const translatedText = results[index] ?? ''
-    const status: EntryAITranslationSegment['status'] =
-      !shouldTranslateParagraph(paragraph)
-        ? 'skipped'
-        : errorMessage
-          ? 'failed'
-          : translatedText
-            ? 'succeeded'
-            : runningIndex === index
-              ? 'running'
-              : 'queued'
+    // Drop translations saved before a rule started skipping this block.
+    const translatedText = skipped ? '' : (results[index] ?? '')
+    const status: EntryAITranslationSegment['status'] = skipped
+      ? 'skipped'
+      : errorMessage
+        ? 'failed'
+        : translatedText
+          ? 'succeeded'
+          : runningIndex === index
+            ? 'running'
+            : 'queued'
 
     return {
       index,
@@ -91,7 +154,7 @@ function createOrResetSession(
     entryId: input.entryId,
     targetLanguage: input.targetLanguage,
     status: 'running',
-    segments: buildSegments(input.paragraphs, [], {}),
+    segments: buildSegments(input.paragraphs, input.targetLanguage, [], {}),
     model: getTranslationModel(),
     configFingerprint: fingerprint,
   })
@@ -128,7 +191,12 @@ function updateSession(
     getDb().aiTranslationSessions.updateSession(sessionId, {
       targetLanguage: input.targetLanguage,
       status,
-      segments: buildSegments(input.paragraphs, results, errors),
+      segments: buildSegments(
+        input.paragraphs,
+        input.targetLanguage,
+        results,
+        errors,
+      ),
       errorCode: patch.errorCode,
       errorMessage: patch.errorMessage,
       model: getTranslationModel(),
@@ -164,9 +232,14 @@ export async function translateEntrySegments(
   const queue = paragraphs
     .map((paragraph, index) => ({ paragraph, index }))
     .filter(({ paragraph, index }) => {
-      if (requestedIndexes && !requestedIndexes.has(index)) return false
-      return shouldTranslateParagraph(paragraph)
+      if (requestedIndexes) {
+        if (!requestedIndexes.has(index)) return false
+      } else if (results[index]) {
+        return false // already translated in this session
+      }
+      return shouldTranslateParagraph(paragraph, targetLanguage)
     })
+  const runId = ++latestRunId
 
   session = updateSession(
     session.id,
@@ -178,7 +251,7 @@ export async function translateEntrySegments(
 
   let cursor = 0
   const worker = async () => {
-    while (cursor < queue.length) {
+    while (cursor < queue.length && runId === latestRunId) {
       const item = queue[cursor++]
       if (getTranslationConfigFingerprint() !== expectedFingerprint) {
         errors[item.index] = CONFIG_CHANGED_ERROR
@@ -208,6 +281,12 @@ export async function translateEntrySegments(
         errors[item.index] =
           error instanceof Error ? error.message : String(error)
       }
+      getEventBus().send(TRANSLATION_PROGRESS_EVENT, {
+        entryId,
+        index: item.index,
+        translation: results[item.index] || '',
+        error: errors[item.index],
+      })
     }
   }
 
@@ -220,19 +299,30 @@ export async function translateEntrySegments(
 
   const configChanged = Object.values(errors).includes(CONFIG_CHANGED_ERROR)
   const hasErrors = Object.keys(errors).length > 0
+  const superseded = runId !== latestRunId && cursor < queue.length
   session = updateSession(
     session.id,
     normalizedInput,
-    configChanged ? 'config_changed' : hasErrors ? 'failed' : 'succeeded',
+    configChanged
+      ? 'config_changed'
+      : hasErrors || superseded
+        ? 'failed'
+        : 'succeeded',
     results,
     errors,
     {
-      errorCode: configChanged ? 'config_changed' : undefined,
+      errorCode: configChanged
+        ? 'config_changed'
+        : superseded
+          ? 'superseded'
+          : undefined,
       errorMessage: configChanged
         ? CONFIG_CHANGED_ERROR
         : hasErrors
           ? '部分段落翻译失败'
-          : undefined,
+          : superseded
+            ? '已切换到其他文章，翻译暂停'
+            : undefined,
       finishedAt: Date.now(),
     },
   )

@@ -92,6 +92,10 @@ export function useAITranslation(
       .then((session) => {
         if (canceled || !session) return
         const next = sessionToState(session)
+        contextRef.current ??= {
+          paragraphs: next.sourceParagraphs,
+          targetLang: session.targetLanguage,
+        }
         setTranslatedParagraphs(next.translatedParagraphs)
         setSourceParagraphs(next.sourceParagraphs)
         setErrorMap(next.errorMap)
@@ -110,6 +114,20 @@ export function useAITranslation(
     }
   }, [entryId])
 
+  // Paragraphs arrive one by one while the run is going.
+  useEffect(() => {
+    if (!entryId) return
+    return window.api.ai.onTranslationProgress((data) => {
+      if (data.entryId !== entryId || !data.translation) return
+      setTranslatedParagraphs((current) => {
+        if (current[data.index] === data.translation) return current
+        const next = [...current]
+        next[data.index] = data.translation
+        return next
+      })
+    })
+  }, [entryId])
+
   const applySession = useCallback(
     (session: EntryAITranslationSession | undefined) => {
       if (!session) return
@@ -125,8 +143,13 @@ export function useAITranslation(
   const translate = useCallback(
     async (paragraphs: string[], targetLang: string) => {
       const requestId = ++requestIdRef.current
+      const sameSource =
+        contextRef.current?.targetLang === targetLang &&
+        contextRef.current.paragraphs.length === paragraphs.length &&
+        contextRef.current.paragraphs.every((p, i) => p === paragraphs[i])
       contextRef.current = { paragraphs, targetLang }
-      setTranslatedParagraphs(paragraphs.map(() => ''))
+      // Keep what is already translated; the main process only fills gaps.
+      if (!sameSource) setTranslatedParagraphs(paragraphs.map(() => ''))
       setSourceParagraphs(paragraphs)
       setErrorMap({})
       setIsTranslating(true)
