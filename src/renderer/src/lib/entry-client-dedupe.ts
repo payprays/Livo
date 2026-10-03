@@ -9,7 +9,7 @@
 import type { Entry } from '../../../shared/types'
 import { extractInstagramAssetId } from './entry-media-url'
 
-export function getEntryClientDedupKey(entry: Entry): string {
+function getEntryClientDedupKey(entry: Entry): string {
   const candidates: string[] = [
     entry.url || '',
     entry.imageUrl || '',
@@ -27,7 +27,7 @@ export function getEntryClientDedupKey(entry: Entry): string {
   return `fallback:${entry.feedId}:${title}:${bucket}`
 }
 
-export function entryClientRichness(entry: Entry): number {
+function entryClientRichness(entry: Entry): number {
   return (
     (entry.media?.length || 0) * 400 +
     (entry.content?.length || 0) +

@@ -122,9 +122,7 @@ async function trimCodeCache(limitBytes: number): Promise<number> {
   }
 }
 
-export async function runCacheMaintenance(
-  settings: AppSettings,
-): Promise<void> {
+async function runCacheMaintenance(settings: AppSettings): Promise<void> {
   if (!settings.data.autoCleanCache) return
 
   const cacheLimitBytes =
@@ -175,7 +173,7 @@ export function startCacheMaintenance(
   return () => clearInterval(timer)
 }
 
-export const __internal = {
+const __internal = {
   getDirectorySize,
   collectFilesRecursive,
   pruneDirectoryToLimit,

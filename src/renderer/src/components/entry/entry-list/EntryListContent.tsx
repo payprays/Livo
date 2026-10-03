@@ -95,7 +95,6 @@ export function EntryListContent({
         return (
           <EntryListEmpty
             selectedFeedId={selectedFeedId}
-            activeView={activeView}
             isRefreshing={isRefreshing}
             onRefresh={onRefresh}
             lastRefreshError={lastRefreshError}

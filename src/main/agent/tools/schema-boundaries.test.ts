@@ -19,28 +19,6 @@ vi.mock('electron', () => ({
   },
 }))
 
-vi.mock('electron-store', () => ({
-  default: class MockStore {
-    private readonly values = new Map<string, unknown>()
-
-    get(key: string): unknown {
-      return this.values.get(key)
-    }
-
-    set(key: string, value: unknown): void {
-      this.values.set(key, value)
-    }
-
-    delete(key: string): void {
-      this.values.delete(key)
-    }
-
-    clear(): void {
-      this.values.clear()
-    }
-  },
-}))
-
 function toolByName(name: string): AgentTool {
   const tool = buildAllAgentTools().find((candidate) => candidate.name === name)
   if (!tool) throw new Error(`Missing test tool: ${name}`)

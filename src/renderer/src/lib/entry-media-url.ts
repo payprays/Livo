@@ -43,7 +43,7 @@ export function normalizeNitterImageUrl(url: string): string {
   }
 }
 
-export function normalizePicnobImageUrl(url: string): string {
+function normalizePicnobImageUrl(url: string): string {
   const raw = (url || '').trim()
   if (!raw) return ''
   try {
@@ -320,65 +320,4 @@ export function isDecorativeSocialImageUrl(url: string): boolean {
     // Ignore malformed URLs.
   }
   return false
-}
-
-/**
- * Convert a numeric Instagram media ID to a shortcode.
- * Instagram uses a base64 alphabet: A-Z, a-z, 0-9, -, _
- */
-function instagramIdToShortcode(instagramId: string): string {
-  const alphabet =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
-  if (!/^\d+$/.test(instagramId)) return ''
-  let value = BigInt(instagramId)
-  if (value === 0n) return alphabet[0]
-  let shortcode = ''
-  while (value > 0n) {
-    const idx = Number(value % 64n)
-    shortcode = alphabet[idx] + shortcode
-    value /= 64n
-  }
-  return shortcode
-}
-
-/**
- * Normalize an entry's URL for opening in a browser.
- * Converts picnob.com/post/ links to instagram.com/p/{shortcode}/
- * by extracting the ig_cache_key from the entry's content.
- */
-export function normalizeEntryUrlForBrowser(entry: {
-  url?: string | null
-  content?: string | null
-  summary?: string | null
-}): string {
-  const rawUrl = (entry.url || '').trim()
-  if (!rawUrl) return rawUrl
-
-  // Check if this is a picnob/mirror post URL that needs conversion
-  const isPicnobPostUrl =
-    /picnob\.com\/post\/|picnob\.info\/post\/|pixnoy\.com\/post\/|pixwox\.com\/post\/|piokok\.com\/post\//i.test(
-      rawUrl,
-    )
-
-  if (!isPicnobPostUrl) return rawUrl
-
-  // Search entry content for Instagram CDN URLs with ig_cache_key
-  const contentText = `${entry.content || ''}\n${entry.summary || ''}`
-  const urls = contentText.match(/https?:\/\/[^\s"'<>]+/g) || []
-
-  for (const candidate of urls) {
-    const igCacheKeyRaw = extractIgCacheKeyFromUrl(candidate)
-    if (!igCacheKeyRaw) continue
-    const base64Part = decodeURIComponent(igCacheKeyRaw).split('.')[0] || ''
-    if (!base64Part) continue
-    try {
-      const instagramId = atob(base64Part)
-      const shortcode = instagramIdToShortcode(instagramId)
-      if (shortcode) return `https://www.instagram.com/p/${shortcode}/`
-    } catch {
-      // Ignore invalid payload
-    }
-  }
-
-  return rawUrl
 }

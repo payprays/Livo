@@ -8,8 +8,6 @@ export const zhCNDiscover = {
   quickBundles: '一键订阅包',
   feedCount: '{{count}} 个订阅源',
   browseCategories: '浏览分类',
-  rsshubRoutes: '热门 RSSHub 路由',
-  rsshubRoutesHint: '（需要 RSSHub 实例）',
   featuredFeeds: '推荐订阅',
   curatedFeeds: '精选订阅源',
   noCategoryFeeds: '暂无该分类的推荐',

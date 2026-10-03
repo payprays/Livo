@@ -103,7 +103,7 @@ export interface AgentRunResult {
   metrics: AgentRunMetrics
 }
 
-export class AgentRunDeadlineError extends Error {
+class AgentRunDeadlineError extends Error {
   constructor(timeoutMs: number) {
     super(
       `Agent 运行超时（已达到 ${formatAgentRunTimeout(timeoutMs)} 上限）。请在「设置 > AI」调高 Run timeout，或缩短本次请求后重试。`,

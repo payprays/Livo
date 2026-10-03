@@ -8,10 +8,7 @@
  * Extracted from `discover-handlers.ts` so the search flow has a real interface
  * and a unit-test surface that doesn't require spawning an Electron IPC round-trip.
  */
-import {
-  RSSHUB_ROUTES,
-  searchCuratedFeeds,
-} from '../../../shared/discover-data'
+import { searchCuratedFeeds } from '../../../shared/discover-data'
 import { normalizeDiscoverQueryToFeedUrl } from '../../../shared/discover-helpers'
 import { resolveProfileUrlToCandidates } from '../../../shared/profile-resolver'
 import {
@@ -155,7 +152,6 @@ function appendProbeCandidatesToResults<
 
 async function collectLocalResults(
   query: string,
-  rsshubInstance: string,
 ): Promise<DiscoverSearchResult[]> {
   const results: DiscoverSearchResult[] = []
 
@@ -169,24 +165,6 @@ async function collectLocalResults(
       description: feed.description,
       source: 'curated',
       image: feed.imageUrl || '',
-    })
-  }
-
-  const q = query.toLowerCase()
-  const matchingRoutes = RSSHUB_ROUTES.filter(
-    (r) =>
-      r.name.toLowerCase().includes(q) ||
-      r.description.toLowerCase().includes(q),
-  )
-  logInfo('[discover-search] rsshub routes', matchingRoutes.length)
-  for (const route of matchingRoutes.slice(0, 20)) {
-    results.push({
-      title: route.name,
-      url: `${rsshubInstance}${route.url}`,
-      siteUrl: `${rsshubInstance}${route.url}`,
-      description: `${route.description} (RSSHub)`,
-      source: 'rsshub',
-      image: '',
     })
   }
 
@@ -371,7 +349,7 @@ export async function discoverSearch(
   const results: DiscoverSearchResult[] = []
 
   if (platform === 'all') {
-    const local = await collectLocalResults(query, rsshubInstance)
+    const local = await collectLocalResults(query)
     results.push(...local)
   }
 

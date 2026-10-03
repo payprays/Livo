@@ -19,7 +19,7 @@ const BILIBILI_DYNAMIC_ROUTE_RE = /\/bilibili\/user\/dynamic\//i
 const BILIBILI_VIDEO_ROUTE_RE = /\/bilibili\/user\/video\//i
 
 // Default refresh timeout for ordinary feeds (overridden per slow route below).
-export const DEFAULT_FEED_REFRESH_TIMEOUT_MS = 12000
+const DEFAULT_FEED_REFRESH_TIMEOUT_MS = 12000
 
 export type FeedRouteKind =
   | 'instagram-user'
@@ -108,7 +108,7 @@ export function classifyFeedRoute(url: string | undefined): FeedRouteKind {
   return 'generic'
 }
 
-export function getFeedRoutePolicy(url: string | undefined): FeedRoutePolicy {
+function getFeedRoutePolicy(url: string | undefined): FeedRoutePolicy {
   return ROUTE_POLICIES[classifyFeedRoute(url)]
 }
 
@@ -117,11 +117,11 @@ export function isInstagramUserFeedUrl(url: string | undefined): boolean {
   return isInstagramUserRouteUrl(url || '')
 }
 
-export function isTwitterUserFeedUrl(url: string | undefined): boolean {
+function isTwitterUserFeedUrl(url: string | undefined): boolean {
   return TWITTER_USER_ROUTE_RE.test(lower(url))
 }
 
-export function isNitterUserFeedUrl(url: string | undefined): boolean {
+function isNitterUserFeedUrl(url: string | undefined): boolean {
   try {
     const parsed = new URL(url || '')
     return (
@@ -133,7 +133,7 @@ export function isNitterUserFeedUrl(url: string | undefined): boolean {
   }
 }
 
-export function isBilibiliDynamicFeedUrl(url: string | undefined): boolean {
+function isBilibiliDynamicFeedUrl(url: string | undefined): boolean {
   return BILIBILI_DYNAMIC_ROUTE_RE.test(lower(url))
 }
 

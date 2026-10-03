@@ -3,7 +3,6 @@ import { GlobalShortcutsProvider } from './GlobalShortcutsProvider'
 import { OverlayStackProvider } from './OverlayStackProvider'
 import { QueryVisibilityRefreshProvider } from './QueryVisibilityRefreshProvider'
 import { UpdateCheckProvider } from './UpdateCheckProvider'
-import { PerformanceMetricsProvider } from './PerformanceMetricsProvider'
 
 export function DeferredAppProviders() {
   return (
@@ -11,9 +10,7 @@ export function DeferredAppProviders() {
       <AppCommandProvider>
         <GlobalShortcutsProvider>
           <QueryVisibilityRefreshProvider>
-            <UpdateCheckProvider>
-              <PerformanceMetricsProvider />
-            </UpdateCheckProvider>
+            <UpdateCheckProvider />
           </QueryVisibilityRefreshProvider>
         </GlobalShortcutsProvider>
       </AppCommandProvider>

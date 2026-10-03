@@ -10,7 +10,7 @@ import {
   resolveDiscoverSubscribeConfig,
   resolveDiscoverSubscribeUrl,
   type DiscoverSubscribeTarget,
-} from '../../lib/discover-subscribe-config'
+} from '../../../../shared/discover-target-resolution'
 import { shouldPreserveExplicitDiscoverView } from '../../lib/discover-search'
 import { ROUTES } from '../../router/route-paths'
 import { useFeedStore } from '../../store/feed-store'

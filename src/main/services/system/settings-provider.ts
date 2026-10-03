@@ -146,7 +146,7 @@ function encodeSettingsForDisk(settings: AppSettings): AppSettings {
   return stored
 }
 
-export class SettingsProvider {
+class SettingsProvider {
   private current: AppSettings | null = null
 
   private readonly listeners = new Set<SettingsChangeListener>()

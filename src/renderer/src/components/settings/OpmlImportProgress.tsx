@@ -3,10 +3,10 @@ import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { useFeedStore } from '../../store/feed-store'
 
 /** Maximum number of feeds to auto-refresh after import. */
-export const OPML_IMPORT_AUTO_REFRESH_LIMIT = 8
+const OPML_IMPORT_AUTO_REFRESH_LIMIT = 8
 
 /** Hint shown when the import is too large for auto-refresh. */
-export const OPML_IMPORT_LARGE_BATCH_HINT_KEY = 'opml.largeBatchHint'
+const OPML_IMPORT_LARGE_BATCH_HINT_KEY = 'opml.largeBatchHint'
 
 interface OpmlImportProgressProps {
   importedFeedIds?: string[]

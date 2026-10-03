@@ -1,19 +1,10 @@
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import { QueryClient } from '@tanstack/react-query'
-import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-client'
 
 const DEFAULT_STALE_TIME_MS = 30_000
 const DEFAULT_GC_TIME_MS = 5 * 60_000
-const QUERY_PERSIST_KEY = 'livo.react-query-cache.v1'
-const QUERY_PERSIST_MAX_AGE_MS = 12 * 60 * 60 * 1000
 const DO_NOT_RETRY_STATUS_CODES = new Set([400, 401, 403, 404, 422])
 
 let rendererQueryClient: QueryClient | null = null
-let rendererPersistOptions: Omit<
-  PersistQueryClientOptions,
-  'queryClient'
-> | null = null
-let rendererPersistOptionsInitialized = false
 
 declare module '@tanstack/react-query' {
   interface Register {
@@ -69,38 +60,4 @@ export function getRendererQueryClient(): QueryClient {
   }
 
   return rendererQueryClient
-}
-
-export function getRendererPersistOptions(): Omit<
-  PersistQueryClientOptions,
-  'queryClient'
-> | null {
-  if (rendererPersistOptionsInitialized) {
-    return rendererPersistOptions
-  }
-  rendererPersistOptionsInitialized = true
-
-  if (typeof window === 'undefined') {
-    rendererPersistOptions = null
-    return rendererPersistOptions
-  }
-
-  rendererPersistOptions = {
-    persister: createSyncStoragePersister({
-      storage: window.localStorage,
-      key: QUERY_PERSIST_KEY,
-    }),
-    maxAge: QUERY_PERSIST_MAX_AGE_MS,
-    dehydrateOptions: {
-      shouldDehydrateQuery: (query) => {
-        if (!query.meta?.persist) return false
-        if (query.state.status !== 'success') return false
-
-        const data = query.state.data as { pages?: unknown[] } | undefined
-        return !Array.isArray(data?.pages)
-      },
-    },
-  }
-
-  return rendererPersistOptions
 }

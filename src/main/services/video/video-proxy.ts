@@ -28,8 +28,6 @@ import {
 } from '@shared/video-url'
 import { assertNetworkFetchUrl } from '../system/network-url-policy'
 
-export { extractYouTubeId }
-
 export interface VideoResolveResult {
   success: boolean
   /** Direct video URL playable in <video> tag */

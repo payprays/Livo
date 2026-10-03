@@ -17,7 +17,7 @@ export interface EntryInlineTaskStatusItem {
   canOpenSettings: boolean
 }
 
-export function isAIConfigError(error: string | undefined): boolean {
+function isAIConfigError(error: string | undefined): boolean {
   const normalized = (error || '').toLowerCase()
   return (
     normalized.includes('api key') ||

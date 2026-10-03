@@ -5,7 +5,7 @@ import {
   buildCachedWideViewBaseEntries,
   buildCachedWideViewEntryModel,
 } from '../lib/wide-view-entry-model'
-import { RECOMMENDED_CATEGORY } from './useInitRecommendedFeeds'
+import { RECOMMENDED_CATEGORY } from '../store/feed-store'
 import { useAsyncSocialDedupe } from './useAsyncSocialDedupe'
 
 export function useWideViewEntries({

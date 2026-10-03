@@ -42,8 +42,6 @@ export const enSettings = {
   refresh_6hours: 'Every 6 hours',
   markReadOnScroll: 'Mark as read on scroll',
   markReadOnScrollDesc: 'Automatically mark articles as read when selected',
-  hoverMarkAsRead: 'Mark as read on hover',
-  hoverMarkAsReadDesc: 'Automatically mark articles as read when hovering',
   autoExpandLongSocialMedia: 'Expand long social media',
   autoExpandLongSocialMediaDesc:
     'Automatically expand long content in social media view',
@@ -51,9 +49,6 @@ export const enSettings = {
   dimReadDesc: 'Make read entries appear dimmer to highlight unread',
   groupByDate: 'Group by date',
   groupByDateDesc: 'Group entries by date in timeline view',
-  renderMarkAsRead: 'Mark as read on view',
-  renderMarkAsReadDesc:
-    'Automatically mark entries as read when scrolled into viewport (wide mode)',
   videoPagination: 'Video Pagination',
   videoPaginationDesc:
     'Use pagination instead of infinite scroll in Videos view',

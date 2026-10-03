@@ -214,7 +214,7 @@ export function cloneDefaultSettings(): AppSettings {
   return JSON.parse(JSON.stringify(DEFAULT_SETTINGS)) as AppSettings
 }
 
-export function isLegacyDefaultSystemPromptTemplate(
+function isLegacyDefaultSystemPromptTemplate(
   value: string | undefined,
 ): boolean {
   if (!value) return false

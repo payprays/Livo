@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 /** Target/output language options shared by the AI feature cards. */
-export const AI_LANGUAGE_OPTIONS: Array<{ value: string; label: string }> = [
+const AI_LANGUAGE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'zh-CN', label: '简体中文' },
   { value: 'zh-TW', label: '繁體中文' },
   { value: 'en', label: 'English' },

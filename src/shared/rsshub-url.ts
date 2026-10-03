@@ -109,17 +109,6 @@ export function normalizeFeedUrl(
   return normalizeRsshubProtocolUrl(limited, rsshubInstance)
 }
 
-/**
- * Like normalizeFeedUrl but without limit injection — used for legacy URL matching.
- */
-export function normalizeFeedUrlNoLimits(
-  rawUrl: string,
-  rsshubInstance: string,
-): string {
-  const rsshub = toRsshubProtocolUrl(rawUrl)
-  return normalizeRsshubProtocolUrl(rsshub, rsshubInstance)
-}
-
 export function ensureTwitterUserFeedLimit(
   rawUrl: string,
   limit = 120,

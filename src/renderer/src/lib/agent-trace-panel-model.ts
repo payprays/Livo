@@ -38,7 +38,7 @@ export function agentTraceStatusColor(status: TraceStatus): string {
   return 'var(--text-tertiary)'
 }
 
-export function agentTraceDurationMs(
+function agentTraceDurationMs(
   trace: Pick<AgentTraceRecord, 'startedAt' | 'completedAt'>,
 ): number | null {
   if (trace.startedAt <= 0 || trace.completedAt <= 0) return null

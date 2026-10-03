@@ -16,7 +16,7 @@ import { getIpcHandler, toIpcError } from '../../ipc/register-channel'
 import { addEventSink, getEventBus } from '../system/event-bus'
 import { logError, logInfo, logWarn } from '../system/logger'
 
-export const DEFAULT_LOCAL_API_PORT = 27412
+const DEFAULT_LOCAL_API_PORT = 27412
 const MAX_BODY_BYTES = 10 * 1024 * 1024
 const SSE_PING_MS = 25_000
 const LOCAL_ORIGIN = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/

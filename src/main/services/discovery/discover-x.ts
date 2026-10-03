@@ -33,10 +33,7 @@ export const FALLBACK_NITTER_INSTANCES = [
   'https://nitter.privacydev.net',
   'https://nitter.d420.de',
 ]
-
-const X_AVATAR_CACHE_TTL = 10 * 60 * 1000
 const X_FOLLOWER_CACHE_TTL = 10 * 60 * 1000
-const xAvatarCache = new Map<string, { expiresAt: number; image: string }>()
 const xFollowerCache = new Map<
   string,
   { expiresAt: number; followers?: string }
@@ -58,35 +55,6 @@ export function extractLikelyXHandleFromKeywords(query: string): string | null {
   if (!compact) return null
   if (!/^[a-zA-Z0-9_]{1,15}$/.test(compact)) return null
   return compact
-}
-
-export async function fetchXAvatarByUsername(
-  username: string,
-): Promise<string> {
-  const clean = extractLikelyXHandle(username)
-  if (!clean) return ''
-  const now = Date.now()
-  const cached = xAvatarCache.get(clean.toLowerCase())
-  if (cached && cached.expiresAt > now) return cached.image
-  try {
-    const profileUrl = `https://x.com/${encodeURIComponent(clean)}`
-    // Use session fetch to respect proxy settings
-    const res = await discoveryFetch(profileUrl)
-    if (!res?.ok) return ''
-    const html = await res.text()
-    const raw =
-      extractOgMeta(html, 'og:image') || extractOgMeta(html, 'twitter:image')
-    const decoded = decodeBasicHtmlEntities(raw)
-    if (!/^https?:\/\//i.test(decoded)) return ''
-    const image = decoded.replace(/_normal(\.[a-z0-9]+)(\?.*)?$/i, '$1')
-    xAvatarCache.set(clean.toLowerCase(), {
-      expiresAt: now + X_AVATAR_CACHE_TTL,
-      image,
-    })
-    return image
-  } catch {
-    return ''
-  }
 }
 
 export async function fetchXDisplayNameByUsername(
@@ -182,7 +150,7 @@ async function fetchXFollowersViaJinaNode(
   return undefined
 }
 
-export async function _fetchXFollowersByUsername(
+async function _fetchXFollowersByUsername(
   usernameRaw: string,
 ): Promise<string | undefined> {
   const username = usernameRaw.trim().replace(/^@+/, '')

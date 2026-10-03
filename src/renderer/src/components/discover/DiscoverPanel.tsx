@@ -16,7 +16,7 @@ import {
   shouldImmediatelySubmitDiscoverSearch,
 } from '../../lib/discover-search'
 import { inferDiscoverFeedViewFromUrl } from '../../lib/discover-feed'
-import { canonicalizeDiscoverRoute } from '../../lib/discover-subscribe-config'
+import { canonicalizeDiscoverRoute } from '../../../../shared/discover-target-resolution'
 import { useDiscoverStore } from '../../store/discover-store'
 import { useFeedStore } from '../../store/feed-store'
 import { useEntryStore } from '../../store/entry-store'

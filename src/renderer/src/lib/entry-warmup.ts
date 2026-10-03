@@ -16,7 +16,7 @@ export interface EntryWarmupRequest {
   }
 }
 
-export const ENTRY_WARMUP_VIEWS = [
+const ENTRY_WARMUP_VIEWS = [
   FeedViewType.SocialMedia,
   FeedViewType.Videos,
   FeedViewType.Pictures,

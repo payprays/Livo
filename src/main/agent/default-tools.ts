@@ -110,10 +110,6 @@ export function buildAllAgentTools(): AgentTool[] {
 
 agentToolRegistryProvider.setBuilder(buildAllAgentTools)
 
-export function buildDefaultAgentToolRegistry(): AgentToolRegistry {
-  return agentToolRegistryProvider.full()
-}
-
 export function buildAllowedAgentToolRegistry(
   permissions?: AgentPermissionSettings,
 ): AgentToolRegistry {

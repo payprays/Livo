@@ -254,7 +254,7 @@ export const DEFAULT_SHORTCUTS: ShortcutDefinition[] = [
   },
 ]
 
-export function parseKeyCombo(keys: string): {
+function parseKeyCombo(keys: string): {
   ctrl: boolean
   shift: boolean
   alt: boolean

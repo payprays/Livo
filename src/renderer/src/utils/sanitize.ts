@@ -9,11 +9,7 @@
  * - Strips data: URLs except for images
  * - Removes dangerous CSS properties
  */
-import {
-  createExternalUrlWarning,
-  isAllowedHtmlUrl,
-  isExternalHttpUrl,
-} from '../../../shared/url-policy'
+import { isAllowedHtmlUrl } from '../../../shared/url-policy'
 import {
   isAllowedPlaybackMediaSrcset,
   isAllowedPlaybackMediaUrl,
@@ -313,24 +309,4 @@ function isAllowedIframeSrc(src: string): boolean {
   } catch {
     return false
   }
-}
-
-/**
- * Check if a URL appears to be external (different domain).
- * Used for external link warnings.
- */
-export function isExternalUrl(url: string): boolean {
-  return isExternalHttpUrl(url)
-}
-
-/**
- * Show an external link warning before navigating.
- * Returns the URL if user confirms, null if cancelled.
- */
-export function createExternalLinkWarning(url: string): {
-  url: string
-  hostname: string
-  isSuspicious: boolean
-} {
-  return createExternalUrlWarning(url)
 }

@@ -3,7 +3,7 @@ import { useEntryStore } from '../store/entry-store'
 import { useFeedStore } from '../store/feed-store'
 import { useStoreShallow } from '../store/helpers'
 import { useGeneralSettingKey } from '../store/settings-store'
-import { RECOMMENDED_CATEGORY } from './useInitRecommendedFeeds'
+import { RECOMMENDED_CATEGORY } from '../store/feed-store'
 import { useStableHomeFeedLoadOptions } from './useStableHomeFeedLoadOptions'
 import { getEntryLoadLimit } from '../lib/entry-load-limit'
 import {

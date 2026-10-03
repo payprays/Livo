@@ -4,7 +4,7 @@
  */
 
 /** Social media timeline item skeleton. */
-export function SocialMediaItemSkeleton() {
+function SocialMediaItemSkeleton() {
   return (
     <div className="mx-auto max-w-[clamp(45ch,60vw,65ch)] pl-4 pr-3">
       <div className="flex animate-pulse py-4">
@@ -38,7 +38,7 @@ export function SocialMediaItemSkeleton() {
 }
 
 /** Article list item skeleton */
-export function ArticleItemSkeleton() {
+function ArticleItemSkeleton() {
   return (
     <div className="border-surface-secondary dark:border-surface-dark-tertiary w-full animate-pulse border-b px-4 py-3.5">
       <div className="flex items-start gap-3">
@@ -59,7 +59,7 @@ export function ArticleItemSkeleton() {
 }
 
 /** Grid card skeleton for media/video views */
-export function GridCardSkeleton() {
+function GridCardSkeleton() {
   return (
     <div className="bg-surface-secondary dark:bg-surface-dark-secondary animate-pulse overflow-hidden rounded-xl">
       <div className="bg-surface-tertiary dark:bg-surface-dark-tertiary aspect-[4/3]" />

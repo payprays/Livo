@@ -23,7 +23,7 @@ export const DISCOVERY_CHROME_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
 /** Default HTML request headers used by HTML-scraping probes. */
-export const DISCOVERY_HTML_HEADERS: Record<string, string> = {
+const DISCOVERY_HTML_HEADERS: Record<string, string> = {
   'User-Agent': DISCOVERY_CHROME_UA,
   Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
   'Accept-Language': 'en-US,en;q=0.5',
@@ -60,7 +60,7 @@ export type DiscoveryFetch = (
 ) => Promise<DiscoveryFetchResponse>
 
 /** The default fetch: Electron session fetch, resolved lazily per call. */
-export const defaultDiscoveryFetch: DiscoveryFetch = (url, init) =>
+const defaultDiscoveryFetch: DiscoveryFetch = (url, init) =>
   session.defaultSession.fetch(
     url,
     init as RequestInit,

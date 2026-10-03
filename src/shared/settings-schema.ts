@@ -52,11 +52,9 @@ export interface AppSettings {
     thumbnailRatio: 'square' | 'original'
     customCSS: string
     contentMaxWidth: number
-    hoverMarkAsRead: boolean
     autoExpandLongSocialMedia: boolean
     dimRead: boolean
     groupByDate: boolean
-    renderMarkAsRead: boolean
     imageProxy: boolean
     showRecommended: boolean
     showFeedRefreshErrorBadge: boolean
@@ -151,11 +149,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     thumbnailRatio: 'square',
     customCSS: '',
     contentMaxWidth: 680,
-    hoverMarkAsRead: false,
     autoExpandLongSocialMedia: false,
     dimRead: true,
     groupByDate: true,
-    renderMarkAsRead: true,
     imageProxy: false,
     showRecommended: true,
     showFeedRefreshErrorBadge: true,

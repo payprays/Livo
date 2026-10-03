@@ -19,7 +19,7 @@ const TRUSTED_TOOL_NAMES = new Set([
   'list_builtin_feeds',
 ])
 
-export function isTrustedAgentToolResultSource(toolName: string): boolean {
+function isTrustedAgentToolResultSource(toolName: string): boolean {
   return TRUSTED_TOOL_NAMES.has(toolName)
 }
 

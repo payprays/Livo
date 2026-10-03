@@ -23,7 +23,7 @@ import { openExternalUrlSafe } from '../../services/external-url'
 import { isAllowedPlaybackMediaUrl } from '../../lib/media-source-policy'
 import { decodeHtmlEntities } from '@shared/discover-helpers'
 
-export const PAUSE_INLINE_VIDEOS_EVENT = 'livo:pause-inline-videos'
+const PAUSE_INLINE_VIDEOS_EVENT = 'livo:pause-inline-videos'
 
 export function pauseInlineVideos() {
   window.dispatchEvent(new Event(PAUSE_INLINE_VIDEOS_EVENT))

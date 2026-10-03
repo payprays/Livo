@@ -7,7 +7,7 @@ import {
   findDiscoverSubscribeFeed,
   parseDiscoverSubscribeTarget,
   resolveDiscoverSubscribeUrl,
-} from './discover-subscribe-config'
+} from '../../../shared/discover-target-resolution'
 
 function feed(
   overrides: Partial<FeedWithCount> & Pick<FeedWithCount, 'id' | 'url'>,

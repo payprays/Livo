@@ -52,7 +52,7 @@ function createProxyUrl(
  * - Resize to 2x display density
  * - Privacy (origin server doesn't see user's IP)
  */
-export function getProxiedImageUrl(
+function getProxiedImageUrl(
   originalUrl: string,
   options?: {
     width?: number
@@ -114,14 +114,4 @@ export function getThumbnailUrl(originalUrl: string, size = 80): string {
     height: size,
     quality: 80,
   })
-}
-
-/**
- * Get a gallery-quality proxy URL for social media photos.
- */
-export function getGalleryImageUrl(
-  originalUrl: string,
-  maxWidth = 600,
-): string {
-  return getProxiedImageUrl(originalUrl, { width: maxWidth, quality: 85 })
 }

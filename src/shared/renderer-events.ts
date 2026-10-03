@@ -112,7 +112,7 @@ export type RendererEventCallback<C extends RendererEventChannel> = (
   ...args: RendererEventArgs<C>
 ) => void
 
-export const RENDERER_EVENT_CHANNELS = [
+const RENDERER_EVENT_CHANNELS = [
   'app:command',
   'app:deep-link',
   'app:update-state',

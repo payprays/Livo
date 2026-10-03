@@ -1,7 +1,6 @@
 import {
   DISCOVER_CATEGORIES,
   CURATED_FEEDS,
-  RSSHUB_ROUTES,
   DEFAULT_RSSHUB_INSTANCE,
 } from '../../shared/discover-data'
 import {
@@ -95,18 +94,6 @@ export function registerDiscoverHandlers(): void {
     (_event, query: string, platform: DiscoverSearchPlatform = 'all') =>
       discoverSearch(query, platform, getRSSHubInstance()),
   )
-
-  // Get RSSHub routes - prepend instance URL to make them subscribable
-  registerChannel(IPC.DISCOVER_RSSHUB_ROUTES, (_event, category?: string) => {
-    const routes = category
-      ? RSSHUB_ROUTES.filter((r) => r.category === category)
-      : RSSHUB_ROUTES
-    const instance = getRSSHubInstance()
-    return routes.map((r) => ({
-      ...r,
-      url: `${instance}${r.url}`,
-    }))
-  })
 
   // Get RSSHub instance config
   registerChannel(IPC.DISCOVER_RSSHUB_INSTANCE, () => {

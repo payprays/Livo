@@ -104,7 +104,7 @@ export interface SelectedStream {
 }
 
 /** Parse a quality string like "720p" into a numeric height for comparison. */
-export function qualityToNumber(quality: string | undefined): number {
+function qualityToNumber(quality: string | undefined): number {
   const match = (quality || '').match(/(\d+)/)
   return match ? Number.parseInt(match[1], 10) : 0
 }

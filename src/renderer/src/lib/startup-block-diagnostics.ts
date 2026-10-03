@@ -112,31 +112,6 @@ export function recordStartupReactProfiler(
   )
 }
 
-export async function traceStartupChunk<T>(
-  name: string,
-  loader: () => Promise<T>,
-): Promise<T> {
-  const start = performance.now()
-  recordStartupBlockEvent(`${name}.chunkStart`)
-
-  try {
-    const result = await loader()
-    recordStartupBlockEvent(
-      `${name}.chunkLoaded`,
-      undefined,
-      performance.now() - start,
-    )
-    return result
-  } catch (error) {
-    recordStartupBlockEvent(
-      `${name}.chunkFailed`,
-      error instanceof Error ? error.message : String(error),
-      performance.now() - start,
-    )
-    throw error
-  }
-}
-
 export function startStartupBlockDiagnostics(): void {
   if (session || typeof window === 'undefined') return
 

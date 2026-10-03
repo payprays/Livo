@@ -22,24 +22,6 @@ export type AIAssistRunStatus =
   | 'partial'
   | 'error'
 
-const LANGUAGE_LABELS: Record<string, string> = {
-  'zh-CN': '简体中文',
-  'zh-TW': '繁體中文',
-  en: 'English',
-  ja: '日本語',
-  ko: '한국어',
-  fr: 'Français',
-  de: 'Deutsch',
-  es: 'Español',
-  ru: 'Русский',
-  ar: 'العربية',
-}
-
-/** Human-readable label for an AI target language code. */
-export function aiLanguageLabel(language: string): string {
-  return LANGUAGE_LABELS[language] ?? language
-}
-
 export interface ArticleAIAssistInput {
   /** Active entry id — when it changes, all AI state resets. */
   entryId?: string

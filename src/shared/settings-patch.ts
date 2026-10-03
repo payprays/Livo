@@ -309,11 +309,9 @@ const generalSettingsPatchSchema: Record<string, FieldSanitizer> = {
   customCSS: (value, field) =>
     sanitizeString(value, field, SETTINGS_PATCH_CUSTOM_CSS_MAX_LENGTH),
   contentMaxWidth: sanitizeNumber,
-  hoverMarkAsRead: sanitizeBoolean,
   autoExpandLongSocialMedia: sanitizeBoolean,
   dimRead: sanitizeBoolean,
   groupByDate: sanitizeBoolean,
-  renderMarkAsRead: sanitizeBoolean,
   imageProxy: sanitizeBoolean,
   showRecommended: sanitizeBoolean,
   showFeedRefreshErrorBadge: sanitizeBoolean,

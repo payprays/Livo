@@ -35,7 +35,7 @@ export function getRememberedImageMetadata(
   return imageMetadataByUrl.get(normalizeImageMetadataCacheKey(url))
 }
 
-export function hasRememberedImageMetadata(url: string): boolean {
+function hasRememberedImageMetadata(url: string): boolean {
   return !!getRememberedImageMetadata(url)
 }
 
@@ -65,7 +65,7 @@ export function loadPersistedImageMetadata(): void {
   }
 }
 
-export function schedulePersistedImageMetadata(): void {
+function schedulePersistedImageMetadata(): void {
   if (typeof window === 'undefined') return
   if (persistImageMetadataTimer !== null) {
     window.clearTimeout(persistImageMetadataTimer)

@@ -48,10 +48,6 @@ export function getIpcHandler(channel: IpcChannel): AnyIpcHandler | undefined {
   return handlers.get(channel)
 }
 
-export function listIpcChannels(): IpcChannel[] {
-  return [...handlers.keys()]
-}
-
 export function registerChannel<C extends IpcChannel, R>(
   channel: C,
   handler: IpcHandler<C, R>,

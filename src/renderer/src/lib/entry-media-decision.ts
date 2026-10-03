@@ -50,7 +50,7 @@ let mediaSrcCacheLoaded = false
 let mediaSrcCacheSaveTimer: number | null = null
 
 /** 返回解码后的媒体项，保留 previewUrl 的镜像/代理语义用于渲染。 */
-export function decodeMediaUrls(m: MediaItem): MediaItem {
+function decodeMediaUrls(m: MediaItem): MediaItem {
   return {
     ...m,
     url: decodeMediaUrl(m.url),

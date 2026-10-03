@@ -23,7 +23,6 @@ import { isAllowedPlaybackMediaUrl } from '../../lib/media-source-policy'
 // `AudioMiniBar.tsx`. Re-exported here for backwards-compatible import paths.
 export { usePlayerStore } from '../../store/player-store'
 export type { PlayOptions, AudioTrack } from '../../store/player-store'
-export { AudioMiniBar as CornerPlayer } from './AudioMiniBar'
 
 /** Transform a video URL into an embeddable iframe URL. */
 export function transformVideoUrl(url: string): string | null {
@@ -66,11 +65,6 @@ export function transformVideoUrl(url: string): string | null {
   }
 
   return null
-}
-
-/** Check if a URL is a known video platform */
-export function isVideoUrl(url: string): boolean {
-  return transformVideoUrl(url) !== null
 }
 
 export function VideoPlayer({

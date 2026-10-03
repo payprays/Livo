@@ -17,7 +17,7 @@ export function addEventSink(sink: EventSink): () => void {
 }
 
 /** Sends events to all open BrowserWindows and registered sinks. */
-export function createBrowserWindowEventBus(): EventBus {
+function createBrowserWindowEventBus(): EventBus {
   return {
     send(channel: string, ...args: unknown[]) {
       for (const win of BrowserWindow.getAllWindows()) {
@@ -36,11 +36,6 @@ let _instance: EventBus | null = null
 export function getEventBus(): EventBus {
   if (!_instance) _instance = createBrowserWindowEventBus()
   return _instance
-}
-
-/** Override the default event bus (useful for testing). */
-export function setEventBus(bus: EventBus): void {
-  _instance = bus
 }
 
 /** Convenience wrapper around `getEventBus().send` for the common (channel, payload) shape. */

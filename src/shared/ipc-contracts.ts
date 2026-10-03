@@ -98,7 +98,6 @@ export const IPC = {
   DISCOVER_CATEGORIES: 'discover:categories',
   DISCOVER_POPULAR: 'discover:popular',
   DISCOVER_SEARCH: 'discover:search',
-  DISCOVER_RSSHUB_ROUTES: 'discover:rsshub-routes',
   DISCOVER_RSSHUB_INSTANCE: 'discover:rsshub-instance',
   DISCOVER_VALIDATE_FEED: 'discover:validate-feed',
   DISCOVER_PREVIEW_FEED: 'discover:preview-feed',
@@ -332,7 +331,6 @@ export type IpcArgsByChannel = {
     query: string,
     platform?: 'all' | 'youtube' | 'bilibili' | 'x' | 'instagram',
   ]
-  [IPC.DISCOVER_RSSHUB_ROUTES]: [category?: string]
   [IPC.DISCOVER_RSSHUB_INSTANCE]: []
   [IPC.DISCOVER_VALIDATE_FEED]: [url: string]
   [IPC.DISCOVER_PREVIEW_FEED]: [url: string]
@@ -1140,7 +1138,7 @@ function validateReaderSnapshotInput(value: unknown): void {
   })
 }
 
-export const IPC_CONTRACTS = {
+const IPC_CONTRACTS = {
   [IPC.FEED_ADD]: {
     channel: IPC.FEED_ADD,
     validateArgs: (args) => {
@@ -1448,10 +1446,6 @@ export const IPC_CONTRACTS = {
       return args as IpcArgs<typeof IPC.DISCOVER_SEARCH>
     },
   },
-  [IPC.DISCOVER_RSSHUB_ROUTES]: optionalString(
-    IPC.DISCOVER_RSSHUB_ROUTES,
-    'category',
-  ),
   [IPC.DISCOVER_RSSHUB_INSTANCE]: noArgs(IPC.DISCOVER_RSSHUB_INSTANCE),
   [IPC.DISCOVER_VALIDATE_FEED]: oneString(IPC.DISCOVER_VALIDATE_FEED, 'url'),
   [IPC.DISCOVER_PREVIEW_FEED]: oneString(IPC.DISCOVER_PREVIEW_FEED, 'url'),
@@ -1743,8 +1737,4 @@ export function validateIpcArgs<C extends IpcChannel>(
   args: unknown[],
 ): IpcArgs<C> {
   return IPC_CONTRACTS[channel].validateArgs(args) as IpcArgs<C>
-}
-
-export function isIpcChannel(value: unknown): value is IpcChannel {
-  return typeof value === 'string' && value in IPC_CONTRACTS
 }

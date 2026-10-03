@@ -112,13 +112,11 @@ export function getSettingsSnapshot(): AppSettings {
   return useSettingsStore.getState().settings
 }
 
-export function useSettingsSelector<T>(selector: SettingsSelector<T>): T {
+function useSettingsSelector<T>(selector: SettingsSelector<T>): T {
   return useSettingsStore((state) => selector(state.settings))
 }
 
-export function useSettingsShallowSelector<T>(
-  selector: SettingsSelector<T>,
-): T {
+function useSettingsShallowSelector<T>(selector: SettingsSelector<T>): T {
   return useStoreShallow(useSettingsStore, (state) => selector(state.settings))
 }
 
@@ -134,12 +132,6 @@ export function useGeneralSettingKey<K extends keyof AppSettings['general']>(
   return useSettingsSelector((settings) => settings.general[key])
 }
 
-export function useGeneralSettingsSelector<T>(
-  selector: (general: AppSettings['general']) => T,
-): T {
-  return useSettingsSelector((settings) => selector(settings.general))
-}
-
 export function useGeneralSettingsShallowSelector<T>(
   selector: (general: AppSettings['general']) => T,
 ): T {
@@ -152,24 +144,10 @@ export function useAISettingKey<K extends keyof AppSettings['ai']>(
   return useSettingsSelector((settings) => settings.ai[key])
 }
 
-export function useAISettingsShallowSelector<T>(
-  selector: (ai: AppSettings['ai']) => T,
-): T {
-  return useSettingsShallowSelector((settings) => selector(settings.ai))
-}
-
 export function useTranslationSettingKey<
   K extends keyof AppSettings['translation'],
 >(key: K): AppSettings['translation'][K] {
   return useSettingsSelector((settings) => settings.translation[key])
-}
-
-export function useTranslationSettingsShallowSelector<T>(
-  selector: (translation: AppSettings['translation']) => T,
-): T {
-  return useSettingsShallowSelector((settings) =>
-    selector(settings.translation),
-  )
 }
 
 export function useSettingsActions() {

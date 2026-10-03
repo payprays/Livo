@@ -1,11 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, Inbox, RefreshCw } from 'lucide-react'
-import { ViewRecommendations } from '../ViewRecommendations'
-import type { FeedViewType } from '../../../../../shared/types'
 
 interface EntryListEmptyProps {
   selectedFeedId: string | null
-  activeView: FeedViewType | null
   isRefreshing: boolean
   onRefresh: () => void
   lastRefreshError?: string | null
@@ -17,7 +14,6 @@ interface EntryListEmptyProps {
  */
 export function EntryListEmpty({
   selectedFeedId,
-  activeView,
   isRefreshing,
   onRefresh,
   lastRefreshError,
@@ -46,11 +42,6 @@ export function EntryListEmpty({
         </button>
       </div>
     )
-  }
-
-  // Active view with no entries - show view-specific recommendations
-  if (activeView !== null) {
-    return <ViewRecommendations viewType={activeView} />
   }
 
   // Global empty state - prompt to add feeds

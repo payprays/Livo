@@ -233,24 +233,6 @@ export function GeneralSettings() {
         />
       </div>
 
-      {/* Render mark as read */}
-      <div className="flex items-center justify-between">
-        <div>
-          <label className="text-sm font-medium">
-            {t('settings.renderMarkAsRead')}
-          </label>
-          <p className="text-text-secondary dark:text-text-dark-secondary mt-0.5 text-xs">
-            {t('settings.renderMarkAsReadDesc')}
-          </p>
-        </div>
-        <ToggleSwitch
-          checked={general.renderMarkAsRead}
-          onChange={(v) =>
-            void updateSettingsSection('general', { renderMarkAsRead: v })
-          }
-        />
-      </div>
-
       {/* Video pagination */}
       <div className="flex items-center justify-between">
         <div>

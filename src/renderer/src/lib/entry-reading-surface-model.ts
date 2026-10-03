@@ -106,7 +106,7 @@ export function buildCachedEntryReadingSurfaceScopeModel<TFeed extends Feed>(
   return model
 }
 
-export function buildEntryReadingSurfaceEntries(input: {
+function buildEntryReadingSurfaceEntries(input: {
   entries: Entry[]
   feedById: Map<string, Feed>
   recommendedFeedIds: Set<string>

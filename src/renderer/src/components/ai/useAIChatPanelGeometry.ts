@@ -31,7 +31,7 @@ function viewportFromWindow(): PanelViewport {
   return { width: window.innerWidth, height: window.innerHeight }
 }
 
-export function loadPanelRatio(): PanelRatio | null {
+function loadPanelRatio(): PanelRatio | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) return JSON.parse(raw) as PanelRatio
@@ -41,7 +41,7 @@ export function loadPanelRatio(): PanelRatio | null {
   return null
 }
 
-export function savePanelRatio(ratio: PanelRatio): void {
+function savePanelRatio(ratio: PanelRatio): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ratio))
 }
 

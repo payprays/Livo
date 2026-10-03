@@ -34,7 +34,7 @@ function stripInvalidXmlControlCharacters(input: string): string {
  * Lenient RSS parser that attempts to handle malformed XML.
  * Falls back to string manipulation when strict parsing fails.
  */
-export class LenientRssParser extends RssParser {
+class LenientRssParser extends RssParser {
   /**
    * Attempt to fix common XML issues before parsing
    */

@@ -1,4 +1,3 @@
-import type { SyntheticEvent } from 'react'
 import type { Entry, MediaItem } from '../../../shared/types'
 import {
   canonicalizeSocialUrl,
@@ -6,10 +5,8 @@ import {
   extractFirstNonMediaUrl,
 } from './social-url'
 import { sanitizeHTML } from '../utils/sanitize'
-import { getImageProxyFallbackUrls } from './image-proxy'
 import { transformVideoUrl } from '../components/media/MediaPlayer'
 import {
-  decodeHtmlEntitiesUrl,
   decodeMediaUrl,
   extractIgCacheKeyFromUrl,
   extractInstagramAssetId,
@@ -96,7 +93,7 @@ export function extractPixnoyOriginUrl(url: string): string {
   }
 }
 
-export function normalizeMediaCompareKey(url: string): string {
+function normalizeMediaCompareKey(url: string): string {
   const raw = decodeMediaUrl(url || '').trim()
   if (!raw) return ''
   try {
@@ -179,11 +176,11 @@ export function isLikelyImageByUrl(url: string): boolean {
   )
 }
 
-export function isDirectVideoUrl(url: string): boolean {
+function isDirectVideoUrl(url: string): boolean {
   return /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(url)
 }
 
-export function isRenderableVideoUrl(url: string): boolean {
+function isRenderableVideoUrl(url: string): boolean {
   const decoded = decodeMediaUrl(url || '')
   if (!decoded || isLikelyImageByUrl(decoded)) return false
   if (isDirectVideoUrl(decoded)) return true
@@ -366,131 +363,6 @@ export function normalizeImageCacheKey(url: string): string {
   } catch {
     return raw.split('#')[0] || raw
   }
-}
-
-export function buildImageFallbackCandidates(
-  primaryUrl: string,
-  coverUrl: string,
-  mirrorOriginUrl: string,
-  maxWidth: number,
-): string[] {
-  const proxyFallbacks = getImageProxyFallbackUrls(
-    mirrorOriginUrl || coverUrl || primaryUrl,
-    {
-      width: maxWidth,
-      quality: 85,
-      format: 'jpg',
-    },
-  )
-  const candidates = [
-    primaryUrl,
-    coverUrl,
-    mirrorOriginUrl,
-    ...proxyFallbacks,
-  ].filter(Boolean)
-  const seedForMirror = mirrorOriginUrl || coverUrl || primaryUrl
-  if (
-    seedForMirror &&
-    /cdninstagram\.com|fbcdn\.net|scontent\./i.test(seedForMirror)
-  ) {
-    candidates.push(
-      `https://media.pixnoy.com/get?url=${encodeURIComponent(seedForMirror)}`,
-    )
-  }
-  const unique: string[] = []
-  for (const candidate of candidates) {
-    if (!/^https?:\/\//i.test(candidate)) continue
-    const normalized = normalizeImageCacheKey(candidate)
-    if (
-      !normalized ||
-      unique.some((existing) => normalizeImageCacheKey(existing) === normalized)
-    )
-      continue
-    unique.push(candidate)
-  }
-  return unique
-}
-
-export function advanceImageFallback(
-  e: SyntheticEvent<HTMLImageElement>,
-  seedUrl: string,
-  options?: {
-    previewUrl?: string
-    maxWidth?: number
-    onExhausted?: (img: HTMLImageElement) => void
-  },
-): void {
-  const img = e.currentTarget
-  const normalizedSeed = decodeMediaUrl(seedUrl || '')
-  const originFromMirror =
-    extractPixnoyOriginUrl(seedUrl) || extractPixnoyOriginUrl(normalizedSeed)
-  const candidates = buildImageFallbackCandidates(
-    img.currentSrc || img.src || normalizedSeed,
-    normalizedSeed || seedUrl,
-    originFromMirror,
-    options?.maxWidth ?? 1280,
-  )
-  const rawDecoded = decodeHtmlEntitiesUrl(seedUrl || '')
-  if (
-    rawDecoded &&
-    rawDecoded !== normalizedSeed &&
-    /^https?:\/\//i.test(rawDecoded)
-  ) {
-    const rawKey = normalizeImageCacheKey(rawDecoded)
-    if (
-      rawKey &&
-      !candidates.some(
-        (candidate) => normalizeImageCacheKey(candidate) === rawKey,
-      )
-    ) {
-      candidates.splice(1, 0, rawDecoded)
-    }
-  }
-  if (options?.previewUrl) {
-    const decodedPreview = decodeMediaUrl(options.previewUrl)
-    for (const previewCandidate of [options.previewUrl, decodedPreview]) {
-      if (!previewCandidate || !/^https?:\/\//i.test(previewCandidate)) continue
-      const previewKey = normalizeImageCacheKey(previewCandidate)
-      if (
-        previewKey &&
-        !candidates.some(
-          (candidate) => normalizeImageCacheKey(candidate) === previewKey,
-        )
-      ) {
-        candidates.splice(1, 0, previewCandidate)
-        const mirrorProxyFallbacks = getImageProxyFallbackUrls(
-          previewCandidate,
-          {
-            width: options?.maxWidth ?? 1280,
-            quality: 85,
-            format: 'jpg',
-          },
-        )
-        for (const fallback of mirrorProxyFallbacks) {
-          const fallbackKey = normalizeImageCacheKey(fallback)
-          if (
-            fallbackKey &&
-            !candidates.some(
-              (candidate) => normalizeImageCacheKey(candidate) === fallbackKey,
-            )
-          ) {
-            candidates.push(fallback)
-          }
-        }
-      }
-    }
-  }
-  const currentKey = normalizeImageCacheKey(img.currentSrc || img.src || '')
-  const currentIdx = candidates.findIndex(
-    (candidate) => normalizeImageCacheKey(candidate) === currentKey,
-  )
-  const nextIdx = currentIdx >= 0 ? currentIdx + 1 : 1
-  if (nextIdx < candidates.length) {
-    img.dataset.fallbackIndex = String(nextIdx)
-    img.src = withCacheBust(candidates[nextIdx])
-    return
-  }
-  options?.onExhausted?.(img)
 }
 
 export function isGenericInstagramIconUrl(url: string): boolean {

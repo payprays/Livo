@@ -16,7 +16,7 @@ export interface TaskContract<Payload = unknown> {
   retry?: TaskRetryPolicy
 }
 
-export const TASK_NAMES = {
+const TASK_NAMES = {
   FEED_REFRESH_SINGLE: 'feed.refresh_single',
   FEED_REFRESH_ALL: 'feed.refresh_all',
   FEED_BOOTSTRAP_REFRESH: 'feed.bootstrap_refresh',

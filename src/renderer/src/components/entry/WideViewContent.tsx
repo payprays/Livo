@@ -39,7 +39,7 @@ import {
   type Entry,
 } from '../../../../shared/types'
 import { VIEW_TYPE_I18N_KEYS } from '../../lib/view-type-keys'
-import { RECOMMENDED_CATEGORY } from '../../hooks/useInitRecommendedFeeds'
+import { RECOMMENDED_CATEGORY } from '../../store/feed-store'
 import { formatDistanceToNow } from 'date-fns'
 import { getDateLocale } from '../../lib/date-locale'
 import { SkeletonList } from '../ui/Skeleton'
@@ -104,7 +104,6 @@ import {
 import { Loader2, Inbox, RefreshCw, X, ExternalLink } from 'lucide-react'
 import { EntryContextMenuWrapper } from './EntryContextMenuWrapper'
 import { WideViewHeader } from './WideViewHeader'
-import { ViewRecommendations } from './ViewRecommendations'
 import { useAISummary } from '../../hooks/useAISummary'
 import { useAITranslation } from '../../hooks/useAITranslation'
 import { AISummaryPanel } from './AISummaryPanel'
@@ -924,8 +923,6 @@ export function WideViewContent() {
                 {isRefreshing ? t('common.refreshing') : t('common.refresh')}
               </button>
             </div>
-          ) : effectiveActiveView !== null ? (
-            <ViewRecommendations viewType={effectiveActiveView} />
           ) : (
             <div className="text-text-secondary dark:text-text-dark-secondary flex flex-col items-center justify-center py-12">
               <Inbox size={40} className="text-text-tertiary mb-3" />

@@ -151,7 +151,7 @@ export function cacheEntrySnapshots(entries: Entry[]): Entry[] {
   return entries
 }
 
-export function mergeEntrySnapshotState(detail: Entry, snapshot: Entry): Entry {
+function mergeEntrySnapshotState(detail: Entry, snapshot: Entry): Entry {
   return {
     ...detail,
     feedId: snapshot.feedId,

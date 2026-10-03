@@ -20,7 +20,7 @@ import {
   getFeedsByView as selectFeedsByView,
 } from '../lib/feed-selectors'
 
-const RECOMMENDED_CATEGORY = 'Recommended'
+export const RECOMMENDED_CATEGORY = 'Recommended'
 const FEEDS_CACHE_KEY = 'livo-feeds-cache'
 let hasLoadedFeedsFromStorage = false
 let cachedFeedsFromStorage: FeedWithCount[] = []

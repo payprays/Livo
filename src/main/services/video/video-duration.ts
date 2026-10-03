@@ -163,45 +163,6 @@ export async function fetchVideoDuration(
   return undefined
 }
 
-/**
- * Batch fetch durations for multiple URLs (with concurrency limit).
- * Returns a Map of url -> duration in seconds.
- */
-export async function fetchVideoDurations(
-  urls: string[],
-  concurrency = 3,
-): Promise<Map<string, number>> {
-  const result = new Map<string, number>()
-  const unique = [...new Set(urls)]
-
-  for (let i = 0; i < unique.length; i += concurrency) {
-    const batch = unique.slice(i, i + concurrency)
-    await Promise.allSettled(
-      batch.map(async (url) => {
-        const d = await fetchVideoDuration(url)
-        if (d) result.set(url, d)
-      }),
-    )
-  }
-
-  return result
-}
-
-/**
- * Enrich video entries for a given feed with duration data.
- * Finds video media items lacking duration, fetches from YouTube/Bilibili,
- * and updates entries in the database. Fire-and-forget - errors are silenced.
- */
-export async function enrichVideoDurations(
-  feedId: string,
-  context?: TaskRunContext,
-): Promise<number> {
-  return runVideoDurationEnrich(feedId, context).catch((error) => {
-    console.warn('[video-duration] enrich failed', error)
-    return 0
-  })
-}
-
 async function runVideoDurationEnrich(
   feedId: string,
   context?: TaskRunContext,

@@ -1,4 +1,4 @@
-import type { Entry, Feed } from '../../shared/types'
+import type { Entry } from '../../shared/types'
 
 export function makeEntryUrlKey(feedId: string, url: string): string {
   return `${feedId}\n${url}`
@@ -6,14 +6,6 @@ export function makeEntryUrlKey(feedId: string, url: string): string {
 
 function compareByPublishedDesc(a: Entry, b: Entry): number {
   return (b.publishedAt || 0) - (a.publishedAt || 0)
-}
-
-export function buildFeedByUrlIndex(feeds: Feed[]): Map<string, Feed> {
-  const index = new Map<string, Feed>()
-  for (const feed of feeds) {
-    index.set(feed.url, feed)
-  }
-  return index
 }
 
 export function buildEntryIndexes(

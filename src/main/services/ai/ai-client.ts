@@ -3,7 +3,7 @@ import type { AIConfig } from '../../../shared/types/index'
 import { resolveOpenAICompatibleBaseUrl } from '../../../shared/ai-endpoint'
 
 /** Resolve the effective base URL for a provider, honoring explicit overrides. */
-export function resolveBaseUrl(config: AIConfig): string {
+function resolveBaseUrl(config: AIConfig): string {
   const explicitBaseUrl = (config.baseUrl || '').trim()
   if (explicitBaseUrl) return resolveOpenAICompatibleBaseUrl(explicitBaseUrl)
 

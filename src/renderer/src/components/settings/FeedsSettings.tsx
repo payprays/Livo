@@ -10,7 +10,7 @@ import {
 } from '../../../../shared/types'
 import type { FeedWithCount, FeedColumnId } from '../../../../shared/types'
 import { VIEW_TYPE_I18N_KEYS } from '../../lib/view-type-keys'
-import { RECOMMENDED_CATEGORY } from '../../hooks/useInitRecommendedFeeds'
+import { RECOMMENDED_CATEGORY } from '../../store/feed-store'
 import { getSafeImageSrc } from '../../lib/safe-image-source'
 import {
   Trash2,

@@ -61,12 +61,3 @@ export function detectViewType(parsed: {
 
   return FeedViewType.Articles
 }
-
-export function detectViewTypeFromUrlOrContent(
-  url: string,
-  parsed: any,
-): FeedViewType {
-  const routeView = detectRouteViewFromUrl(url)
-  if (routeView !== null) return routeView
-  return parsed ? detectViewType(parsed) : FeedViewType.Articles
-}

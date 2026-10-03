@@ -46,7 +46,7 @@ function getMediaIdentityKeysForRead(entry: Entry): string[] {
   return Array.from(new Set(keys))
 }
 
-export function isMirrorSingleForRead(entry: Entry): boolean {
+function isMirrorSingleForRead(entry: Entry): boolean {
   const mediaCount = getMediaIdentityKeysForRead(entry).length
   if (mediaCount > 1) return false
   const blob = [
@@ -79,7 +79,7 @@ function isSocialMirrorEntry(entry: Entry): boolean {
     `${entry.url || ''} ${entry.imageUrl || ''}`,
   )
 }
-export function isRichGalleryForRead(entry: Entry): boolean {
+function isRichGalleryForRead(entry: Entry): boolean {
   const mediaCount = getMediaIdentityKeysForRead(entry).length
   if (mediaCount >= 2) return true
 
@@ -129,7 +129,7 @@ export function getEntryReadDedupKey(entry: Entry): string {
   return `read-text:${entry.feedId}:${title}:${bucket}:${text}`
 }
 
-export function entryRichnessForRead(entry: Entry): number {
+function entryRichnessForRead(entry: Entry): number {
   return (
     (entry.media?.length || 0) * 400 +
     (entry.content?.length || 0) +

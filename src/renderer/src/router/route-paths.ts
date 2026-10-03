@@ -89,7 +89,7 @@ export const VIEW_TYPE_SLUGS: Record<FeedViewType, string> = {
 }
 
 /** Reverse mapping from URL slug to FeedViewType. */
-export const VIEW_TYPE_FROM_SLUG: Record<string, FeedViewType> = {
+const VIEW_TYPE_FROM_SLUG: Record<string, FeedViewType> = {
   articles: FeedViewType.Articles,
   social: FeedViewType.SocialMedia,
   videos: FeedViewType.Videos,

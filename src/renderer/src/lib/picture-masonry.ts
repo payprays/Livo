@@ -31,7 +31,7 @@ export function schedulePersistedMasonrySizes() {
   // Persistence is handled centrally by image-metadata.ts.
 }
 
-export function getMasonryCardAspectRatio(card: MasonryCardData): number {
+function getMasonryCardAspectRatio(card: MasonryCardData): number {
   if (card.width && card.height) return card.width / card.height
   const remembered = getRememberedImageMetadata(card.firstImage)
   if (remembered?.width && remembered?.height)

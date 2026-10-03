@@ -7,7 +7,6 @@ import { useSettingsStore } from '../store/settings-store'
 import { serializeFeedsForCache, useFeedStore } from '../store/feed-store'
 import { useActionsStore } from '../store/actions-store'
 import { useEntryStore } from '../store/entry-store'
-import { recordAppMetric } from '../lib/performance-metrics'
 import { writeDefaultHomeSnapshotCache } from '../lib/reader-snapshot-cache'
 import {
   buildListCacheKey,
@@ -22,12 +21,10 @@ import type {
 } from '../../../shared/types'
 
 const DEFAULT_INITIAL_SNAPSHOT_LIMIT = 20
-const isDev = import.meta.env.DEV
 
 function logStartupTiming(label: string, startTime: number): number {
   const duration = performance.now() - startTime
   console.log(`[Startup] ${label} ${duration.toFixed(0)}ms`)
-  if (isDev) recordAppMetric(label, duration)
   return duration
 }
 
@@ -137,21 +134,6 @@ export async function hydrateDataToMemory(): Promise<HydrateResult> {
     rules,
     initialSnapshot,
     timings,
-  }
-}
-
-export async function hydrateInitialSnapshot(): Promise<void> {
-  const startTime = performance.now()
-  try {
-    const snapshot = await window.api.reader.snapshot({
-      limit: DEFAULT_INITIAL_SNAPSHOT_LIMIT,
-      compact: true,
-      maxContentLength: 520,
-    })
-    logStartupTiming('hydrate.initialSnapshot', startTime)
-    applyInitialSnapshot(snapshot)
-  } catch (error) {
-    console.warn('[Hydrate] Initial snapshot hydration failed', error)
   }
 }
 

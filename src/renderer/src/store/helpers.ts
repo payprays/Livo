@@ -15,13 +15,3 @@ export function useStoreShallow<TState, TSlice>(
 ) {
   return store(useShallow(selector))
 }
-
-export function mergeState<TState extends object>(
-  set: (
-    partial: Partial<TState> | ((state: TState) => Partial<TState>),
-  ) => void,
-) {
-  return (patch: Partial<TState> | ((state: TState) => Partial<TState>)) => {
-    set((state) => (typeof patch === 'function' ? patch(state) : patch))
-  }
-}

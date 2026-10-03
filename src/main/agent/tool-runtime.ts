@@ -10,7 +10,7 @@ const TOOL_TIMEOUT_MS: Record<string, number> = {
   cleanup_old_entries: 60_000,
 }
 
-export class AgentToolInterruptedError extends Error {
+class AgentToolInterruptedError extends Error {
   constructor(readonly reason: AgentToolInterruptionReason) {
     super(reason === 'timeout' ? '工具执行超时。' : '工具执行已取消。')
     this.name =

@@ -300,8 +300,6 @@ export function createApi(transport: ApiTransport) {
         query: string,
         platform?: 'all' | 'youtube' | 'bilibili' | 'x' | 'instagram',
       ) => invokeIpc(IPC.DISCOVER_SEARCH, query, platform),
-      rsshubRoutes: (category?: string) =>
-        invokeIpc(IPC.DISCOVER_RSSHUB_ROUTES, category),
       rsshubInstance: () => invokeIpc(IPC.DISCOVER_RSSHUB_INSTANCE),
       validateFeed: (url: string) => invokeIpc(IPC.DISCOVER_VALIDATE_FEED, url),
       previewFeed: (url: string): Promise<DiscoverFeedPreviewResult> =>

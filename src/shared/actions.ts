@@ -16,11 +16,11 @@ export interface ActionRule {
 }
 
 export const ACTION_RULES_MAX_COUNT = 100
-export const ACTION_RULE_CONDITIONS_MAX_COUNT = 12
-export const ACTION_RULE_EFFECTS_MAX_COUNT = 8
-export const ACTION_RULE_ID_MAX_LENGTH = 128
-export const ACTION_RULE_NAME_MAX_LENGTH = 160
-export const ACTION_RULE_CONDITION_VALUE_MAX_LENGTH = 2048
+const ACTION_RULE_CONDITIONS_MAX_COUNT = 12
+const ACTION_RULE_EFFECTS_MAX_COUNT = 8
+const ACTION_RULE_ID_MAX_LENGTH = 128
+const ACTION_RULE_NAME_MAX_LENGTH = 160
+const ACTION_RULE_CONDITION_VALUE_MAX_LENGTH = 2048
 
 export type ConditionField =
   | 'entry.title'
@@ -60,7 +60,7 @@ export interface ActionEffect {
   type: ActionEffectType
 }
 
-export const ACTION_CONDITION_FIELDS = [
+const ACTION_CONDITION_FIELDS = [
   'entry.title',
   'entry.content',
   'entry.author',
@@ -71,7 +71,7 @@ export const ACTION_CONDITION_FIELDS = [
   'ai.semantic',
 ] as const satisfies readonly ConditionField[]
 
-export const ACTION_CONDITION_OPERATORS = [
+const ACTION_CONDITION_OPERATORS = [
   'contains',
   'not_contains',
   'equals',
@@ -82,7 +82,7 @@ export const ACTION_CONDITION_OPERATORS = [
   'semantic_matches',
 ] as const satisfies readonly ConditionOperator[]
 
-export const ACTION_EFFECT_TYPES = [
+const ACTION_EFFECT_TYPES = [
   'block',
   'star',
   'mark_read',
@@ -124,15 +124,6 @@ export const ACTION_EFFECT_LABELS: Record<ActionEffectType, string> = {
   notify: '桌面通知',
   readability: '自动 Readability',
   summarize: '自动 AI 摘要',
-}
-
-export const ACTION_EFFECT_ICONS: Record<ActionEffectType, string> = {
-  block: 'Ban',
-  star: 'Star',
-  mark_read: 'CheckCircle2',
-  notify: 'Bell',
-  readability: 'BookType',
-  summarize: 'Sparkles',
 }
 
 function isBoundedString(
@@ -315,7 +306,7 @@ export function isSemanticCondition(condition: ActionCondition): boolean {
   )
 }
 
-export function matchAllConditions(
+function matchAllConditions(
   rule: ActionRule,
   entry: { title: string; content?: string; author?: string; url: string },
   feed: { title: string; url: string; category?: string },

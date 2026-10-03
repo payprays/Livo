@@ -792,7 +792,7 @@ export async function bootstrapFeedEntries(
   ).catch(() => {})
 }
 
-export async function bootstrapFeedEntriesQuick(
+async function bootstrapFeedEntriesQuick(
   feed: Feed,
   normalizedUrl: string,
   view?: FeedViewType,

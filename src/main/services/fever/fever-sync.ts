@@ -306,7 +306,7 @@ async function performWriteBack(
   // remote state on each cycle.
 }
 
-export async function syncFeverAccount(
+async function syncFeverAccount(
   accountId: string,
   options?: { force?: boolean; context?: TaskRunContext },
 ): Promise<FeverSyncResult> {

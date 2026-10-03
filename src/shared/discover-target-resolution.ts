@@ -31,7 +31,7 @@ export interface ResolvedDiscoverSubscribeConfig {
   initialView: FeedViewType
 }
 
-export const DISCOVER_SUBSCRIBE_VIEW_OPTIONS: readonly FeedViewType[] = [
+const DISCOVER_SUBSCRIBE_VIEW_OPTIONS: readonly FeedViewType[] = [
   FeedViewType.Articles,
   FeedViewType.SocialMedia,
   FeedViewType.Videos,
@@ -56,7 +56,7 @@ export function parseDiscoverSubscribeTarget(
   }
 }
 
-export function resolveDiscoverSubscribeView(
+function resolveDiscoverSubscribeView(
   target: DiscoverSubscribeTarget,
   existingFeed?: Pick<FeedWithCount, 'view' | 'url'> | null,
 ): FeedViewType {
@@ -67,7 +67,7 @@ export function resolveDiscoverSubscribeView(
   )
 }
 
-export function resolveDiscoverSubscribeTitle(
+function resolveDiscoverSubscribeTitle(
   target: DiscoverSubscribeTarget,
   existingFeed?: Pick<FeedWithCount, 'title' | 'url'> | null,
 ): string {
@@ -76,7 +76,7 @@ export function resolveDiscoverSubscribeTitle(
   return inferResultTitleFromUrl(existingFeed?.url || target.url)
 }
 
-export function resolveDiscoverSubscribeCategory(
+function resolveDiscoverSubscribeCategory(
   target: DiscoverSubscribeTarget,
   existingFeed?: Pick<FeedWithCount, 'category' | 'folder'> | null,
 ): string {
@@ -194,7 +194,7 @@ export function feedMatchesDiscoverTarget(
   return !!feedRoute && targetRoutes.includes(feedRoute)
 }
 
-export function hostOfDiscoverTarget(target: DiscoverSubscribeTarget): string {
+function hostOfDiscoverTarget(target: DiscoverSubscribeTarget): string {
   return hostOf(target.siteUrl || target.url)
 }
 

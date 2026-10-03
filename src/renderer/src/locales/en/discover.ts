@@ -8,8 +8,6 @@ export const enDiscover = {
   quickBundles: 'Quick Start Bundles',
   feedCount: '{{count}} feeds',
   browseCategories: 'Browse Categories',
-  rsshubRoutes: 'Popular RSSHub Routes',
-  rsshubRoutesHint: '(requires RSSHub instance)',
   featuredFeeds: 'Featured Feeds',
   curatedFeeds: 'Curated Feeds',
   noCategoryFeeds: 'No recommendations for this category',

@@ -23,7 +23,7 @@ import {
   findExistingFeed,
 } from '../../../../shared/subscription-intake'
 import { VIEW_TYPE_I18N_KEYS } from '../../lib/view-type-keys'
-import { RECOMMENDED_CATEGORY } from '../../hooks/useInitRecommendedFeeds'
+import { RECOMMENDED_CATEGORY } from '../../store/feed-store'
 import {
   Rss,
   Star,
@@ -798,39 +798,6 @@ export function Sidebar({ width }: { width?: number }) {
     },
     [],
   )
-  /**
-   * Lazily loads the full discover-data module (182 KB — too heavy for first paint).
-   * Only needed when the user unsubscribes from a recommended feed, which requires
-   * checking whether the feed URL is in the recommended catalog.
-   */
-  const recommendedUrlsRef = useRef<Set<string> | null>(null)
-
-  const getRecommendedUrls = useCallback(async (): Promise<Set<string>> => {
-    if (recommendedUrlsRef.current) return recommendedUrlsRef.current
-
-    const [
-      {
-        RECOMMENDED_ARTICLE_FEEDS,
-        RECOMMENDED_SOCIAL_FEEDS,
-        RECOMMENDED_VIDEO_FEEDS,
-      },
-    ] = await Promise.all([import('../../../../shared/discover-data')])
-
-    const base = (rsshubInstance || DEFAULT_RSSHUB_INSTANCE).replace(/\/+$/, '')
-    const all = [
-      ...RECOMMENDED_ARTICLE_FEEDS,
-      ...RECOMMENDED_SOCIAL_FEEDS,
-      ...RECOMMENDED_VIDEO_FEEDS,
-    ]
-    const urls = new Set<string>()
-    for (const feed of all) {
-      const url = feed.isRSSHub ? `${base}${feed.url}` : feed.url
-      urls.add(url)
-    }
-    recommendedUrlsRef.current = urls
-    return urls
-  }, [rsshubInstance])
-
   useEffect(() => {
     try {
       localStorage.setItem(
@@ -1317,16 +1284,9 @@ export function Sidebar({ width }: { width?: number }) {
 
   const unsubscribeFeed = useCallback(
     async (feedId: string) => {
-      const feed = feeds.find((f) => f.id === feedId)
-      if (!feed) return
-      const recommendedUrls = await getRecommendedUrls()
-      if (recommendedUrls.has(feed.url)) {
-        await updateFeed(feedId, { category: RECOMMENDED_CATEGORY })
-        return
-      }
       await removeFeed(feedId)
     },
-    [feeds, getRecommendedUrls, updateFeed, removeFeed],
+    [removeFeed],
   )
 
   const resolveUrlSubscriptionTarget = useCallback(

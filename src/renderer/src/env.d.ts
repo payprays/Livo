@@ -91,14 +91,6 @@ declare global {
             followers?: string
           }>
         >
-        rsshubRoutes: (category?: string) => Promise<
-          Array<{
-            name: string
-            url: string
-            description: string
-            category: string
-          }>
-        >
         rsshubInstance: () => Promise<string>
         validateFeed: (url: string) => Promise<{
           valid: boolean

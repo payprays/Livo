@@ -62,7 +62,7 @@ type TaskHandler<Payload, Result> = (
   context: TaskRunContext,
 ) => Promise<Result> | Result
 
-export class TaskRunTimeoutError extends Error {
+class TaskRunTimeoutError extends Error {
   constructor(taskName: string, timeoutMs: number) {
     super(`[task-runner] timeout after ${timeoutMs}ms: ${taskName}`)
     this.name = 'TaskRunTimeoutError'

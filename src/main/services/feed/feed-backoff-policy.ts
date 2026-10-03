@@ -20,7 +20,7 @@ export function shouldBackOffFeed(
   return now - feed.lastFetched < backoffMs
 }
 
-export function getFeedBackoffUntilMs(feed: Feed): number | null {
+function getFeedBackoffUntilMs(feed: Feed): number | null {
   if (!isInstagramUserFeedUrl(feed.url)) return null
   if (!feed.lastFetched || feed.errorCount <= 0) return null
   const exp = Math.max(0, feed.errorCount - 1)

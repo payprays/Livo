@@ -250,7 +250,7 @@ function decodeUrlSafeBase64(value: string): string {
  * Check whether rawUrl is a mirror proxy URL (picnob/pixnoy/etc) that wraps
  * a direct CDN URL.  Returns true when normalizeKnownMediaUrl would unwrap it.
  */
-export function isMirrorProxyUrl(rawUrl: string): boolean {
+function isMirrorProxyUrl(rawUrl: string): boolean {
   const decoded = decodeHTMLEntities((rawUrl || '').trim())
   if (!decoded) return false
   try {
@@ -268,7 +268,7 @@ export function isMirrorProxyUrl(rawUrl: string): boolean {
   }
 }
 
-export function normalizeKnownMediaUrl(rawUrl: string): string {
+function normalizeKnownMediaUrl(rawUrl: string): string {
   const decoded = decodeHTMLEntities((rawUrl || '').trim())
   if (!decoded) return ''
 

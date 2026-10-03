@@ -6,12 +6,7 @@ import {
   type NormalizedProxyState,
 } from './proxy-policy'
 
-export {
-  buildElectronProxyConfig,
-  getNormalizedProxyState,
-  normalizeProxyUrl,
-  type NormalizedProxyState,
-} from './proxy-policy'
+export { type NormalizedProxyState } from './proxy-policy'
 
 export async function applyProxySettings(
   settings: Pick<AppSettings, 'general'>,

@@ -405,7 +405,7 @@ export async function fetchInstagramAvatarByUsername(
   return undefined
 }
 
-export function extractLikelyInstagramHandle(query: string): string | null {
+function extractLikelyInstagramHandle(query: string): string | null {
   const clean = query.trim().replace(/^@+/, '')
   if (!clean) return null
   // Instagram username: 1-30 chars, letters/digits/underscores/periods

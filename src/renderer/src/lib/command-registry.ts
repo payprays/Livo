@@ -23,10 +23,6 @@ export function registerCommand(entry: Omit<CommandEntry, 'order'>) {
   }
 }
 
-export function runCommand(id: string, event: KeyboardEvent) {
-  return commandRegistry.get(id)?.handler(event)
-}
-
 export function resetCommandRegistry() {
   commandRegistry.clear()
   registrationOrder = 0

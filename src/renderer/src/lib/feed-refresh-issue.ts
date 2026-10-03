@@ -5,7 +5,7 @@ export type FeedRefreshIssueTranslator = (
   options?: Record<string, string>,
 ) => string
 
-export const FEED_REFRESH_FAILURE_BADGE_GRACE_MS = 60 * 60 * 1000
+const FEED_REFRESH_FAILURE_BADGE_GRACE_MS = 60 * 60 * 1000
 
 export function getFeedRefreshIssueLabel(
   feed: Pick<

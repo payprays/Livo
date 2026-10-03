@@ -4,10 +4,6 @@ import ReactDOM from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import {
-  recordAppMetric,
-  printPerformanceSummary,
-} from './lib/performance-metrics'
 import { RootProviders } from './providers/RootProviders'
 import {
   hydrateFromLocalCache,
@@ -69,7 +65,6 @@ if (_platform === 'darwin' || _platform === 'win32') {
 
 if (isDev) {
   performance.mark('livo-render-start')
-  recordAppMetric('app.moduleLoaded', performance.now())
 }
 
 function notifyRendererShellReady(): void {
@@ -134,7 +129,6 @@ function renderApp(): void {
     </StrictModeBoundary>,
   )
   if (isDev) {
-    recordAppMetric('app.reactMounted', performance.now())
     recordStartupBlockEvent('react.render.scheduled')
   }
   notifyRendererShellReady()
@@ -186,12 +180,6 @@ async function bootstrap(): Promise<void> {
       .catch((error) => {
         console.error('[Livo] Failed to setup background listeners:', error)
       })
-
-    if (isDev) {
-      setTimeout(() => {
-        printPerformanceSummary()
-      }, 1000)
-    }
   } catch (err) {
     console.error('[Livo] Bootstrap failed:', err)
     void window.api.app.reportError({

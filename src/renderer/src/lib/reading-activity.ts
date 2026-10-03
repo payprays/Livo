@@ -3,14 +3,14 @@ const MAX_DAYS = 400
 
 export type ReadingActivity = Record<string, number>
 
-export function toDayKey(date: Date): string {
+function toDayKey(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
 }
 
-export function getReadingActivity(): ReadingActivity {
+function getReadingActivity(): ReadingActivity {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return {}

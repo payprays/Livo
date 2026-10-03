@@ -117,7 +117,7 @@ function isAllowedSearchResultUrl(rawUrl: string): boolean {
   return hostname !== 'localhost' && !hostname.endsWith('.localhost')
 }
 
-export function filterSafeWebSearchResults(
+function filterSafeWebSearchResults(
   results: WebSearchResult[],
 ): WebSearchResult[] {
   return results
@@ -340,14 +340,6 @@ export async function webSearchWithMetadata(
   }
 
   return { results: [], fromCache: false, attempts }
-}
-
-export async function webSearch(
-  query: string,
-  options: WebSearchOptions = {},
-): Promise<WebSearchResult[]> {
-  const response = await webSearchWithMetadata(query, options)
-  return response.results
 }
 
 function parseDuckDuckGoResults(html: string): WebSearchResult[] {

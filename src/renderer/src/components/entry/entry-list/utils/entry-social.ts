@@ -77,7 +77,7 @@ export function parseSocialHandle(url: string): ParsedSocialHandle {
 /**
  * Extract Twitter display name from feed title by removing platform suffixes and handles
  */
-export function extractTwitterDisplayNameFromFeedTitle(
+function extractTwitterDisplayNameFromFeedTitle(
   feedTitle?: string,
   handle?: string,
 ): string {
