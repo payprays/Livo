@@ -418,7 +418,6 @@ async function runRefreshSingleFeed(
       feed,
       items: parsedItems,
       authorAvatarSeed: selectedFeedAvatar || feedImageUrl,
-      parsedFeedLink: parsed.link,
       now,
       replaceExisting: isBilibiliVideoFeedUrl(feed.url),
     })

@@ -17,7 +17,6 @@ const TWITTER_USER_ROUTE_RE = /\/(?:twitter|x)\/user\//i
 const NITTER_USER_FEED_RE = /^\/[^/?#]+\/rss\/?$/i
 const BILIBILI_DYNAMIC_ROUTE_RE = /\/bilibili\/user\/dynamic\//i
 const BILIBILI_VIDEO_ROUTE_RE = /\/bilibili\/user\/video\//i
-const BILIBILI_USER_ROUTE_RE = /\/bilibili\/user\/(?:dynamic|video|article)\//i
 
 // Default refresh timeout for ordinary feeds (overridden per slow route below).
 export const DEFAULT_FEED_REFRESH_TIMEOUT_MS = 12000
@@ -140,11 +139,6 @@ export function isBilibiliDynamicFeedUrl(url: string | undefined): boolean {
 
 export function isBilibiliVideoFeedUrl(url: string | undefined): boolean {
   return BILIBILI_VIDEO_ROUTE_RE.test(lower(url))
-}
-
-/** Any Bilibili user feed route (dynamic / video / article). */
-export function isBilibiliUserFeedUrl(url: string | undefined): boolean {
-  return BILIBILI_USER_ROUTE_RE.test(lower(url))
 }
 
 /**

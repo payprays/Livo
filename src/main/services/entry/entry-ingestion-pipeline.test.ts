@@ -98,22 +98,14 @@ beforeEach(() => {
 })
 
 describe('ingestParsedFeedEntries', () => {
-  it('builds, filters, applies rules, persists entries, and queues effects', async () => {
+  it('builds, applies rules, persists entries, and queues effects', async () => {
     const feed = makeFeed()
     const keptEntry = makeEntry(
       'entry-1',
       'keep this entry',
       'https://blog.example.com/post-1',
     )
-    const foreignEntry = makeEntry(
-      'entry-2',
-      'keep foreign entry',
-      'https://another-site.com/post-2',
-    )
-    vi.mocked(buildEntriesFromParsedItems).mockResolvedValue([
-      keptEntry,
-      foreignEntry,
-    ])
+    vi.mocked(buildEntriesFromParsedItems).mockResolvedValue([keptEntry])
     vi.mocked(getActionRules).mockReturnValue([
       {
         id: 'rule-1',
@@ -135,7 +127,6 @@ describe('ingestParsedFeedEntries', () => {
       feed,
       items: [{ title: 'raw item' }],
       authorAvatarSeed: 'https://example.com/avatar.png',
-      parsedFeedLink: 'https://example.com/feed.xml',
       now: 123,
     })
 

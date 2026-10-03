@@ -22,29 +22,10 @@ import { enqueueEntryActionEffects } from './entry-action-effects'
 import { getActionRules } from '../actions/action-rules-store'
 import { validateAIConfig } from '../ai/ai-client'
 import { judgeSemanticFilter } from '../ai/ai-filter'
-import {
-  isBilibiliUserFeedUrl,
-  isInstagramUserFeedUrl,
-  isNitterUserFeedUrl,
-  isTwitterUserFeedUrl,
-} from '../feed/feed-route-policy'
-
-// 自建 WeRSS 实例直接输出的公众号 RSS（条目链接指向 mp.weixin.qq.com）。
-function isWechatMpFeedUrl(feedUrl: string | undefined): boolean {
-  if (!feedUrl) return false
-  try {
-    const parsed = new URL(feedUrl)
-    return /^\/feed\/MP_WXS_[^/?#]+\.xml$/i.test(parsed.pathname)
-  } catch {
-    return false
-  }
-}
-
 export interface EntryIngestionInput {
   feed: Feed
   items: Array<Record<string, any>>
   authorAvatarSeed?: string
-  parsedFeedLink?: string
   now: number
   replaceExisting?: boolean
 }
@@ -68,55 +49,6 @@ type SemanticFilterJudge = (
 export interface ApplyActionRulesOptions {
   aiConfig?: AIConfig
   semanticJudge?: SemanticFilterJudge
-}
-
-/**
- * 过滤 FeedBurner 等聚合源注入的跨站条目，社交/视频源保留跨子域内容。
- */
-export function filterForeignEntries(
-  entries: Entry[],
-  feedSiteUrl: string | undefined,
-  parsedFeedLink: string | undefined,
-  feedUrl?: string,
-): Entry[] {
-  if (
-    isTwitterUserFeedUrl(feedUrl) ||
-    isNitterUserFeedUrl(feedUrl) ||
-    isInstagramUserFeedUrl(feedUrl) ||
-    isBilibiliUserFeedUrl(feedUrl) ||
-    isWechatMpFeedUrl(feedUrl)
-  ) {
-    return entries
-  }
-
-  const siteUrl = feedSiteUrl || parsedFeedLink || ''
-  if (!siteUrl) return entries
-  let siteHost: string
-  try {
-    siteHost = new URL(siteUrl).hostname.replace(/^www\./, '')
-  } catch {
-    return entries
-  }
-  if (!siteHost) return entries
-
-  const sameSite = entries.filter((entry) => {
-    if (!entry.url) return true
-    let entryHost: string
-    try {
-      entryHost = new URL(entry.url).hostname.replace(/^www\./, '')
-    } catch {
-      return true
-    }
-    return (
-      entryHost === siteHost ||
-      entryHost.endsWith('.' + siteHost) ||
-      siteHost.endsWith('.' + entryHost)
-    )
-  })
-  // No item links back to the feed's own site: the feed is a proxy/converter
-  // (wechat2rss, RSSHub-style services) and every item is its real content.
-  // Only a mix of own and foreign items indicates injected entries.
-  return sameSite.length === 0 ? entries : sameSite
 }
 
 export function applyActionRulesToEntries(
@@ -310,13 +242,7 @@ export async function ingestParsedFeedEntries(
     input.feed.view,
     input.now,
   )
-  const foreignFiltered = filterForeignEntries(
-    builtEntries,
-    input.feed.siteUrl,
-    input.parsedFeedLink,
-    input.feed.url,
-  )
-  const ruleAppliedEntries = await applyActionRules(foreignFiltered, input.feed)
+  const ruleAppliedEntries = await applyActionRules(builtEntries, input.feed)
   const entriesToInsert = ruleAppliedEntries.map(({ entry }) => entry)
   const effectsByEntryId = new Map(
     ruleAppliedEntries.map(({ entry, effects }) => [entry.id, effects]),

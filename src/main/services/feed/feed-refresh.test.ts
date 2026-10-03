@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   applyActionRulesToEntriesAsync,
   applyActionRulesToEntries,
-  filterForeignEntries,
 } from '../entry/entry-ingestion-pipeline'
 import {
   queueBootstrapRefresh,
@@ -130,87 +129,6 @@ const aiConfig: AIConfig = {
   apiKey: 'test-key',
   model: 'test-model',
 }
-
-describe('filterForeignEntries', () => {
-  it('keeps bilibili entries across sibling bilibili subdomains', () => {
-    const entries = [
-      makeEntry('https://t.bilibili.com/1234567890'),
-      makeEntry('https://www.bilibili.com/video/BV1xx411c7mD'),
-    ]
-
-    expect(
-      filterForeignEntries(
-        entries,
-        'https://space.bilibili.com/123456',
-        'https://space.bilibili.com/123456/dynamic',
-        'https://rsshub.app/bilibili/user/dynamic/123456',
-      ),
-    ).toEqual(entries)
-  })
-
-  it('keeps Nitter article links even when a built-in feed declares an x.com site URL', () => {
-    const entries = [
-      makeEntry('https://nitter.net/openai/status/1234567890'),
-      makeEntry('https://x.com/openai/status/1234567891'),
-    ]
-
-    expect(
-      filterForeignEntries(
-        entries,
-        'https://x.com/openai',
-        'https://nitter.net/openai',
-        'https://nitter.net/openai/rss',
-      ),
-    ).toEqual(entries)
-  })
-
-  it('still filters unrelated domains for regular feeds', () => {
-    const ownEntry = makeEntry('https://blog.example.com/post-1')
-    const foreignEntry = makeEntry('https://another-site.com/post-2')
-
-    expect(
-      filterForeignEntries(
-        [ownEntry, foreignEntry],
-        'https://example.com/feed',
-        'https://example.com/feed',
-        'https://example.com/feed.xml',
-      ),
-    ).toEqual([ownEntry])
-  })
-
-  it('keeps every item of a proxy feed whose items all link elsewhere', () => {
-    // wechat2rss: the channel link is the converter, items are WeChat articles.
-    const entries = [
-      makeEntry('https://mp.weixin.qq.com/s?__biz=MzAwNDE4Mzc1NA==&mid=1'),
-      makeEntry('https://mp.weixin.qq.com/s?__biz=MzAwNDE4Mzc1NA==&mid=2'),
-    ]
-
-    expect(
-      filterForeignEntries(
-        entries,
-        'https://wechat2rss.xlab.app/feed/f35b2e0c.xml',
-        'https://wechat2rss.xlab.app/feed/f35b2e0c.xml',
-        'https://wechat2rss.xlab.app/feed/f35b2e0c.xml',
-      ),
-    ).toEqual(entries)
-  })
-
-  it('keeps WeChat MP article links from self-hosted WeRSS feeds', () => {
-    const entries = [
-      makeEntry('https://mp.weixin.qq.com/s/Tn4165SvP7HSGCRmG8ljlQ'),
-      makeEntry('https://mp.weixin.qq.com/s/eI-teOXIxORTZL3zlKH47Q'),
-    ]
-
-    expect(
-      filterForeignEntries(
-        entries,
-        undefined,
-        'https://werss.example.com/feed/MP_WXS_2396676120.xml',
-        'https://werss.example.com/feed/MP_WXS_2396676120.xml',
-      ),
-    ).toEqual(entries)
-  })
-})
 
 describe('refreshAllFeeds', () => {
   beforeEach(() => {
