@@ -6,6 +6,7 @@ import { useFeedStore } from '../../store/feed-store'
 import {
   useAISettingKey,
   useGeneralSettingsShallowSelector,
+  useSettingSection,
   useTranslationSettingKey,
   useSettingsActions,
 } from '../../store/settings-store'
@@ -106,7 +107,10 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     contentFontFamily: settings.contentFontFamily,
     fontSize: settings.fontSize,
     language: settings.language,
+    readabilityMode: settings.readabilityMode,
   }))
+  const translationSettings = useSettingSection('translation')
+  const summarySettings = useSettingSection('summary')
   const translationTargetLanguage = useTranslationSettingKey('targetLanguage')
   const aiApiKey = useAISettingKey('apiKey')
   const { setPanelOpen } = useAIChatStore()
@@ -169,6 +173,10 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
   const [isReadabilityMode, setIsReadabilityMode] = useState(false)
   const [isFetchingReadable, setIsFetchingReadable] = useState(false)
   const [readabilityError, setReadabilityError] = useState<string | null>(null)
+  // Entry whose readability attempt has settled; auto translate waits for it.
+  const [readableSettledFor, setReadableSettledFor] = useState<string | null>(
+    null,
+  )
   const [embeddedPageUrl, setEmbeddedPageUrl] = useState<string | null>(null)
   const [socialAvatarImageFailed, setSocialAvatarImageFailed] = useState(false)
   const [articleMenu, setArticleMenu] = useState<{
@@ -382,46 +390,61 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     setPanelOpen(true)
   }, [setPanelOpen])
 
+  const openReadable = useCallback(
+    async (entry: {
+      id: string
+      url?: string
+      readabilityContent?: string
+    }) => {
+      if (!entry.url) return
+      if (entry.readabilityContent) {
+        setIsReadabilityMode(true)
+        setReadableSettledFor(entry.id)
+        return
+      }
+      setIsFetchingReadable(true)
+      setReadabilityError(null)
+      try {
+        const result = await window.api.readability.fetch(entry.url, entry.id)
+        if (result.success && result.content) {
+          setReadableContent(result.content)
+          setIsReadabilityMode(true)
+        } else {
+          setReadabilityError(result.error || t('entry.cannotFetchContent'))
+        }
+      } catch (err) {
+        setReadabilityError(t('entry.fetchFailed', { error: String(err) }))
+      } finally {
+        setIsFetchingReadable(false)
+        setReadableSettledFor(entry.id)
+      }
+    },
+    [t],
+  )
+
+  // The toggle is remembered and applies to the next articles too.
   const handleReadability = useCallback(async () => {
     if (!selectedEntry?.url) return
-
-    // If already in readability mode, toggle back to original RSS content
-    if (isReadabilityMode) {
+    const next = !isReadabilityMode
+    if (general.readabilityMode !== next) {
+      void updateSettingsSection('general', { readabilityMode: next })
+    }
+    if (!next) {
       setIsReadabilityMode(false)
       return
     }
-
-    // If we already have cached readable content, just switch to it
     if (readableContent) {
       setIsReadabilityMode(true)
       return
     }
-
-    // Fetch readability content via IPC
-    setIsFetchingReadable(true)
-    setReadabilityError(null)
-    try {
-      const result = await window.api.readability.fetch(
-        selectedEntry.url,
-        selectedEntry.id,
-      )
-      if (result.success && result.content) {
-        setReadableContent(result.content)
-        setIsReadabilityMode(true)
-      } else {
-        setReadabilityError(result.error || t('entry.cannotFetchContent'))
-      }
-    } catch (err) {
-      setReadabilityError(t('entry.fetchFailed', { error: String(err) }))
-    } finally {
-      setIsFetchingReadable(false)
-    }
+    await openReadable(selectedEntry)
   }, [
-    selectedEntry?.id,
-    selectedEntry?.url,
+    selectedEntry,
     isReadabilityMode,
     readableContent,
-    t,
+    general.readabilityMode,
+    updateSettingsSection,
+    openReadable,
   ])
 
   const handleOpenAISettings = useCallback(() => {
@@ -534,6 +557,48 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
   const detailPresentation = resolveEntryDetailPresentation({
     entryFeedView: currentFeed?.view,
   })
+
+  // Open new articles in readability mode when that was the last choice.
+  const readabilityAutoRef = useRef({ on: false, article: false })
+  readabilityAutoRef.current = {
+    on: general.readabilityMode,
+    article: detailPresentation === 'article',
+  }
+  useEffect(() => {
+    if (!selectedEntry) return
+    const { on, article } = readabilityAutoRef.current
+    if (on && article && selectedEntry.url) void openReadable(selectedEntry)
+    else setReadableSettledFor(selectedEntry.id)
+    // Only on entry switch; toggling is handled by handleReadability.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEntry?.id])
+
+  // Auto summary / translation from settings, once per entry, after the
+  // readability text (if any) is in place so the shown text gets translated.
+  const autoRanForRef = useRef<string | null>(null)
+  useEffect(() => {
+    const id = selectedEntry?.id
+    if (!id || !aiApiKey || autoRanForRef.current === id) return
+    if (readableSettledFor !== id || paragraphs.length === 0) return
+    autoRanForRef.current = id
+    if (summarySettings.enabled && summarySettings.autoTrigger) {
+      handleSummarize()
+    }
+    if (translationSettings.enabled && translationSettings.autoTranslate) {
+      handleTranslate()
+    }
+  }, [
+    selectedEntry?.id,
+    aiApiKey,
+    readableSettledFor,
+    paragraphs.length,
+    summarySettings.enabled,
+    summarySettings.autoTrigger,
+    translationSettings.enabled,
+    translationSettings.autoTranslate,
+    handleSummarize,
+    handleTranslate,
+  ])
   const socialAuthorName = useMemo(
     () =>
       resolveSocialAuthorName({

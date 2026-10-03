@@ -38,6 +38,8 @@ export interface AppSettings {
     startInTray: boolean
     refreshInterval: number
     markReadOnScroll: boolean
+    /** Open articles in readability (full text) mode; follows the last toggle. */
+    readabilityMode: boolean
     fontSize: number
     contentWidth: 'narrow' | 'normal' | 'wide' | 'custom'
     customContentMaxWidth: number
@@ -135,6 +137,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     startInTray: false,
     refreshInterval: 30,
     markReadOnScroll: true,
+    readabilityMode: false,
     fontSize: 16,
     contentWidth: 'normal',
     customContentMaxWidth: 680,

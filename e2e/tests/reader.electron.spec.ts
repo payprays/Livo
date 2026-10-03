@@ -140,6 +140,22 @@ test('bilingual translation interleaves translated paragraphs', async () => {
   )
 })
 
+test('auto translate setting translates an article on open', async () => {
+  await page.evaluate(() =>
+    window.api.settings.set({
+      translation: { enabled: true, autoTranslate: true },
+    } as never),
+  )
+  await page.reload()
+  await expect(page.locator('html[data-shortcuts-ready]')).toHaveCount(1)
+  await sidebarFeed(FEEDS.big.title).click()
+  await openEntry(`${FEEDS.big.prefix} 5`)
+
+  await expect(
+    page.locator('.entry-content.text-accent\\/80').first(),
+  ).toContainText(TRANSLATION_MARK)
+})
+
 test('AI digest cites sources by number, not raw ids', async () => {
   await page.getByRole('button', { name: 'AI 简报', exact: true }).click()
   await page.getByRole('button', { name: '生成', exact: true }).click()

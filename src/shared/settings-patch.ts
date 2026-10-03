@@ -290,6 +290,7 @@ const generalSettingsPatchSchema: Record<string, FieldSanitizer> = {
   startInTray: sanitizeBoolean,
   refreshInterval: sanitizeNumber,
   markReadOnScroll: sanitizeBoolean,
+  readabilityMode: sanitizeBoolean,
   fontSize: sanitizeNumber,
   contentWidth: sanitizeEnum(CONTENT_WIDTH_VALUES),
   customContentMaxWidth: sanitizeNumber,
