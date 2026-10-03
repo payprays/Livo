@@ -99,7 +99,7 @@ export function filterForeignEntries(
   }
   if (!siteHost) return entries
 
-  return entries.filter((entry) => {
+  const sameSite = entries.filter((entry) => {
     if (!entry.url) return true
     let entryHost: string
     try {
@@ -113,6 +113,10 @@ export function filterForeignEntries(
       siteHost.endsWith('.' + entryHost)
     )
   })
+  // No item links back to the feed's own site: the feed is a proxy/converter
+  // (wechat2rss, RSSHub-style services) and every item is its real content.
+  // Only a mix of own and foreign items indicates injected entries.
+  return sameSite.length === 0 ? entries : sameSite
 }
 
 export function applyActionRulesToEntries(

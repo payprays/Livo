@@ -178,6 +178,23 @@ describe('filterForeignEntries', () => {
     ).toEqual([ownEntry])
   })
 
+  it('keeps every item of a proxy feed whose items all link elsewhere', () => {
+    // wechat2rss: the channel link is the converter, items are WeChat articles.
+    const entries = [
+      makeEntry('https://mp.weixin.qq.com/s?__biz=MzAwNDE4Mzc1NA==&mid=1'),
+      makeEntry('https://mp.weixin.qq.com/s?__biz=MzAwNDE4Mzc1NA==&mid=2'),
+    ]
+
+    expect(
+      filterForeignEntries(
+        entries,
+        'https://wechat2rss.xlab.app/feed/f35b2e0c.xml',
+        'https://wechat2rss.xlab.app/feed/f35b2e0c.xml',
+        'https://wechat2rss.xlab.app/feed/f35b2e0c.xml',
+      ),
+    ).toEqual(entries)
+  })
+
   it('keeps WeChat MP article links from self-hosted WeRSS feeds', () => {
     const entries = [
       makeEntry('https://mp.weixin.qq.com/s/Tn4165SvP7HSGCRmG8ljlQ'),
