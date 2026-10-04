@@ -75,6 +75,8 @@ import {
   stripDuplicateMediaFromHtml,
 } from './entry-content/entry-content-utils'
 
+const AUTO_SUMMARY_MIN_MINUTES = 2
+
 export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
   const {
     selectedEntry,
@@ -328,15 +330,19 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     return selectedEntry.content
   }, [selectedEntry?.content, selectedEntry?.media])
 
-  // Content paragraphs (memoized). In readability mode translate the fetched
-  // full text the reader is looking at, not the feed excerpt.
-  const paragraphs = useMemo(() => {
-    const source =
+  // The text on screen: the fetched full text in readability mode, otherwise
+  // the feed content. Translation and summary work on this, not the excerpt.
+  const displayedContent = useMemo(
+    () =>
       isReadabilityMode && readableContent
         ? sanitizeHTML(readableContent)
-        : articleContent
-    return source ? splitHtmlIntoParagraphs(source) : []
-  }, [articleContent, isReadabilityMode, readableContent])
+        : articleContent,
+    [articleContent, isReadabilityMode, readableContent],
+  )
+  const paragraphs = useMemo(
+    () => (displayedContent ? splitHtmlIntoParagraphs(displayedContent) : []),
+    [displayedContent],
+  )
 
   // A saved translation only applies if it was made from the same paragraphs.
   const translationMatchesContent =
@@ -581,7 +587,16 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     if (!id || !aiApiKey || autoRanForRef.current === id) return
     if (readableSettledFor !== id || paragraphs.length === 0) return
     autoRanForRef.current = id
-    if (summarySettings.enabled && summarySettings.autoTrigger) {
+    // Short posts read faster than their summary; only summarize articles of
+    // about two minutes or more (~300 English words / ~600 Chinese chars).
+    // Measured on the full text when fetched, as the main process summarizes.
+    if (
+      summarySettings.enabled &&
+      summarySettings.autoTrigger &&
+      !selectedEntry?.aiSummary &&
+      estimateReadingTime(readableContent || articleContent) >=
+        AUTO_SUMMARY_MIN_MINUTES
+    ) {
       handleSummarize()
     }
     if (translationSettings.enabled && translationSettings.autoTranslate) {
@@ -601,6 +616,9 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     handleSummarize,
     translate,
     paragraphs,
+    selectedEntry?.aiSummary,
+    readableContent,
+    articleContent,
     translationTargetLanguage,
   ])
   const socialAuthorName = useMemo(
