@@ -28,6 +28,7 @@ import {
   Rss,
   Star,
   RefreshCw,
+  LogIn,
   Plus,
   Settings,
   ChevronRight,
@@ -325,6 +326,17 @@ function loadPersistedEmptyFolders(): Array<{
       .filter((item) => item.name.length > 0)
   } catch {
     return []
+  }
+}
+
+/** Where to sign in for a feed: its site, or the feed host without an rss./feed. prefix. */
+function siteLoginUrl(feed: { url: string; siteUrl?: string }): string {
+  if (feed.siteUrl) return feed.siteUrl
+  try {
+    const { protocol, host } = new URL(feed.url)
+    return `${protocol}//${host.replace(/^(rss|feeds?)\./i, 'www.')}/`
+  } catch {
+    return feed.url
   }
 }
 
@@ -2206,6 +2218,26 @@ export function Sidebar({ width }: { width?: number }) {
                   className={isRefreshing ? 'animate-spin' : ''}
                 />
                 {t('sidebar.refreshFeed')}
+              </button>
+              <button
+                className="hover:bg-surface-secondary dark:hover:bg-surface-dark-tertiary flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
+                onClick={() => {
+                  const feed = feeds.find((f) => f.id === contextMenu.feedId)
+                  setContextMenu(null)
+                  if (!feed) return
+                  // Sign in inside Livo; refetch once the window is closed so
+                  // logged-in content shows up.
+                  void window.api.app
+                    .openSiteLogin(siteLoginUrl(feed))
+                    .then(() => refreshFeed(feed.id))
+                }}
+              >
+                <LogIn size={14} />
+                {tWithDefault(
+                  'sidebar.siteLogin',
+                  '登录此站点',
+                  'Sign in to this site',
+                )}
               </button>
               <button
                 className="hover:bg-surface-secondary dark:hover:bg-surface-dark-tertiary flex w-full items-center gap-2 px-3 py-2 text-left text-sm"

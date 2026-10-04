@@ -346,6 +346,11 @@ export function createApi(transport: ApiTransport) {
         url: string,
       ): Promise<{ success: boolean; error?: string }> =>
         invokeIpc(IPC.APP_OPEN_EXTERNAL, url),
+      /** Sign in to a site inside Livo; resolves when the window closes. */
+      openSiteLogin: (
+        url: string,
+      ): Promise<{ success: boolean; error?: string }> =>
+        invokeIpc(IPC.APP_OPEN_SITE_LOGIN, url),
       reportError: (payload: {
         source: string
         message: string

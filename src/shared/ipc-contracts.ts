@@ -118,6 +118,7 @@ export const IPC = {
   APP_GET_VERSION: 'app:version',
   APP_GET_ICON: 'app:get-icon',
   APP_OPEN_EXTERNAL: 'app:open-external',
+  APP_OPEN_SITE_LOGIN: 'app:open-site-login',
   APP_REPORT_ERROR: 'app:report-error',
   APP_READ_RECENT_LOGS: 'app:read-recent-logs',
   APP_OPEN_DATA_DIRECTORY: 'app:open-data-directory',
@@ -353,6 +354,7 @@ export type IpcArgsByChannel = {
   [IPC.APP_GET_VERSION]: []
   [IPC.APP_GET_ICON]: []
   [IPC.APP_OPEN_EXTERNAL]: [url: string]
+  [IPC.APP_OPEN_SITE_LOGIN]: [url: string]
   [IPC.APP_REPORT_ERROR]: [
     payload: {
       source: string
@@ -1503,6 +1505,18 @@ const IPC_CONTRACTS = {
         max: IPC_TEXT_FIELD_MAX_LENGTH * 4,
       })
       return args as IpcArgs<typeof IPC.APP_OPEN_EXTERNAL>
+    },
+  },
+  [IPC.APP_OPEN_SITE_LOGIN]: {
+    channel: IPC.APP_OPEN_SITE_LOGIN,
+    validateArgs: (args) => {
+      assertArity(IPC.APP_OPEN_SITE_LOGIN, args, 1)
+      assertString(args[0], 'url')
+      assertStringLengthRange(args[0], 'url', {
+        min: 1,
+        max: IPC_TEXT_FIELD_MAX_LENGTH * 4,
+      })
+      return args as IpcArgs<typeof IPC.APP_OPEN_SITE_LOGIN>
     },
   },
   [IPC.APP_REPORT_ERROR]: {

@@ -168,6 +168,64 @@ test('auto translate setting translates an article on open', async () => {
   expect(upstream.translationRequests()).toBe(requestsBefore)
 })
 
+test('auto summary skips short posts and runs for long articles', async () => {
+  await page.evaluate(() =>
+    window.api.settings.set({
+      summary: { enabled: true, autoTrigger: true },
+      translation: { enabled: false, autoTranslate: false },
+    } as never),
+  )
+  await page.reload()
+  await expect(page.locator('html[data-shortcuts-ready]')).toHaveCount(1)
+  await sidebarFeed(FEEDS.small.title).click()
+  const before = upstream.summaryRequests()
+
+  await openEntry(`${FEEDS.small.prefix} 2`)
+  await expect(readerTitle()).toHaveText(`${FEEDS.small.prefix} 2`)
+  await page.waitForTimeout(1500)
+  expect(upstream.summaryRequests()).toBe(before)
+
+  await openEntry(`${FEEDS.small.prefix} 1`)
+  await expect.poll(() => upstream.summaryRequests()).toBe(before + 1)
+})
+
+test('signing in to a site from the feed menu unlocks its members feed', async () => {
+  await page.evaluate(async (url) => {
+    const { feed } = (await window.api.feeds.add(url, 'QA')) as {
+      feed: { id: string }
+    }
+    await window.api.feeds.refresh(feed.id)
+  }, upstream.feedUrl('members'))
+  await page.reload()
+  await expect(sidebarFeed(FEEDS.members.title)).toBeVisible()
+  expect(
+    await page.evaluate(
+      async (title) =>
+        (await window.api.feeds.list()).find((f) => f.title === title)
+          ?.unreadCount,
+      FEEDS.members.title,
+    ),
+  ).toBe(0)
+
+  await sidebarFeed(FEEDS.members.title).click({ button: 'right' })
+  const loginWindow = app.waitForEvent('window')
+  await page.getByRole('button', { name: '登录此站点' }).click()
+  const login = await loginWindow
+  await expect(login.locator('h1')).toHaveText('Signed in')
+  await login.close()
+
+  await expect
+    .poll(() =>
+      page.evaluate(
+        async (title) =>
+          (await window.api.feeds.list()).find((f) => f.title === title)
+            ?.unreadCount,
+        FEEDS.members.title,
+      ),
+    )
+    .toBe(FEEDS.members.count)
+})
+
 test('AI digest cites sources by number, not raw ids', async () => {
   await page.getByRole('button', { name: 'AI 简报', exact: true }).click()
   await page.getByRole('button', { name: '生成', exact: true }).click()

@@ -154,7 +154,7 @@ const LEGACY_FEED_USER_AGENT =
  * Chromium sends trips WordPress bot checks (403 "Checking your browser...").
  * Falls back to the legacy string when `app` is unavailable (unit tests).
  */
-function feedUserAgent(): string {
+export function feedUserAgent(): string {
   let real = ''
   try {
     real =
