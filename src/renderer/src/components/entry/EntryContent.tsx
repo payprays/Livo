@@ -396,12 +396,12 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     setPanelOpen(true)
   }, [setPanelOpen])
 
+  // quiet: an automatic fetch that fails just leaves the feed text in place.
   const openReadable = useCallback(
-    async (entry: {
-      id: string
-      url?: string
-      readabilityContent?: string
-    }) => {
+    async (
+      entry: { id: string; url?: string; readabilityContent?: string },
+      quiet = false,
+    ) => {
       if (!entry.url) return
       if (entry.readabilityContent) {
         setIsReadabilityMode(true)
@@ -415,11 +415,12 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
         if (result.success && result.content) {
           setReadableContent(result.content)
           setIsReadabilityMode(true)
-        } else {
+        } else if (!quiet) {
           setReadabilityError(result.error || t('entry.cannotFetchContent'))
         }
       } catch (err) {
-        setReadabilityError(t('entry.fetchFailed', { error: String(err) }))
+        if (!quiet)
+          setReadabilityError(t('entry.fetchFailed', { error: String(err) }))
       } finally {
         setIsFetchingReadable(false)
         setReadableSettledFor(entry.id)
@@ -573,7 +574,8 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
   useEffect(() => {
     if (!selectedEntry) return
     const { on, article } = readabilityAutoRef.current
-    if (on && article && selectedEntry.url) void openReadable(selectedEntry)
+    if (on && article && selectedEntry.url)
+      void openReadable(selectedEntry, true)
     else setReadableSettledFor(selectedEntry.id)
     // Only on entry switch; toggling is handled by handleReadability.
     // eslint-disable-next-line react-hooks/exhaustive-deps

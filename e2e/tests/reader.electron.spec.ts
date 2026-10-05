@@ -226,6 +226,28 @@ test('signing in to a site from the feed menu unlocks its members feed', async (
     .toBe(FEEDS.members.count)
 })
 
+test('remembered readability mode keeps quiet when a fetch fails', async () => {
+  // Readability refuses the loopback fixture pages, so every fetch fails here.
+  await page.evaluate(() =>
+    window.api.settings.set({ general: { readabilityMode: true } } as never),
+  )
+  await page.reload()
+  await expect(page.locator('html[data-shortcuts-ready]')).toHaveCount(1)
+  await sidebarFeed(FEEDS.small.title).click()
+  await openEntry(`${FEEDS.small.prefix} 3`)
+  const getOriginal = page.getByTitle(/获取原文|Get Original/)
+  await expect(getOriginal).toBeEnabled()
+  await page.waitForTimeout(500)
+  await expect(page.getByText(/全文抓取失败|Full ?text/i)).toHaveCount(0)
+
+  // Asking by hand still reports the failure.
+  await getOriginal.click()
+  await expect(page.getByText(/全文抓取失败|Full ?text/i)).toBeVisible()
+  await page.evaluate(() =>
+    window.api.settings.set({ general: { readabilityMode: false } } as never),
+  )
+})
+
 test('dragging a folder header reorders folders and the order sticks', async () => {
   const folderNames = () =>
     page
