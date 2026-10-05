@@ -11,7 +11,11 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useFeedStore } from '../../store/feed-store'
 import { useEntryStore } from '../../store/entry-store'
-import { useSettingsStore } from '../../store/settings-store'
+import {
+  useSettingsActions,
+  useSettingsStore,
+} from '../../store/settings-store'
+import { moveFolder, sortFolders } from '../../lib/folder-order'
 import {
   FeedViewType,
   VIEW_DEFINITIONS,
@@ -45,6 +49,8 @@ import {
   Sparkles,
   FolderPlus,
   GripVertical,
+  ChevronsDownUp,
+  ChevronsUpDown,
   Link,
   Pencil,
 } from 'lucide-react'
@@ -502,9 +508,14 @@ export function Sidebar({ width }: { width?: number }) {
   } | null>(null)
   const dragOverlayRef = useRef<{
     feedId: string
+    /** Set when a folder header is dragged to reorder folders. */
+    folder?: string
     startY: number
     pointerId: number
   } | null>(null)
+  const reorderFolderRef = useRef<(folder: string, target: string) => void>(
+    () => {},
+  )
 
   // Keep latest values in refs so the persistent window listener can access them
   const updateFeedRef = useRef(updateFeed)
@@ -649,10 +660,19 @@ export function Sidebar({ width }: { width?: number }) {
 
     const onUp = () => {
       if (!dragOverlayRef.current) return
-      const { feedId } = dragOverlayRef.current
+      const { feedId, folder } = dragOverlayRef.current
 
       // Get current drop target from ref (immediate access)
       const currentTarget = dropTargetRef.current
+      if (folder) {
+        dropTargetRef.current = null
+        setDropTarget(null)
+        setDragFeedId(null)
+        setDragOverlay(null)
+        dragOverlayRef.current = null
+        if (currentTarget) reorderFolderRef.current(folder, currentTarget)
+        return
+      }
       const draggedFeed = feedsRef.current.find((f) => f.id === feedId)
       const sourceFolder = draggedFeed
         ? getFeedFolderNameRef.current(draggedFeed)
@@ -709,6 +729,21 @@ export function Sidebar({ width }: { width?: number }) {
       setDragOverlay({ label, x: e.clientX, y: e.clientY })
       dragOverlayRef.current = {
         feedId,
+        startY: e.clientY,
+        pointerId: e.pointerId,
+      }
+    },
+    [],
+  )
+  const handleFolderDragStart = useCallback(
+    (folder: string, e: React.PointerEvent) => {
+      e.preventDefault()
+      // '' matches no feed row but still lights up the hovered folder.
+      setDragFeedId('')
+      setDragOverlay({ label: folder, x: e.clientX, y: e.clientY })
+      dragOverlayRef.current = {
+        feedId: '',
+        folder,
         startY: e.clientY,
         pointerId: e.pointerId,
       }
@@ -1172,10 +1207,44 @@ export function Sidebar({ width }: { width?: number }) {
     }
     return counts
   }, [feeds])
+  const folderOrder = useSettingsStore((s) => s.settings.general.folderOrder)
+  const { updateSettingsSection } = useSettingsActions()
   const categoryEntries = useMemo(
-    () => Array.from(userCategories.entries()),
-    [userCategories],
+    () => sortFolders(Array.from(userCategories.entries()), folderOrder ?? []),
+    [userCategories, folderOrder],
   )
+  reorderFolderRef.current = (folder, target) => {
+    const names = categoryEntries.map(([name]) => name)
+    const moved = moveFolder(names, folder, target)
+    if (moved === names) return
+    // Keep the saved place of folders hidden by the current view filter.
+    const hidden = (folderOrder ?? []).filter((name) => !moved.includes(name))
+    void updateSettingsSection('general', {
+      folderOrder: [...moved, ...hidden],
+    })
+  }
+  // Collapsed folders live in settings so they survive view switches and restarts.
+  const collapsedFolders = useSettingsStore(
+    (s) => s.settings.general.collapsedFolders,
+  )
+  const collapsedSet = useMemo(
+    () => new Set(collapsedFolders ?? []),
+    [collapsedFolders],
+  )
+  const setFoldersExpanded = useCallback(
+    (folders: string[], expanded: boolean) => {
+      const current =
+        useSettingsStore.getState().settings.general.collapsedFolders ?? []
+      const next = expanded
+        ? current.filter((name) => !folders.includes(name))
+        : [...new Set([...current, ...folders])]
+      void updateSettingsSection('general', { collapsedFolders: next })
+    },
+    [updateSettingsSection],
+  )
+  const allFoldersCollapsed =
+    categoryEntries.length > 0 &&
+    categoryEntries.every(([name]) => collapsedSet.has(name))
   const userVisibleFeedCount = useMemo(
     () =>
       displayFeeds.filter((f) => f.category !== RECOMMENDED_CATEGORY).length,
@@ -1826,8 +1895,8 @@ export function Sidebar({ width }: { width?: number }) {
           }`}
         >
           {showGlobalFeedSearch && (
-            <div className="mt-1 px-1">
-              <div className="relative">
+            <div className="mt-1 flex items-center gap-1 px-1">
+              <div className="relative flex-1">
                 <Search
                   size={14}
                   className="dark:text-text-dark-tertiary text-text-tertiary pointer-events-none absolute left-2 top-1/2 -translate-y-1/2"
@@ -1855,6 +1924,35 @@ export function Sidebar({ width }: { width?: number }) {
                   }}
                 />
               </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setFoldersExpanded(
+                    categoryEntries.map(([name]) => name),
+                    allFoldersCollapsed,
+                  )
+                }
+                title={
+                  allFoldersCollapsed
+                    ? tWithDefault(
+                        'sidebar.expandAll',
+                        '全部展开',
+                        'Expand all',
+                      )
+                    : tWithDefault(
+                        'sidebar.collapseAll',
+                        '全部折叠',
+                        'Collapse all',
+                      )
+                }
+                className="dark:text-text-dark-tertiary text-text-tertiary hover:text-text-secondary dark:hover:text-text-dark-secondary shrink-0 rounded-md p-1"
+              >
+                {allFoldersCollapsed ? (
+                  <ChevronsUpDown size={14} />
+                ) : (
+                  <ChevronsDownUp size={14} />
+                )}
+              </button>
             </div>
           )}
 
@@ -1874,6 +1972,9 @@ export function Sidebar({ width }: { width?: number }) {
                 dragFeedId={dragFeedId}
                 dropTarget={dropTarget}
                 onDragStart={handleDragPointerStart}
+                onFolderDragStart={handleFolderDragStart}
+                expanded={!collapsedSet.has(category)}
+                onSetExpanded={setFoldersExpanded}
                 autoExpand={searchExpandedCategories.has(category)}
                 highlightedFeedIds={searchHighlightedFeedIds}
               />
@@ -2619,6 +2720,9 @@ type FeedCategoryProps = {
   dragFeedId: string | null
   dropTarget: string | null
   onDragStart: (feedId: string, label: string, e: React.PointerEvent) => void
+  onFolderDragStart: (folder: string, e: React.PointerEvent) => void
+  expanded: boolean
+  onSetExpanded: (folders: string[], expanded: boolean) => void
   autoExpand: boolean
   highlightedFeedIds: Set<string>
 }
@@ -2634,6 +2738,9 @@ const FeedCategory = memo(function FeedCategory({
   dragFeedId,
   dropTarget,
   onDragStart,
+  onFolderDragStart,
+  expanded: savedExpanded,
+  onSetExpanded,
   autoExpand,
   highlightedFeedIds,
 }: FeedCategoryProps) {
@@ -2641,7 +2748,8 @@ const FeedCategory = memo(function FeedCategory({
   const showFeedRefreshErrorBadge = useSettingsStore(
     (s) => s.settings.general.showFeedRefreshErrorBadge,
   )
-  const [expanded, setExpanded] = useState(true)
+  // Search matches open a folder without changing its saved state.
+  const expanded = savedExpanded || (!lite && autoExpand)
   const isDropHover = !lite && dropTarget === category && dragFeedId !== null
   const shouldVirtualizeFeeds =
     !lite && feeds.length > FEED_CATEGORY_VIRTUALIZE_THRESHOLD
@@ -2659,17 +2767,14 @@ const FeedCategory = memo(function FeedCategory({
       ? Math.min(420, feeds.length * 36 + 8)
       : feeds.length * 40 + 8
     : 0
-  // Auto-expand when dragging over a collapsed folder
+  // Auto-expand when dragging a feed over a collapsed folder. Folder drags
+  // set dragFeedId to '' and must not open the folders they pass over.
   const wasDropHover = useRef(false)
-  if (isDropHover && !expanded && !wasDropHover.current) {
+  if (isDropHover && dragFeedId && !expanded && !wasDropHover.current) {
     wasDropHover.current = true
-    setTimeout(() => setExpanded(true), 400)
+    setTimeout(() => onSetExpanded([category], true), 400)
   }
   if (!isDropHover) wasDropHover.current = false
-
-  useEffect(() => {
-    if (!lite && autoExpand) setExpanded(true)
-  }, [autoExpand, lite])
 
   const renderFeedRow = useCallback(
     (feed: FeedWithCount, itemStart?: number, itemIndex?: number) => {
@@ -2767,7 +2872,8 @@ const FeedCategory = memo(function FeedCategory({
       }`}
     >
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => onSetExpanded([category], !expanded)}
+        aria-expanded={expanded}
         onContextMenu={
           lite
             ? undefined
@@ -2778,7 +2884,7 @@ const FeedCategory = memo(function FeedCategory({
                   feeds.map((f) => f.id),
                 )
         }
-        className={`flex w-full items-center gap-1 px-3 py-1 text-xs font-medium uppercase tracking-wider transition-colors ${
+        className={`group flex w-full items-center gap-1 px-3 py-1 text-xs font-medium uppercase tracking-wider transition-colors ${
           isDropHover
             ? 'text-accent'
             : 'text-text-secondary dark:text-text-dark-secondary'
@@ -2789,6 +2895,17 @@ const FeedCategory = memo(function FeedCategory({
           className={`transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
         />
         {category}
+        {!lite && (
+          <GripVertical
+            size={12}
+            aria-label="drag folder"
+            className="cursor-grab touch-none opacity-0 transition-opacity active:cursor-grabbing group-hover:opacity-40"
+            onPointerDown={(e) => {
+              e.stopPropagation()
+              onFolderDragStart(category, e)
+            }}
+          />
+        )}
         <span className="text-text-tertiary ml-auto">{feeds.length}</span>
       </button>
       <div

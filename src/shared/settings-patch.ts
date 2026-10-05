@@ -174,6 +174,19 @@ function sanitizeSettingsSection(
   return result
 }
 
+function sanitizeFolderNames(value: unknown, field: string) {
+  if (!Array.isArray(value) || value.length > 500) {
+    rejectSettingsPatch(field, 'max_items_500')
+  }
+  return value.map((item, index) =>
+    sanitizeString(
+      item,
+      `${field}.${index}`,
+      SETTINGS_PATCH_SHORT_STRING_MAX_LENGTH,
+    ),
+  )
+}
+
 function sanitizeViewTabs(value: unknown, field: string) {
   if (!Array.isArray(value) || value.length > SETTINGS_PATCH_MAX_ARRAY_ITEMS) {
     rejectSettingsPatch(field, `max_items_${SETTINGS_PATCH_MAX_ARRAY_ITEMS}`)
@@ -291,6 +304,8 @@ const generalSettingsPatchSchema: Record<string, FieldSanitizer> = {
   refreshInterval: sanitizeNumber,
   markReadOnScroll: sanitizeBoolean,
   readabilityMode: sanitizeBoolean,
+  folderOrder: sanitizeFolderNames,
+  collapsedFolders: sanitizeFolderNames,
   fontSize: sanitizeNumber,
   contentWidth: sanitizeEnum(CONTENT_WIDTH_VALUES),
   customContentMaxWidth: sanitizeNumber,

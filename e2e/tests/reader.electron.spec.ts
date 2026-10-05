@@ -226,6 +226,84 @@ test('signing in to a site from the feed menu unlocks its members feed', async (
     .toBe(FEEDS.members.count)
 })
 
+test('dragging a folder header reorders folders and the order sticks', async () => {
+  const folderNames = () =>
+    page
+      .locator('[data-drop-category]')
+      .evaluateAll((els) =>
+        els.map((el) => el.getAttribute('data-drop-category')),
+      )
+  const before = await folderNames()
+  expect(before[0]).toBe('QA')
+  const target = before[before.length - 1]!
+
+  const grip = page
+    .locator('[data-drop-category="QA"]')
+    .getByLabel('drag folder')
+  const box = (await grip.boundingBox())!
+  const dest = (await page
+    .locator(`[data-drop-category="${target}"] > button`)
+    .boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(dest.x + 20, dest.y + dest.height / 2, { steps: 8 })
+  await page.mouse.up()
+
+  const expected = [...before.slice(1), 'QA']
+  await expect.poll(folderNames).toEqual(expected)
+  await page.reload()
+  await expect.poll(folderNames).toEqual(expected)
+})
+
+const folderHeader = (name: string) =>
+  page.locator(`[data-drop-category="${name}"] > button`)
+
+test('a collapsed folder stays collapsed after switching views', async () => {
+  await folderHeader('QA').click()
+  await expect(folderHeader('QA')).toHaveAttribute('aria-expanded', 'false')
+  await page.locator('button[title="推文"]').click()
+  await expect(folderHeader('QA')).toHaveCount(0)
+  await page.locator('button[title="全部"]').click()
+  await expect(folderHeader('QA')).toHaveAttribute('aria-expanded', 'false')
+  await folderHeader('QA').click()
+  await expect(folderHeader('QA')).toHaveAttribute('aria-expanded', 'true')
+})
+
+test('dragging a folder over a collapsed folder does not open it', async () => {
+  const names = await page
+    .locator('[data-drop-category]')
+    .evaluateAll((els) =>
+      els.map((el) => el.getAttribute('data-drop-category')),
+    )
+  const other = names.find((name) => name !== 'QA')!
+  await folderHeader(other).click()
+  await expect(folderHeader(other)).toHaveAttribute('aria-expanded', 'false')
+
+  const grip = (await page
+    .locator('[data-drop-category="QA"]')
+    .getByLabel('drag folder')
+    .boundingBox())!
+  const dest = (await folderHeader(other).boundingBox())!
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(dest.x + 20, dest.y + dest.height / 2, { steps: 8 })
+  await page.waitForTimeout(800)
+  await expect(folderHeader(other)).toHaveAttribute('aria-expanded', 'false')
+  await page.mouse.up()
+  await folderHeader(other).click()
+})
+
+test('the collapse-all button folds and unfolds every folder', async () => {
+  const states = () =>
+    page
+      .locator('[data-drop-category] > button')
+      .evaluateAll((els) => els.map((el) => el.getAttribute('aria-expanded')))
+  await page.locator('button[title="全部折叠"]').click()
+  await expect.poll(states).not.toContain('true')
+  await page.locator('button[title="全部展开"]').click()
+  await expect.poll(states).not.toContain('false')
+})
+
 test('AI digest cites sources by number, not raw ids', async () => {
   await page.getByRole('button', { name: 'AI 简报', exact: true }).click()
   await page.getByRole('button', { name: '生成', exact: true }).click()

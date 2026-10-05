@@ -40,6 +40,10 @@ export interface AppSettings {
     markReadOnScroll: boolean
     /** Open articles in readability (full text) mode; follows the last toggle. */
     readabilityMode: boolean
+    /** Sidebar folder order set by dragging; unlisted folders follow. */
+    folderOrder: string[]
+    /** Sidebar folders the user collapsed. */
+    collapsedFolders: string[]
     fontSize: number
     contentWidth: 'narrow' | 'normal' | 'wide' | 'custom'
     customContentMaxWidth: number
@@ -138,6 +142,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     refreshInterval: 30,
     markReadOnScroll: true,
     readabilityMode: false,
+    folderOrder: [],
+    collapsedFolders: [],
     fontSize: 16,
     contentWidth: 'normal',
     customContentMaxWidth: 680,
