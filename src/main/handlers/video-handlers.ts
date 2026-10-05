@@ -1,7 +1,7 @@
 ﻿/**
  * IPC handlers for video URL resolution.
  *
- * - VIDEO_RESOLVE: Invidious/Piped proxy -> direct .mp4 URLs
+ * - VIDEO_RESOLVE: always fails; players fall back to the YouTube iframe.
  * - VIDEO_YT_STATUS: Legacy compatibility stub; account linking was removed.
  */
 import { BrowserWindow } from 'electron'
@@ -10,7 +10,6 @@ import { classifyExternalUrl } from '../../shared/url-policy'
 import { registerChannel } from '../ipc/register-channel'
 import { toHandlerError } from '../ipc/handler-error'
 import { classifyNetworkFetchUrl } from '../services/system/network-url-policy'
-import { resolveVideoUrl } from '../services/video/video-proxy'
 
 const DESKTOP_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
@@ -72,10 +71,12 @@ async function validateAndLoadVideoNavigation(
 }
 
 export function registerVideoHandlers(): void {
-  // 鈹€鈹€ Invidious/Piped video resolution 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
-  registerChannel(IPC.VIDEO_RESOLVE, async (_event, url: string) => {
-    return resolveVideoUrl(url)
-  })
+  // The public Invidious/Piped instances this used are shut down or blocked,
+  // and waiting on all of them delayed every video by ~20s.
+  registerChannel(IPC.VIDEO_RESOLVE, async () => ({
+    success: false,
+    error: 'Direct video resolution is not available',
+  }))
 
   registerChannel(IPC.VIDEO_OPEN_IN_APP, async (_event, url: string) => {
     try {

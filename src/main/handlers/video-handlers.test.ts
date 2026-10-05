@@ -18,10 +18,6 @@ vi.mock('../ipc/register-channel', () => ({
   registerChannel: registerChannelMock,
 }))
 
-vi.mock('../services/video/video-proxy', () => ({
-  resolveVideoUrl: vi.fn(),
-}))
-
 function getRegisteredHandler(channel: string) {
   const call = registerChannelMock.mock.calls.find(
     ([registeredChannel]) => registeredChannel === channel,

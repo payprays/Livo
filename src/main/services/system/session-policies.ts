@@ -83,6 +83,15 @@ export function registerSessionPolicies(): void {
           .replace(/\s*electron-vite[\w-]*\/[\d.]+/gi, '')
       }
 
+      // The embed player refuses to load (error 153) without a Referer, and
+      // pages served from file:// send none.
+      if (
+        /^https:\/\/www\.youtube(?:-nocookie)?\.com\/embed\//.test(url) &&
+        !details.requestHeaders['Referer']
+      ) {
+        details.requestHeaders['Referer'] = 'https://github.com/payprays/Livo'
+      }
+
       callback({ requestHeaders: details.requestHeaders })
     },
   )

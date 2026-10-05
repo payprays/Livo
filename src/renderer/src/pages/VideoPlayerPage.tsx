@@ -20,7 +20,7 @@ type YoutubePlayback = { kind: 'direct' | 'iframe'; url: string }
 // from ArticleDetailPage (1.3) so we get title + media + poster for free.
 // `ui/VideoPlayer` already handles direct video files + Bilibili webview; for
 // YouTube embeds — which it would otherwise punt to `window.open` — we resolve
-// upfront via the existing `video-proxy` IPC and inline an iframe fallback so
+// upfront via the `video:resolve` IPC and inline an iframe fallback so
 // the page is the unified fullscreen entry.
 export default function VideoPlayerPage() {
   const { t } = useTranslation()
