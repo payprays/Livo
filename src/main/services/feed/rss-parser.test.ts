@@ -163,3 +163,35 @@ describe('rss-parser RSSHub mirror routes', () => {
     expect(requestedUrls).toEqual([nitterUrl, nitterUrl])
   })
 })
+
+describe('rss-parser relative item urls', () => {
+  afterEach(() => {
+    fetchMock.mockReset()
+  })
+
+  it('resolves site-relative links and images against the feed url', async () => {
+    // Shape of Bing's image archive feed.
+    fetchMock.mockResolvedValue(
+      new Response(
+        `<?xml version="1.0"?><rss version="2.0"><channel><title>必应图片</title>
+<item><title>Wallpaper</title><link>/th?id=OHR.Hall_1920x1080.jpg&amp;pid=hp</link>
+<description><![CDATA[<img src="/th?id=OHR.Hall_1920x1080.jpg&amp;pid=hp"/><a href="#top">top</a>]]></description></item>
+</channel></rss>`,
+        { status: 200 },
+      ),
+    )
+
+    const { data } = await fetchAndParseFeed(
+      'https://www.bing.com/HPImageArchive.aspx?format=rss',
+    )
+    const parsed = data!.items[0]
+
+    expect(parsed.link).toBe(
+      'https://www.bing.com/th?id=OHR.Hall_1920x1080.jpg&pid=hp',
+    )
+    expect(parsed.content).toContain(
+      'src="https://www.bing.com/th?id=OHR.Hall_1920x1080.jpg&pid=hp"',
+    )
+    expect(parsed.content).toContain('href="#top"')
+  })
+})

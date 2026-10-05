@@ -10,6 +10,7 @@ import {
 } from '../bilibili/bilibili-video-feed'
 import { assertNetworkFetchUrl } from '../system/network-url-policy'
 import { createLenientParser } from './rss-parser-lenient'
+import { resolveRelativeUrls } from '../entry/readability'
 import {
   isAbortError,
   scopedSignalWithTimeout,
@@ -1144,19 +1145,57 @@ async function fetchFeedText(
   throw new Error(`Failed to fetch feed text: ${String(lastError)}`)
 }
 
+const RELATIVE_URL_ATTR = /\b(?:src|href)=["'](?!https?:|data:|#)/i
+
+/** Some feeds (e.g. Bing's image archive) use site-relative links and images. */
+export function resolveRelativeItemUrls<T extends { items?: any[] }>(
+  feed: T,
+  feedUrl: string,
+): T {
+  for (const item of feed.items || []) {
+    if (typeof item.link === 'string' && /^[/?.]/.test(item.link)) {
+      try {
+        item.link = new URL(item.link, feedUrl).href
+      } catch {
+        // Keep the original link.
+      }
+    }
+    for (const key of [
+      'content:encoded',
+      'content',
+      'description',
+      'summary',
+    ]) {
+      const value = item[key]
+      if (typeof value === 'string' && RELATIVE_URL_ATTR.test(value)) {
+        item[key] = resolveRelativeUrls(value, feedUrl)
+      }
+    }
+  }
+  return feed
+}
+
+async function parseFeedText(
+  text: string,
+  feedUrl: string,
+): Promise<RssParser.Output<Record<string, any>>> {
+  let parsed: RssParser.Output<Record<string, any>>
+  // PERF: Try strict parsing first, then fall back to lenient mode
+  try {
+    parsed = await parser.parseString(text)
+  } catch {
+    parsed = await lenientParser.parseStringLenient(text)
+  }
+  return resolveRelativeItemUrls(parsed, feedUrl)
+}
+
 async function parseFeedUrl(
   url: string,
   options?: FetchTextOptions,
 ): Promise<RssParser.Output<Record<string, any>>> {
   throwIfAborted(options?.signal)
   const text = await fetchFeedText(url, options)
-
-  // PERF: Try strict parsing first, then fall back to lenient mode
-  try {
-    return await parser.parseString(text)
-  } catch {
-    return await lenientParser.parseStringLenient(text)
-  }
+  return parseFeedText(text, url)
 }
 
 export async function fetchAndParseFeed(
@@ -1484,13 +1523,7 @@ export async function fetchAndParseFeed(
           lastModified: result.lastModified,
         }
       }
-      // Parse the fetched body with lenient fallback
-      let parsed: RssParser.Output<Record<string, any>>
-      try {
-        parsed = await parser.parseString(result.body!)
-      } catch {
-        parsed = await lenientParser.parseStringLenient(result.body!)
-      }
+      const parsed = await parseFeedText(result.body!, feedUrl)
       return {
         data: parsed,
         notModified: false,
