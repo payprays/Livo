@@ -304,6 +304,23 @@ test('the collapse-all button folds and unfolds every folder', async () => {
   await expect.poll(states).not.toContain('false')
 })
 
+test('the reading progress bar animates without relayout', async () => {
+  await sidebarFeed(FEEDS.small.title).click()
+  await openEntry(`${FEEDS.small.prefix} 1`)
+  await expect(readerTitle()).toHaveText(`${FEEDS.small.prefix} 1`)
+  await readerTitle().evaluate((h1) => {
+    let el = h1.parentElement
+    while (el && el.scrollHeight <= el.clientHeight) el = el.parentElement
+    el!.scrollTop = el!.scrollHeight
+  })
+  const bar = page.getByRole('progressbar')
+  await expect(bar).not.toHaveAttribute('aria-valuenow', '0')
+  // Width (or `all`) transitions re-lay out the page on every scroll frame.
+  expect(
+    await bar.evaluate((el) => getComputedStyle(el).transitionProperty),
+  ).toBe('transform')
+})
+
 test('AI digest cites sources by number, not raw ids', async () => {
   await page.getByRole('button', { name: 'AI 简报', exact: true }).click()
   await page.getByRole('button', { name: '生成', exact: true }).click()

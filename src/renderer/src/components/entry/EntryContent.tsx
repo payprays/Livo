@@ -1088,9 +1088,12 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
 
         {/* 阅读进度条跟随工具栏，避免覆盖右上角操作区。 */}
         <div className="dark:bg-surface-dark/80 h-[2px] bg-white/80">
+          {/* 用缩放代替宽度：宽度过渡会让滚动的每一帧都重新布局，高刷屏上明显掉帧。 */}
           <div
-            className="bg-accent h-full transition-all duration-150 ease-out"
-            style={{ width: `${readPercent}%` }}
+            role="progressbar"
+            aria-valuenow={readPercent}
+            className="bg-accent h-full origin-left transition-transform duration-150 ease-out"
+            style={{ transform: `scaleX(${readPercent / 100})` }}
           />
         </div>
       </div>
