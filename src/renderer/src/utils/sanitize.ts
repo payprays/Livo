@@ -34,6 +34,8 @@ const ALLOWED_TAGS = new Set([
   'article',
   'section',
   'main',
+  'aside',
+  'header',
   'figure',
   'figcaption',
   'details',

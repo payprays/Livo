@@ -54,6 +54,14 @@ describe('sanitizeHTML', () => {
     expect(html).not.toContain('poster=')
   })
 
+  it('keeps Discourse link preview structure so it can be styled', () => {
+    const html = sanitizeHTML(
+      '<aside class="onebox"><header class="source"><img class="site-icon" src="https://cdn.example.com/i.png" width="180"></header></aside>',
+    )
+
+    expect(html).toContain('<aside class="onebox"><header class="source">')
+  })
+
   it('keeps public media URLs', () => {
     const html = sanitizeHTML(`
       <img src="https://cdn.example.com/image.jpg" srcset="https://cdn.example.com/image@2x.jpg 2x">

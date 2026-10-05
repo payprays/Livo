@@ -168,6 +168,34 @@
   transform: scale(1.01);
 }
 
+/* Discourse posts (linux.do, ...) ship quotes and link previews with
+   full-size icons and rely on the forum's stylesheet to size them. */
+.entry-content .d-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  vertical-align: -0.125em;
+}
+.entry-content aside.quote > .title {
+  @apply mb-1 flex items-center gap-2 text-sm;
+}
+.entry-content aside.onebox {
+  margin: 1rem 0;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+.entry-content aside.onebox header.source {
+  @apply flex items-center gap-1.5 text-xs;
+}
+.entry-content aside.onebox img.site-icon {
+  @apply m-0 h-4 w-4 rounded-none;
+}
+.entry-content aside.onebox h3 {
+  @apply mb-1 mt-2 text-base;
+}
+
 .entry-content a {
   @apply text-accent decoration-accent/40 no-underline underline-offset-2 hover:underline;
 }

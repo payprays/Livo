@@ -684,7 +684,11 @@ export default function ArticleDetailPage() {
                           key={i}
                           className="text-sm leading-relaxed text-[var(--color-text-secondary)]"
                         >
-                          {text}
+                          {/* Segments are HTML; this panel shows plain text. */}
+                          {
+                            new DOMParser().parseFromString(text, 'text/html')
+                              .body.textContent
+                          }
                         </p>
                       ))}
                     </div>
