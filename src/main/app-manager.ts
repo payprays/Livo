@@ -73,7 +73,10 @@ export class AppManager {
       getCacheImagePath: (fileName) =>
         join(app.getPath('userData'), 'cache', 'images', fileName),
       shouldMinimizeToTray: () => settingsProvider.get().general.minimizeToTray,
-      shouldStartInTray: () => settingsProvider.get().general.startInTray,
+      // --hidden: background restarts (rebuild hook) must not take focus.
+      shouldStartInTray: () =>
+        settingsProvider.get().general.startInTray ||
+        process.argv.includes('--hidden'),
       onVisibilityChanged: () => {
         this.tray?.refreshMenu()
       },
