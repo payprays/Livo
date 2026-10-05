@@ -183,6 +183,36 @@ describe('registerSettingsHandlers', () => {
     expect(savedText).toContain('safeStorage:')
   })
 
+  it('keeps secrets it cannot decrypt instead of wiping them on save', async () => {
+    // Another app identity (e.g. a dev build) has a different keyring key.
+    const foreign = `safeStorage:${Buffer.from('other-key').toString('base64')}`
+    safeStorageMock.decryptString.mockImplementation(() => {
+      throw new Error('Error while decrypting the ciphertext')
+    })
+    const settingsPath = join(userDataDir, 'data', 'settings.json')
+    mkdirSync(join(userDataDir, 'data'), { recursive: true })
+    writeFileSync(
+      settingsPath,
+      JSON.stringify({
+        ai: { apiKey: foreign, apiKeys: { openai: foreign } },
+      }),
+    )
+
+    const { settingsProvider } =
+      await import('../services/system/settings-provider')
+    expect(settingsProvider.get().ai.apiKey).toBe('')
+    await settingsProvider.update({ general: { fontSize: 17 } } as never)
+
+    const saved = JSON.parse(readFileSync(settingsPath, 'utf-8')) as {
+      ai: { apiKey: string; apiKeys: Record<string, string> }
+    }
+    expect(saved.ai.apiKey).toBe(foreign)
+    expect(saved.ai.apiKeys.openai).toBe(foreign)
+    safeStorageMock.decryptString.mockImplementation((value: Buffer) =>
+      value.toString('utf8').replace(/^encrypted:/, ''),
+    )
+  })
+
   it('rejects invalid settings:set payloads before applying side effects', async () => {
     const { registerSettingsHandlers } = await import('./settings-handlers')
     registerSettingsHandlers()

@@ -26,6 +26,13 @@ export type SettingsChangeListener = (settings: AppSettings) => void
 
 const ENCRYPTED_SETTING_SECRET_PREFIX = 'safeStorage:'
 
+// Ciphertexts this process could not decrypt, by field. They belong to another
+// keyring key (a dev build opening the real profile, a locked keyring) and are
+// written back untouched while the field stays empty, instead of being wiped.
+// ponytail: clearing such a key in the same session restores it; set a new
+// key instead.
+const undecryptableSecrets = new Map<string, string>()
+
 function cloneSettings(settings: AppSettings): AppSettings {
   return JSON.parse(JSON.stringify(settings)) as AppSettings
 }
@@ -38,8 +45,9 @@ function canEncryptSettingsSecret(): boolean {
   }
 }
 
-function encryptSettingsSecret(value: string): string {
-  if (!value.trim() || !canEncryptSettingsSecret()) return ''
+function encryptSettingsSecret(value: string, field: string): string {
+  if (!value.trim()) return undecryptableSecrets.get(field) ?? ''
+  if (!canEncryptSettingsSecret()) return ''
   try {
     return `${ENCRYPTED_SETTING_SECRET_PREFIX}${safeStorage
       .encryptString(value)
@@ -49,7 +57,10 @@ function encryptSettingsSecret(value: string): string {
   }
 }
 
-function decryptSettingsSecret(value: unknown): {
+function decryptSettingsSecret(
+  value: unknown,
+  field: string,
+): {
   value: string
   shouldRewrite: boolean
 } {
@@ -68,7 +79,8 @@ function decryptSettingsSecret(value: unknown): {
       shouldRewrite: false,
     }
   } catch {
-    return { value: '', shouldRewrite: true }
+    undecryptableSecrets.set(field, value)
+    return { value: '', shouldRewrite: false }
   }
 }
 
@@ -93,20 +105,23 @@ function decodeStoredSettingsSecrets(raw: Partial<AppSettings>): boolean {
     (isStoredSettingsSecret(raw.general.proxyUrl) ||
       shouldProtectProxyUrl(raw.general.proxyUrl))
   ) {
-    const proxyUrl = decryptSettingsSecret(raw.general.proxyUrl)
+    const proxyUrl = decryptSettingsSecret(
+      raw.general.proxyUrl,
+      'general.proxyUrl',
+    )
     raw.general.proxyUrl = proxyUrl.value
     shouldRewrite ||= proxyUrl.shouldRewrite
   }
 
   if (raw.ai) {
-    const apiKey = decryptSettingsSecret(raw.ai.apiKey)
+    const apiKey = decryptSettingsSecret(raw.ai.apiKey, 'ai.apiKey')
     raw.ai.apiKey = apiKey.value
     shouldRewrite ||= apiKey.shouldRewrite
 
     if (raw.ai.apiKeys) {
       raw.ai.apiKeys = Object.fromEntries(
         Object.entries(raw.ai.apiKeys).map(([provider, value]) => {
-          const decoded = decryptSettingsSecret(value)
+          const decoded = decryptSettingsSecret(value, `ai.apiKeys.${provider}`)
           shouldRewrite ||= decoded.shouldRewrite
           return [provider, decoded.value]
         }),
@@ -115,11 +130,17 @@ function decodeStoredSettingsSecrets(raw: Partial<AppSettings>): boolean {
   }
 
   if (raw.aggregator) {
-    const apiKey = decryptSettingsSecret(raw.aggregator.apiKey)
+    const apiKey = decryptSettingsSecret(
+      raw.aggregator.apiKey,
+      'aggregator.apiKey',
+    )
     raw.aggregator.apiKey = apiKey.value
     shouldRewrite ||= apiKey.shouldRewrite
 
-    const deviceId = decryptSettingsSecret(raw.aggregator.deviceId)
+    const deviceId = decryptSettingsSecret(
+      raw.aggregator.deviceId,
+      'aggregator.deviceId',
+    )
     raw.aggregator.deviceId = deviceId.value
     shouldRewrite ||= deviceId.shouldRewrite
   }
@@ -129,20 +150,32 @@ function decodeStoredSettingsSecrets(raw: Partial<AppSettings>): boolean {
 
 function encodeSettingsForDisk(settings: AppSettings): AppSettings {
   const stored = cloneSettings(settings)
-  if (shouldProtectProxyUrl(stored.general.proxyUrl)) {
-    stored.general.proxyUrl = encryptSettingsSecret(stored.general.proxyUrl)
+  if (
+    shouldProtectProxyUrl(stored.general.proxyUrl) ||
+    !stored.general.proxyUrl
+  ) {
+    stored.general.proxyUrl = encryptSettingsSecret(
+      stored.general.proxyUrl,
+      'general.proxyUrl',
+    )
   }
-  stored.ai.apiKey = encryptSettingsSecret(stored.ai.apiKey)
+  stored.ai.apiKey = encryptSettingsSecret(stored.ai.apiKey, 'ai.apiKey')
   if (stored.ai.apiKeys) {
     stored.ai.apiKeys = Object.fromEntries(
       Object.entries(stored.ai.apiKeys).map(([provider, value]) => [
         provider,
-        encryptSettingsSecret(value),
+        encryptSettingsSecret(value, `ai.apiKeys.${provider}`),
       ]),
     )
   }
-  stored.aggregator.apiKey = encryptSettingsSecret(stored.aggregator.apiKey)
-  stored.aggregator.deviceId = encryptSettingsSecret(stored.aggregator.deviceId)
+  stored.aggregator.apiKey = encryptSettingsSecret(
+    stored.aggregator.apiKey,
+    'aggregator.apiKey',
+  )
+  stored.aggregator.deviceId = encryptSettingsSecret(
+    stored.aggregator.deviceId,
+    'aggregator.deviceId',
+  )
   return stored
 }
 
