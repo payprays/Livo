@@ -1,4 +1,4 @@
-import { session } from 'electron'
+import { nativeImage, session } from 'electron'
 import { assertNetworkFetchUrl } from '../system/network-url-policy'
 import { extractBilibiliUid } from '../../../shared/discover-helpers'
 
@@ -6,6 +6,8 @@ const MAX_AVATAR_REDIRECTS = 5
 const MAX_AVATAR_HTML_BYTES = 2 * 1024 * 1024
 const MAX_AVATAR_IMAGE_BYTES = 2 * 1024 * 1024
 const MAX_AVATAR_JSON_BYTES = 512 * 1024
+const AVATAR_MAX_PX = 128
+const MAX_INLINE_AVATAR_BYTES = 64 * 1024
 
 async function fetchAvatarResource(
   url: string,
@@ -266,6 +268,24 @@ async function tryConvertImageUrlToDataUri(
     const buffer = await readResponseBytes(res, MAX_AVATAR_IMAGE_BYTES)
     if (!buffer) return undefined
     if (buffer.length < 64) return undefined
+    // Site avatars are often full-size og:image banners. The data URI is kept
+    // in every feed list and cache, so store a thumbnail, not megabytes.
+    const image = nativeImage.createFromBuffer(buffer)
+    if (!image.isEmpty()) {
+      const { width, height } = image.getSize()
+      if (Math.max(width, height) > AVATAR_MAX_PX) {
+        return image
+          .resize(
+            width >= height
+              ? { width: AVATAR_MAX_PX }
+              : { height: AVATAR_MAX_PX },
+          )
+          .toDataURL()
+      }
+    } else if (buffer.length > MAX_INLINE_AVATAR_BYTES) {
+      // Can't shrink this format (webp, gif, ...): use the remote URL.
+      return undefined
+    }
     const ext = imageUrl.split('.').pop()?.split('?')[0]?.toLowerCase()
     const mime = contentType.startsWith('image/')
       ? contentType.split(';')[0]
