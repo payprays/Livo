@@ -2326,8 +2326,8 @@ export function Sidebar({ width }: { width?: number }) {
                   const feed = feeds.find((f) => f.id === contextMenu.feedId)
                   setContextMenu(null)
                   if (!feed) return
-                  // Sign in inside Livo; refetch once the window is closed so
-                  // logged-in content shows up.
+                  // Sign in in the browser; refetch once the user is back in
+                  // Livo and its cookies are synced.
                   void window.api.app
                     .openSiteLogin(siteLoginUrl(feed))
                     .then(() => refreshFeed(feed.id))
@@ -2336,8 +2336,8 @@ export function Sidebar({ width }: { width?: number }) {
                 <LogIn size={14} />
                 {tWithDefault(
                   'sidebar.siteLogin',
-                  '登录此站点',
-                  'Sign in to this site',
+                  '在浏览器中登录此站点',
+                  'Sign in to this site in the browser',
                 )}
               </button>
               <button

@@ -114,6 +114,10 @@ vi.mock('./services/system/session-policies', () => ({
   registerSessionPolicies: vi.fn(),
 }))
 
+vi.mock('./services/system/browser-cookies', () => ({
+  startBrowserCookieSync: vi.fn(),
+}))
+
 vi.mock('./services/system/update-check', () => ({
   checkForAppUpdates: vi.fn(),
 }))

@@ -12,8 +12,6 @@ import type { AddressInfo } from 'node:net'
 export const FEEDS = {
   big: { title: 'QA Big Feed', count: 45, prefix: 'Big post' },
   small: { title: 'QA Small Feed', count: 3, prefix: 'Small post' },
-  // Only lists items for a signed-in reader (cookie set by visiting `/`).
-  members: { title: 'QA Members Feed', count: 2, prefix: 'Members post' },
 } as const
 
 export const TRANSLATION_MARK = '【译】'
@@ -24,14 +22,9 @@ const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g
 // Fixed per process so every fetch of a feed reports the same dates.
 const BASE_TIME = Date.now()
 
-function rss(
-  origin: string,
-  name: keyof typeof FEEDS,
-  signedIn: boolean,
-): string {
+function rss(origin: string, name: keyof typeof FEEDS): string {
   const feed = FEEDS[name]
-  const count = name === 'members' && !signedIn ? 0 : feed.count
-  const items = Array.from({ length: count }, (_, i) => {
+  const items = Array.from({ length: feed.count }, (_, i) => {
     const n = i + 1
     // Newest first, all within the last day so the daily digest picks them up.
     // The description must not start with the title, or entry-builder treats
@@ -118,20 +111,10 @@ export async function startFakeUpstream(): Promise<{
   let summaries = 0
   const server: Server = createServer((req, res) => {
     const origin = `http://${req.headers.host}`
-    const feedMatch = req.url?.match(/^\/feed\/(big|small|members)\.xml/)
+    const feedMatch = req.url?.match(/^\/feed\/(big|small)\.xml/)
     if (req.method === 'GET' && feedMatch) {
-      const signedIn = /\bsid=member\b/.test(req.headers.cookie ?? '')
       res.writeHead(200, { 'Content-Type': 'application/rss+xml' })
-      res.end(rss(origin, feedMatch[1] as keyof typeof FEEDS, signedIn))
-      return
-    }
-    // The "login page": visiting the site signs the reader in.
-    if (req.method === 'GET' && req.url === '/') {
-      res.writeHead(200, {
-        'Content-Type': 'text/html',
-        'Set-Cookie': 'sid=member; Path=/; Max-Age=3600',
-      })
-      res.end('<h1>Signed in</h1>')
+      res.end(rss(origin, feedMatch[1] as keyof typeof FEEDS))
       return
     }
     if (req.method === 'POST' && req.url?.endsWith('/chat/completions')) {

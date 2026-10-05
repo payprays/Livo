@@ -17,7 +17,7 @@ import {
   openDirectory,
 } from '../services/system/app-shell'
 import { downloadUrlToFile, saveTextFile } from '../services/system/download'
-import { openSiteLoginWindow } from '../services/system/site-login'
+import { openSiteLogin } from '../services/system/site-login'
 import { settingsProvider } from '../services/system/settings-provider'
 import { getDb, whenDbReady } from '../database'
 import type { WindowManager } from '../window-manager'
@@ -38,7 +38,7 @@ export function registerAppHandlers(
     return windowManager.safeOpenExternal(url)
   })
   registerChannel(IPC.APP_OPEN_SITE_LOGIN, (_event, url: string) =>
-    openSiteLoginWindow(url, windowManager.getMainWindow()),
+    openSiteLogin(url),
   )
   registerChannel(
     IPC.APP_REPORT_ERROR,

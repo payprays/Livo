@@ -189,43 +189,6 @@ test('auto summary skips short posts and runs for long articles', async () => {
   await expect.poll(() => upstream.summaryRequests()).toBe(before + 1)
 })
 
-test('signing in to a site from the feed menu unlocks its members feed', async () => {
-  await page.evaluate(async (url) => {
-    const { feed } = (await window.api.feeds.add(url, 'QA')) as {
-      feed: { id: string }
-    }
-    await window.api.feeds.refresh(feed.id)
-  }, upstream.feedUrl('members'))
-  await page.reload()
-  await expect(sidebarFeed(FEEDS.members.title)).toBeVisible()
-  expect(
-    await page.evaluate(
-      async (title) =>
-        (await window.api.feeds.list()).find((f) => f.title === title)
-          ?.unreadCount,
-      FEEDS.members.title,
-    ),
-  ).toBe(0)
-
-  await sidebarFeed(FEEDS.members.title).click({ button: 'right' })
-  const loginWindow = app.waitForEvent('window')
-  await page.getByRole('button', { name: '登录此站点' }).click()
-  const login = await loginWindow
-  await expect(login.locator('h1')).toHaveText('Signed in')
-  await login.close()
-
-  await expect
-    .poll(() =>
-      page.evaluate(
-        async (title) =>
-          (await window.api.feeds.list()).find((f) => f.title === title)
-            ?.unreadCount,
-        FEEDS.members.title,
-      ),
-    )
-    .toBe(FEEDS.members.count)
-})
-
 test('remembered readability mode keeps quiet when a fetch fails', async () => {
   // Readability refuses the loopback fixture pages, so every fetch fails here.
   await page.evaluate(() =>

@@ -37,6 +37,7 @@ import { AppTray } from './services/system/tray'
 import { recoverOrphanBilibiliDynamicFeeds } from './services/bilibili/bilibili-orphan-recovery'
 import { startCacheMaintenance } from './services/system/cache-maintenance'
 import { registerSessionPolicies } from './services/system/session-policies'
+import { startBrowserCookieSync } from './services/system/browser-cookies'
 import { parseDeepLink } from '../shared/deep-link'
 import { UpdaterService } from './services/updater'
 import { registerUpdaterHandlers } from './handlers/updater-handlers'
@@ -135,6 +136,7 @@ export class AppManager {
     // 数据库初始化完成后再安排后台任务；此时窗口与骨架屏已开始加载。
     await dbInitPromise
     this.databaseReady = true
+    startBrowserCookieSync()
 
     if (this.isQuitting) return
 
