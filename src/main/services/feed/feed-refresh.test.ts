@@ -280,6 +280,8 @@ describe('refreshAllFeeds', () => {
         done: true,
       }),
     )
+    // A feed stored without a site URL picks it up from the channel link.
+    expect(feedById.get(feedA.id)?.siteUrl).toBe(feedA.url)
   })
 })
 

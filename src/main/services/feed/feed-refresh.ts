@@ -365,6 +365,9 @@ async function runRefreshSingleFeed(
     getDb().feeds.updateFeed(feed.id, {
       title: newTitle,
       description: parsed.description,
+      // Feeds added without waiting for the first fetch have no site URL yet;
+      // the sidebar needs it for the site icon.
+      siteUrl: feed.siteUrl || parsed.link || undefined,
       // Keep avatars fresh when upstream exposes a newer image, while still
       // avoiding regressions back to placeholder/default assets.
       imageUrl: selectedFeedAvatar,
