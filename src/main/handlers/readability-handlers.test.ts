@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   fetchReadableContent: vi.fn(),
   resolveRelativeUrls: vi.fn(),
   updateEntry: vi.fn(),
+  getEntryById: vi.fn(),
 }))
 
 vi.mock('electron', () => ({
@@ -20,6 +21,7 @@ vi.mock('../database', () => ({
   getDb: () => ({
     entries: {
       updateEntry: mocks.updateEntry,
+      getEntryById: mocks.getEntryById,
     },
   }),
 }))
@@ -61,6 +63,33 @@ describe('registerReadabilityHandlers', () => {
       await import('../services/system/task-runner-service')
     resetLocalTaskRunnerForTest()
     mocks.resolveRelativeUrls.mockImplementation((html: string) => html)
+    mocks.getEntryById.mockReturnValue({ content: '<p>Short</p>' })
+  })
+
+  it('keeps the feed text when the fetched page has less of it', async () => {
+    // WeChat pages render client-side; the fetch yields an empty shell.
+    mocks.getEntryById.mockReturnValue({
+      content: '<p>完整的公众号正文，订阅源里已经有了。</p>',
+    })
+    mocks.fetchReadableContent.mockResolvedValue({
+      title: 'WeChat',
+      content: '<!---->',
+      length: 0,
+    })
+    const { registerReadabilityHandlers } =
+      await import('./readability-handlers')
+    registerReadabilityHandlers()
+
+    const fetch = getRegisteredHandler(IPC.READABILITY_FETCH)
+    const result = unwrapIpcEnvelope(
+      await fetch({}, 'https://mp.weixin.qq.com/s/x', 'entry-1'),
+    ) as { success: boolean }
+
+    expect(result.success).toBe(false)
+    expect(mocks.updateEntry).not.toHaveBeenCalledWith(
+      'entry-1',
+      expect.objectContaining({ readabilityContent: '<!---->' }),
+    )
   })
 
   it('fetches fulltext through TaskRunner and persists successful entry fields', async () => {

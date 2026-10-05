@@ -237,3 +237,20 @@ describe('registerAIHandlers', () => {
     )
   })
 })
+
+describe('pickEntrySummaryContent', () => {
+  it('summarizes the fuller of the fetched page and the feed text', async () => {
+    const { pickEntrySummaryContent } = await import('./ai-handlers')
+    const feed = '<p>订阅源里的完整正文，有很多内容。</p>'
+
+    expect(
+      pickEntrySummaryContent({ readabilityContent: '<!---->', content: feed }),
+    ).toBe(feed)
+    expect(
+      pickEntrySummaryContent({
+        readabilityContent: '<p>The full article fetched from the site.</p>',
+        content: '<p>Excerpt</p>',
+      }),
+    ).toBe('<p>The full article fetched from the site.</p>')
+  })
+})

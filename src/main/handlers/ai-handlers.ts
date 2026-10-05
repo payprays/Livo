@@ -1,4 +1,5 @@
 import { registerChannel } from '../ipc/register-channel'
+import { htmlTextLength } from '../../shared/html-text'
 import OpenAI from 'openai'
 import { createHash } from 'crypto'
 import { IPC } from '../../shared/types'
@@ -60,17 +61,20 @@ function hasOwnField(object: Record<string, unknown>, field: string): boolean {
   return Object.prototype.hasOwnProperty.call(object, field)
 }
 
-function pickEntrySummaryContent(entry: {
+/**
+ * The fuller of the fetched page and the feed content. A fetched page is not
+ * always the article: WeChat pages render client-side and yield `<!---->`,
+ * while the feed already carries the full text.
+ */
+export function pickEntrySummaryContent(entry: {
   readabilityContent?: string
   content?: string
   summary?: string
 }): string {
-  return (
-    entry.readabilityContent?.trim() ||
-    entry.content?.trim() ||
-    entry.summary?.trim() ||
-    ''
-  )
+  const fetched = entry.readabilityContent?.trim() || ''
+  const feed = entry.content?.trim() || ''
+  const fuller = htmlTextLength(fetched) > htmlTextLength(feed) ? fetched : feed
+  return fuller || entry.summary?.trim() || ''
 }
 
 export function registerAIHandlers(): void {

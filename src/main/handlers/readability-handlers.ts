@@ -2,6 +2,7 @@ import { IPC } from '../../shared/types'
 import { registerChannel } from '../ipc/register-channel'
 import { toHandlerError } from '../ipc/handler-error'
 import { getDb } from '../database'
+import { htmlTextLength } from '../../shared/html-text'
 import {
   fetchReadableContent,
   resolveRelativeUrls,
@@ -15,6 +16,14 @@ async function fetchAndPersistReadableContent(input: {
 }) {
   const result = await fetchReadableContent(input.url)
   const content = resolveRelativeUrls(result.content, input.url)
+  // Keep the feed text when the page yields less (client-rendered pages,
+  // verification walls); otherwise readability mode would show a blank page.
+  const feedContent = input.entryId
+    ? getDb().entries.getEntryById(input.entryId)?.content
+    : undefined
+  if (htmlTextLength(content) <= htmlTextLength(feedContent)) {
+    throw new Error('原文页面没有比订阅内容更完整的正文')
+  }
 
   if (input.entryId) {
     getDb().entries.updateEntry(input.entryId, {
