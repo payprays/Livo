@@ -1242,9 +1242,79 @@ export function Sidebar({ width }: { width?: number }) {
     },
     [updateSettingsSection],
   )
+  // "All" view: feed type first, then the folders holding feeds of that type.
+  // A folder mixing types (e.g. articles and tweets) shows under each type.
+  const viewSections = useMemo(() => {
+    if (activeView !== null) return null
+    const emptyFolderViews = new Map(
+      emptyFolders.map((f) => [f.name, f.view ?? FeedViewType.Articles]),
+    )
+    return visibleViewIds
+      .map((view) => {
+        const defaultName = getViewFolderName(view)
+        let loose: FeedWithCount[] = []
+        const folders: Array<[string, FeedWithCount[]]> = []
+        for (const [name, list] of categoryEntries) {
+          const ofView = list.filter(
+            (f) => (f.view ?? FeedViewType.Articles) === view,
+          )
+          if (name === defaultName) loose = ofView
+          else if (viewDefaultFolderNames.has(name)) continue
+          else if (ofView.length > 0 || emptyFolderViews.get(name) === view)
+            folders.push([name, ofView])
+        }
+        const unread = [...loose, ...folders.flatMap(([, list]) => list)]
+          .map((f) => f.unreadCount)
+          .reduce((a, b) => a + b, 0)
+        return { view, defaultName, loose, folders, unread }
+      })
+      .filter((s) => s.loose.length > 0 || s.folders.length > 0)
+  }, [
+    activeView,
+    categoryEntries,
+    emptyFolders,
+    getViewFolderName,
+    viewDefaultFolderNames,
+    visibleViewIds,
+  ])
+  // ponytail: type sections share collapsedFolders with a prefix; a folder
+  // literally named "view:0" would collide.
+  const viewSectionKey = (view: FeedViewType) => `view:${view}`
+  const collapsibleNames = viewSections
+    ? viewSections.flatMap((s) => [
+        viewSectionKey(s.view),
+        ...s.folders.map(([name]) => name),
+      ])
+    : categoryEntries.map(([name]) => name)
   const allFoldersCollapsed =
-    categoryEntries.length > 0 &&
-    categoryEntries.every(([name]) => collapsedSet.has(name))
+    collapsibleNames.length > 0 &&
+    collapsibleNames.every((name) => collapsedSet.has(name))
+  const renderFolder = (
+    category: string,
+    folderFeeds: FeedWithCount[],
+    key: string,
+    headless = false,
+  ) => (
+    <FeedCategory
+      key={key}
+      headless={headless}
+      lite={!sidebarEnhancementsReady}
+      category={category}
+      feeds={folderFeeds}
+      selectedFeedId={selectedFeedId}
+      onSelect={handleSelectFeed}
+      onContextMenu={handleContextMenu}
+      onCategoryContextMenu={handleCategoryContextMenu}
+      dragFeedId={dragFeedId}
+      dropTarget={dropTarget}
+      onDragStart={handleDragPointerStart}
+      onFolderDragStart={handleFolderDragStart}
+      expanded={!collapsedSet.has(category)}
+      onSetExpanded={setFoldersExpanded}
+      autoExpand={searchExpandedCategories.has(category)}
+      highlightedFeedIds={searchHighlightedFeedIds}
+    />
+  )
   const userVisibleFeedCount = useMemo(
     () =>
       displayFeeds.filter((f) => f.category !== RECOMMENDED_CATEGORY).length,
@@ -1927,10 +1997,7 @@ export function Sidebar({ width }: { width?: number }) {
               <button
                 type="button"
                 onClick={() =>
-                  setFoldersExpanded(
-                    categoryEntries.map(([name]) => name),
-                    allFoldersCollapsed,
-                  )
+                  setFoldersExpanded(collapsibleNames, allFoldersCollapsed)
                 }
                 title={
                   allFoldersCollapsed
@@ -1959,26 +2026,40 @@ export function Sidebar({ width }: { width?: number }) {
           {/* Feed list by category */}
           <div className="pt-2">
             {/* User feed categories */}
-            {categoryEntries.map(([category, categoryFeeds]) => (
-              <FeedCategory
-                key={category}
-                lite={!sidebarEnhancementsReady}
-                category={category}
-                feeds={categoryFeeds}
-                selectedFeedId={selectedFeedId}
-                onSelect={handleSelectFeed}
-                onContextMenu={handleContextMenu}
-                onCategoryContextMenu={handleCategoryContextMenu}
-                dragFeedId={dragFeedId}
-                dropTarget={dropTarget}
-                onDragStart={handleDragPointerStart}
-                onFolderDragStart={handleFolderDragStart}
-                expanded={!collapsedSet.has(category)}
-                onSetExpanded={setFoldersExpanded}
-                autoExpand={searchExpandedCategories.has(category)}
-                highlightedFeedIds={searchHighlightedFeedIds}
-              />
-            ))}
+            {viewSections
+              ? viewSections.map((section) => {
+                  const key = viewSectionKey(section.view)
+                  return (
+                    <ViewSection
+                      key={key}
+                      view={section.view}
+                      label={section.defaultName}
+                      dropCategory={section.defaultName}
+                      unread={section.unread}
+                      expanded={!!allFeedsSearchLower || !collapsedSet.has(key)}
+                      isDropHover={
+                        dropTarget === section.defaultName && !!dragFeedId
+                      }
+                      onToggle={() =>
+                        setFoldersExpanded([key], collapsedSet.has(key))
+                      }
+                    >
+                      {section.folders.map(([category, list]) =>
+                        renderFolder(category, list, `${key}:${category}`),
+                      )}
+                      {section.loose.length > 0 &&
+                        renderFolder(
+                          section.defaultName,
+                          section.loose,
+                          `${key}:loose`,
+                          true,
+                        )}
+                    </ViewSection>
+                  )
+                })
+              : categoryEntries.map(([category, list]) =>
+                  renderFolder(category, list, category),
+                )}
 
             {/* Recommended feeds section -only shown when enabled in settings */}
             {sidebarEnhancementsReady &&
@@ -2705,6 +2786,55 @@ export function Sidebar({ width }: { width?: number }) {
   )
 }
 
+const ViewSection = memo(function ViewSection({
+  view,
+  label,
+  dropCategory,
+  unread,
+  expanded,
+  isDropHover,
+  onToggle,
+  children,
+}: {
+  view: FeedViewType
+  label: string
+  /** The view's default folder: dropping a feed here takes it out of its folder. */
+  dropCategory: string
+  unread: number
+  expanded: boolean
+  isDropHover: boolean
+  onToggle: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <div data-view-section={view} className="mb-2">
+      <button
+        data-drop-category={dropCategory}
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className={`flex w-full items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold transition-colors ${
+          isDropHover
+            ? 'bg-accent/10 text-accent'
+            : 'text-text-primary dark:text-text-dark-primary'
+        }`}
+      >
+        <ChevronRight
+          size={12}
+          className={`transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+        />
+        <span className={VIEW_DEFINITIONS[view]?.color}>
+          {VIEW_ICONS[view]}
+        </span>
+        {label}
+        <span className="text-text-tertiary ml-auto text-xs font-normal">
+          {unread || ''}
+        </span>
+      </button>
+      {expanded && <div className="pl-2">{children}</div>}
+    </div>
+  )
+})
+
 type FeedCategoryProps = {
   lite: boolean
   category: string
@@ -2725,6 +2855,8 @@ type FeedCategoryProps = {
   onSetExpanded: (folders: string[], expanded: boolean) => void
   autoExpand: boolean
   highlightedFeedIds: Set<string>
+  /** Just the feed list, no folder header (feeds without a folder). */
+  headless?: boolean
 }
 
 const FeedCategory = memo(function FeedCategory({
@@ -2743,13 +2875,14 @@ const FeedCategory = memo(function FeedCategory({
   onSetExpanded,
   autoExpand,
   highlightedFeedIds,
+  headless = false,
 }: FeedCategoryProps) {
   const { t } = useTranslation()
   const showFeedRefreshErrorBadge = useSettingsStore(
     (s) => s.settings.general.showFeedRefreshErrorBadge,
   )
   // Search matches open a folder without changing its saved state.
-  const expanded = savedExpanded || (!lite && autoExpand)
+  const expanded = headless || savedExpanded || (!lite && autoExpand)
   const isDropHover = !lite && dropTarget === category && dragFeedId !== null
   const shouldVirtualizeFeeds =
     !lite && feeds.length > FEED_CATEGORY_VIRTUALIZE_THRESHOLD
@@ -2865,49 +2998,52 @@ const FeedCategory = memo(function FeedCategory({
   return (
     <div
       data-drop-category={category}
+      data-folder={headless ? undefined : category}
       className={`mb-1 rounded-lg transition-all duration-300 ${
         isDropHover
           ? 'bg-accent/10 ring-accent/40 scale-[1.01] ring-2 ring-inset'
           : ''
       }`}
     >
-      <button
-        onClick={() => onSetExpanded([category], !expanded)}
-        aria-expanded={expanded}
-        onContextMenu={
-          lite
-            ? undefined
-            : (e) =>
-                onCategoryContextMenu(
-                  e,
-                  category,
-                  feeds.map((f) => f.id),
-                )
-        }
-        className={`group flex w-full items-center gap-1 px-3 py-1 text-xs font-medium uppercase tracking-wider transition-colors ${
-          isDropHover
-            ? 'text-accent'
-            : 'text-text-secondary dark:text-text-dark-secondary'
-        }`}
-      >
-        <ChevronRight
-          size={12}
-          className={`transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
-        />
-        {category}
-        {!lite && (
-          <GripVertical
+      {!headless && (
+        <button
+          onClick={() => onSetExpanded([category], !expanded)}
+          aria-expanded={expanded}
+          onContextMenu={
+            lite
+              ? undefined
+              : (e) =>
+                  onCategoryContextMenu(
+                    e,
+                    category,
+                    feeds.map((f) => f.id),
+                  )
+          }
+          className={`group flex w-full items-center gap-1 px-3 py-1 text-xs font-medium uppercase tracking-wider transition-colors ${
+            isDropHover
+              ? 'text-accent'
+              : 'text-text-secondary dark:text-text-dark-secondary'
+          }`}
+        >
+          <ChevronRight
             size={12}
-            aria-label="drag folder"
-            className="cursor-grab touch-none opacity-0 transition-opacity active:cursor-grabbing group-hover:opacity-40"
-            onPointerDown={(e) => {
-              e.stopPropagation()
-              onFolderDragStart(category, e)
-            }}
+            className={`transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
           />
-        )}
-        <span className="text-text-tertiary ml-auto">{feeds.length}</span>
-      </button>
+          {category}
+          {!lite && (
+            <GripVertical
+              size={12}
+              aria-label="drag folder"
+              className="cursor-grab touch-none opacity-0 transition-opacity active:cursor-grabbing group-hover:opacity-40"
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                onFolderDragStart(category, e)
+              }}
+            />
+          )}
+          <span className="text-text-tertiary ml-auto">{feeds.length}</span>
+        </button>
+      )}
       <div
         className="overflow-hidden transition-all duration-300 ease-in-out"
         style={{

@@ -211,23 +211,44 @@ test('remembered readability mode keeps quiet when a fetch fails', async () => {
   )
 })
 
+test('the all view groups folders under their feed type', async () => {
+  const articles = page.locator('[data-view-section="0"]')
+  await expect(articles.locator('[data-folder="QA"]')).toHaveCount(1)
+  // No tweet feeds, so no empty tweet section or default folder either.
+  await expect(page.locator('[data-view-section="1"]')).toHaveCount(0)
+  await expect(page.locator('[data-folder="推文"]')).toHaveCount(0)
+
+  const feedRow = articles.locator('.sidebar-item', {
+    hasText: FEEDS.small.title,
+  })
+  await articles.locator(':scope > button').click()
+  await expect(feedRow).toHaveCount(0)
+  await articles.locator(':scope > button').click()
+  await expect(feedRow).toBeVisible()
+})
+
 test('dragging a folder header reorders folders and the order sticks', async () => {
+  // A second (empty) article folder to reorder against.
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'livo-empty-folders',
+      JSON.stringify([{ name: 'QB', view: 0 }]),
+    ),
+  )
+  await page.reload()
+  await expect(page.locator('html[data-shortcuts-ready]')).toHaveCount(1)
   const folderNames = () =>
     page
-      .locator('[data-drop-category]')
-      .evaluateAll((els) =>
-        els.map((el) => el.getAttribute('data-drop-category')),
-      )
+      .locator('[data-folder]')
+      .evaluateAll((els) => els.map((el) => el.getAttribute('data-folder')))
   const before = await folderNames()
   expect(before[0]).toBe('QA')
   const target = before[before.length - 1]!
 
-  const grip = page
-    .locator('[data-drop-category="QA"]')
-    .getByLabel('drag folder')
+  const grip = page.locator('[data-folder="QA"]').getByLabel('drag folder')
   const box = (await grip.boundingBox())!
   const dest = (await page
-    .locator(`[data-drop-category="${target}"] > button`)
+    .locator(`[data-folder="${target}"] > button`)
     .boundingBox())!
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
   await page.mouse.down()
@@ -241,7 +262,7 @@ test('dragging a folder header reorders folders and the order sticks', async () 
 })
 
 const folderHeader = (name: string) =>
-  page.locator(`[data-drop-category="${name}"] > button`)
+  page.locator(`[data-folder="${name}"] > button`)
 
 test('a collapsed folder stays collapsed after switching views', async () => {
   await folderHeader('QA').click()
@@ -256,16 +277,14 @@ test('a collapsed folder stays collapsed after switching views', async () => {
 
 test('dragging a folder over a collapsed folder does not open it', async () => {
   const names = await page
-    .locator('[data-drop-category]')
-    .evaluateAll((els) =>
-      els.map((el) => el.getAttribute('data-drop-category')),
-    )
+    .locator('[data-folder]')
+    .evaluateAll((els) => els.map((el) => el.getAttribute('data-folder')))
   const other = names.find((name) => name !== 'QA')!
   await folderHeader(other).click()
   await expect(folderHeader(other)).toHaveAttribute('aria-expanded', 'false')
 
   const grip = (await page
-    .locator('[data-drop-category="QA"]')
+    .locator('[data-folder="QA"]')
     .getByLabel('drag folder')
     .boundingBox())!
   const dest = (await folderHeader(other).boundingBox())!
@@ -281,7 +300,7 @@ test('dragging a folder over a collapsed folder does not open it', async () => {
 test('the collapse-all button folds and unfolds every folder', async () => {
   const states = () =>
     page
-      .locator('[data-drop-category] > button')
+      .locator('[data-folder] > button, [data-view-section] > button')
       .evaluateAll((els) => els.map((el) => el.getAttribute('aria-expanded')))
   await page.locator('button[title="全部折叠"]').click()
   await expect.poll(states).not.toContain('true')
