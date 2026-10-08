@@ -9,6 +9,11 @@ const validateAIConfigMock = vi.hoisted(() => vi.fn())
 const createOpenAIClientMock = vi.hoisted(() => vi.fn())
 const createCompletionMock = vi.hoisted(() => vi.fn())
 const eventSendMock = vi.hoisted(() => vi.fn())
+const fetchReadableMock = vi.hoisted(() => vi.fn())
+
+vi.mock('../entry/readability-fetch', () => ({
+  fetchAndPersistReadableContent: fetchReadableMock,
+}))
 
 vi.mock('../../database', () => ({
   getDb: getDbMock,
@@ -123,6 +128,94 @@ describe('generateAIDigest', () => {
       { type: 'disabled' },
       { type: 'disabled' },
     ])
+  })
+
+  function digestWith(candidates: object[], picked: string) {
+    const db = getDbMock()
+    db.digests.listDigestCandidates = vi.fn(() => candidates)
+    createCompletionMock.mockReset()
+    for (const content of [
+      JSON.stringify({ ids: [picked] }),
+      '- 要点',
+      '# 简报',
+    ]) {
+      createCompletionMock.mockResolvedValueOnce({
+        choices: [{ message: { content } }],
+      })
+    }
+    return () => JSON.stringify(createCompletionMock.mock.calls[1][0].messages)
+  }
+  const other = { id: 'other', title: '其他', summary: '其他', publishedAt: 1 }
+
+  it('fetches the original for picked articles with little text', async () => {
+    fetchReadableMock.mockReset()
+    fetchReadableMock.mockResolvedValue({
+      success: true,
+      content: `<p>${'原文全文 '.repeat(200)}</p>`,
+    })
+    const batchPrompt = digestWith(
+      [
+        {
+          id: 'entry-1',
+          title: '短文',
+          summary: '只有一句摘要',
+          content: '只有一句摘要',
+          url: 'https://example.com/a',
+          feedView: 0,
+          publishedAt: 1900,
+        },
+        other,
+      ],
+      'entry-1',
+    )
+
+    expect((await generateAIDigest({ preset: 'today' })).success).toBe(true)
+    expect(fetchReadableMock).toHaveBeenCalledWith({
+      url: 'https://example.com/a',
+      entryId: 'entry-1',
+    })
+    expect(batchPrompt()).toContain('原文全文')
+  })
+
+  it('keeps tweets as they are and prefers the full feed text over its excerpt', async () => {
+    fetchReadableMock.mockReset()
+    const tweet = digestWith(
+      [
+        {
+          id: 'entry-1',
+          title: '推文',
+          summary: '一条推文',
+          content: '一条推文',
+          url: 'https://x.com/a/status/1',
+          feedView: 1,
+          publishedAt: 1900,
+        },
+        other,
+      ],
+      'entry-1',
+    )
+    await generateAIDigest({ preset: 'today' })
+    expect(fetchReadableMock).not.toHaveBeenCalled()
+    expect(tweet()).toContain('一条推文')
+
+    const article = digestWith(
+      [
+        {
+          id: 'entry-1',
+          title: '全文',
+          summary: '简短摘要',
+          content: 'RSS 全文 '.repeat(200),
+          url: 'https://example.com/b',
+          feedView: 0,
+          publishedAt: 1900,
+        },
+        other,
+      ],
+      'entry-1',
+    )
+    await generateAIDigest({ preset: 'today' })
+    expect(fetchReadableMock).not.toHaveBeenCalled()
+    expect(article()).toContain('RSS 全文')
   })
 })
 

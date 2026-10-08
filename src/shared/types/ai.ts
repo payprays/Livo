@@ -46,6 +46,8 @@ export interface AIDigestCandidate {
   summary?: string
   content?: string
   feedTitle?: string
+  /** FeedViewType of the entry's feed. */
+  feedView?: number
   url?: string
   publishedAt: number
 }

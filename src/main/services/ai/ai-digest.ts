@@ -392,8 +392,9 @@ export function buildDigestBudgetPlan(
       .map((candidate) => ({
         id: candidate.id,
         title: normalizeText(candidate.title),
+        // The full text, not the excerpt: this is what the notes are made from.
         text: clampDigestText(
-          normalizeText(candidate.summary || candidate.content || ''),
+          normalizeText(candidate.content || candidate.summary || ''),
           articleCharBudget,
         ),
         feedTitle: normalizeText(candidate.feedTitle) || undefined,

@@ -26,7 +26,9 @@ import type {
   AiTranslateTaskPayload,
 } from '../system/task-contracts'
 import { getDb } from '../../database'
+import { fetchAndPersistReadableContent } from '../entry/readability-fetch'
 import type {
+  AIDigestCandidate,
   AIDigestGenerateResult,
   AIDigestPreset,
   AIConfig,
@@ -44,6 +46,47 @@ export type AISummarizeResult = { success: true; summary: string }
 export type AITranslateResult = { success: true; translation: string }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+// Same cut as the reader: feed text this short is an excerpt.
+const DIGEST_EXCERPT_CHARS = 500
+
+/**
+ * Fetch the original page for picked articles whose feed text is only an
+ * excerpt (link aggregators, "read more" feeds). Posts (view 1) stay as they
+ * are. A failed fetch, or a page no longer than the feed, keeps the feed text.
+ */
+async function withFullText<T extends AIDigestCandidate>(
+  candidates: T[],
+): Promise<T[]> {
+  return Promise.all(
+    candidates.map(async (candidate) => {
+      const text = candidate.content || candidate.summary || ''
+      if (
+        candidate.feedView !== 0 ||
+        !candidate.url ||
+        text.length >= DIGEST_EXCERPT_CHARS
+      ) {
+        return candidate
+      }
+      try {
+        const result = await fetchAndPersistReadableContent({
+          url: candidate.url,
+          entryId: candidate.id,
+        })
+        return { ...candidate, content: htmlToText(result.content) }
+      } catch {
+        return candidate
+      }
+    }),
+  )
+}
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
 
 function persistAISummarySessionPatch(
   sessionId: string | undefined,
@@ -218,7 +261,7 @@ export async function generateAIDigest(
       .filter((candidate): candidate is (typeof candidates)[number] =>
         Boolean(candidate),
       )
-    const plan = buildDigestBudgetPlan(selectedCandidates, {
+    const plan = buildDigestBudgetPlan(await withFullText(selectedCandidates), {
       totalContextChars: 60_000,
       promptReserveChars: 8_000,
     })

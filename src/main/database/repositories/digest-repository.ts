@@ -75,6 +75,7 @@ export class DigestRepository implements IDigestRepository {
     const sql = `
       SELECT e.id, e.title, e.summary, e.content, e.readability_content,
              e.ai_summary, e.url, e.published_at, f.title as feed_title,
+             f.view as feed_view,
              ROW_NUMBER() OVER (
                PARTITION BY e.feed_id ORDER BY e.published_at DESC
              ) AS feed_rank
@@ -96,6 +97,7 @@ export class DigestRepository implements IDigestRepository {
       url: string
       published_at: number
       feed_title: string
+      feed_view: number
     }>
 
     const stripText = (value: string | null | undefined): string =>
@@ -117,6 +119,7 @@ export class DigestRepository implements IDigestRepository {
         summary,
         content,
         feedTitle: row.feed_title,
+        feedView: row.feed_view,
         url: row.url,
         publishedAt: row.published_at,
       })
