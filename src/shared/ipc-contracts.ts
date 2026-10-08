@@ -301,7 +301,7 @@ export type IpcArgsByChannel = {
   [IPC.AI_FILTER_JUDGE]: [input: AISemanticFilterInput]
   [IPC.AI_DIGEST_LIST]: [limit?: number]
   [IPC.AI_DIGEST_GENERATE]: [
-    input?: { preset?: AIDigestPreset; feedId?: string },
+    input?: { preset?: AIDigestPreset; feedId?: string; folder?: string },
   ]
   [IPC.AI_TEST_CONNECTION]: []
   [IPC.TASK_RUN_GET]: [runId: string]

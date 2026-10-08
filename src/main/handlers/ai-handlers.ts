@@ -376,12 +376,13 @@ export function registerAIHandlers(): void {
         AIDigestGenerateResult
       >({
         contract: AI_DIGEST_GENERATE_TASK,
-        payload: { preset, feedId: input?.feedId },
+        payload: { preset, feedId: input?.feedId, folder: input?.folder },
         handler: async (payload, context) =>
           generateAIDigest(
             {
               preset: normalizeDigestPreset(payload.preset),
               feedId: payload.feedId,
+              folder: payload.folder,
             },
             context,
           ),
@@ -389,6 +390,7 @@ export function registerAIHandlers(): void {
         metadata: {
           preset,
           feedId: input?.feedId,
+          folder: input?.folder,
         },
         target: { id: input?.feedId },
         resultStatus: (result) => (result.success ? 'succeeded' : 'failed'),

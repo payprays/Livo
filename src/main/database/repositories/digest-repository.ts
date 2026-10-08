@@ -11,12 +11,7 @@ export interface IDigestRepository {
     preset: AIDigestPreset,
     now?: number,
   ): { windowStartAt: number; windowEndAt: number }
-  listDigestCandidates(options: {
-    preset: AIDigestPreset
-    feedId?: string
-    limit?: number
-    now?: number
-  }): AIDigestCandidate[]
+  listDigestCandidates(options: DigestCandidateOptions): AIDigestCandidate[]
   listAIDigestRuns(limit?: number): AIDigestRun[]
   upsertAIDigestRun(
     input: Omit<AIDigestRun, 'id' | 'createdAt' | 'updatedAt'>,
@@ -25,6 +20,15 @@ export interface IDigestRepository {
     id: string,
     updates: Partial<Omit<AIDigestRun, 'id' | 'createdAt'>>,
   ): AIDigestRun | null
+}
+
+export interface DigestCandidateOptions {
+  preset: AIDigestPreset
+  feedId?: string
+  /** Sidebar folder (feed category). */
+  folder?: string
+  limit?: number
+  now?: number
 }
 
 export class DigestRepository implements IDigestRepository {
@@ -45,34 +49,41 @@ export class DigestRepository implements IDigestRepository {
     return { windowStartAt: start.getTime(), windowEndAt: now }
   }
 
-  listDigestCandidates(options: {
-    preset: AIDigestPreset
-    feedId?: string
-    limit?: number
-    now?: number
-  }): AIDigestCandidate[] {
+  listDigestCandidates(options: DigestCandidateOptions): AIDigestCandidate[] {
     const { windowStartAt, windowEndAt } = this.getDigestWindow(
       options.preset,
       options.now,
     )
-    const limit = Math.max(1, Math.min(options.limit ?? 80, 200))
+    const limit = Math.max(1, Math.min(options.limit ?? 300, 500))
 
-    let sql = `
-      SELECT e.id, e.title, e.summary, e.content, e.readability_content,
-             e.ai_summary, e.url, e.published_at, f.title as feed_title
-      FROM entries e
-      INNER JOIN feeds f ON f.id = e.feed_id
-      WHERE e.published_at >= ? AND e.published_at <= ?
-        AND f.show_in_all = 1
-    `
+    let where = `e.published_at >= ? AND e.published_at <= ?
+        AND f.show_in_all = 1`
     const params: unknown[] = [windowStartAt, windowEndAt]
-
     if (options.feedId) {
-      sql += ' AND e.feed_id = ?'
+      where += ' AND e.feed_id = ?'
       params.push(options.feedId)
+    } else if (options.folder) {
+      where += ' AND f.category = ?'
+      params.push(options.folder)
+    } else {
+      // The whole-library digest reads articles and posts, not pictures or videos.
+      where += ' AND f.view IN (0, 1)'
     }
 
-    sql += ' ORDER BY e.published_at DESC LIMIT ?'
+    // Each feed's newest entry first, then each feed's second newest, and so
+    // on, so a few busy forums cannot fill every slot.
+    const sql = `
+      SELECT e.id, e.title, e.summary, e.content, e.readability_content,
+             e.ai_summary, e.url, e.published_at, f.title as feed_title,
+             ROW_NUMBER() OVER (
+               PARTITION BY e.feed_id ORDER BY e.published_at DESC
+             ) AS feed_rank
+      FROM entries e
+      INNER JOIN feeds f ON f.id = e.feed_id
+      WHERE ${where}
+      ORDER BY feed_rank, e.published_at DESC
+      LIMIT ?
+    `
     params.push(limit)
 
     const rows = this.db.prepare(sql).all(...params) as Array<{
@@ -134,12 +145,15 @@ export class DigestRepository implements IDigestRepository {
       .prepare(
         `
       SELECT * FROM ai_digest_runs
-      WHERE preset = ? AND feed_id IS ? AND window_start_at = ?
+      WHERE preset = ? AND feed_id IS ? AND folder IS ? AND window_start_at = ?
     `,
       )
-      .get(input.preset, input.feedId ?? null, input.windowStartAt) as
-      | { id: string }
-      | undefined
+      .get(
+        input.preset,
+        input.feedId ?? null,
+        input.folder ?? null,
+        input.windowStartAt,
+      ) as { id: string } | undefined
 
     if (existing) {
       this.db
@@ -175,15 +189,16 @@ export class DigestRepository implements IDigestRepository {
       .prepare(
         `
       INSERT INTO ai_digest_runs
-        (id, preset, feed_id, title, status, window_start_at, window_end_at,
+        (id, preset, feed_id, folder, title, status, window_start_at, window_end_at,
          source_entry_ids, candidate_count, content, error, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
       )
       .run(
         id,
         input.preset,
         input.feedId ?? null,
+        input.folder ?? null,
         input.title,
         input.status,
         input.windowStartAt,

@@ -15,6 +15,7 @@ import {
   buildDigestReduceMessages,
   buildDigestRerankMessages,
   dedupeDigestCandidates,
+  fitDigestCandidatesToBudget,
   getDigestPresetLabel,
   normalizeDigestPreset,
   selectValidDigestRerankIds,
@@ -33,7 +34,11 @@ import type {
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type AIDigestGenerateInput = { preset?: AIDigestPreset; feedId?: string }
+export type AIDigestGenerateInput = {
+  preset?: AIDigestPreset
+  feedId?: string
+  folder?: string
+}
 
 export type AISummarizeResult = { success: true; summary: string }
 export type AITranslateResult = { success: true; translation: string }
@@ -90,7 +95,10 @@ export async function generateAIDigest(
   const settings = settingsProvider.get()
   const aiConfig = settings.ai
   const preset = normalizeDigestPreset(input?.preset)
-  const presetLabel = getDigestPresetLabel(preset)
+  const folder = input?.folder?.trim() || undefined
+  const presetLabel = folder
+    ? `${getDigestPresetLabel(preset)} · ${folder}`
+    : getDigestPresetLabel(preset)
   const now = Date.now()
 
   context?.reportProgress({
@@ -107,13 +115,16 @@ export async function generateAIDigest(
   const rawCandidates = getDb().digests.listDigestCandidates({
     preset,
     feedId: input?.feedId,
-    limit: 80,
+    folder,
     now,
   })
-  const candidates = dedupeDigestCandidates(rawCandidates)
+  const candidates = fitDigestCandidatesToBudget(
+    dedupeDigestCandidates(rawCandidates),
+  )
   const run = getDb().digests.upsertAIDigestRun({
     preset,
     feedId: input?.feedId,
+    folder,
     title: presetLabel,
     status: 'running',
     windowStartAt,

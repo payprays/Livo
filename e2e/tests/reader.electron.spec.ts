@@ -348,3 +348,13 @@ test('AI digest cites sources by number, not raw ids', async () => {
     /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-/,
   )
 })
+
+test('AI digest makes one report per folder', async () => {
+  await page.getByLabel('简报范围').selectOption({ label: '每个分组各一份' })
+  await page.getByRole('button', { name: '生成', exact: true }).click()
+  // The fixture feeds all sit in the QA folder.
+  await expect(
+    page.getByRole('button', { name: /今日简报 · QA/ }).first(),
+  ).toBeVisible({ timeout: 60_000 })
+  await expect(page.locator('article').first()).toContainText('[1]')
+})

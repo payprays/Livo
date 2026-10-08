@@ -54,6 +54,7 @@ export interface AIDigestRun {
   id: string
   preset: AIDigestPreset
   feedId?: string
+  folder?: string
   title: string
   status: AIDigestRunStatus
   windowStartAt: number

@@ -197,6 +197,7 @@ export function createApi(transport: ApiTransport) {
         generate: (input: {
           preset: AIDigestPreset
           feedId?: string
+          folder?: string
         }): Promise<AIDigestGenerateResult> =>
           invokeIpc(IPC.AI_DIGEST_GENERATE, input),
       },

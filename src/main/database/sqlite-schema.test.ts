@@ -85,6 +85,21 @@ describeSqliteSchema('sqlite schema migrations', () => {
           is_starred INTEGER NOT NULL DEFAULT 0,
           created_at INTEGER NOT NULL
         );
+        CREATE TABLE ai_digest_runs (
+          id TEXT PRIMARY KEY,
+          preset TEXT NOT NULL,
+          feed_id TEXT,
+          title TEXT NOT NULL,
+          status TEXT NOT NULL,
+          window_start_at INTEGER NOT NULL,
+          window_end_at INTEGER NOT NULL,
+          source_entry_ids TEXT NOT NULL DEFAULT '[]',
+          candidate_count INTEGER NOT NULL DEFAULT 0,
+          content TEXT,
+          error TEXT,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
         INSERT INTO feeds (id, title, url, error_count, created_at, provider)
         VALUES ('feed-1', 'Feed title', 'https://example.com/feed.xml', 2, 1000, 'local');
       `)

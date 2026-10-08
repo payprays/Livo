@@ -439,6 +439,53 @@ describeSqliteAdapter('SqliteAdapter repository contracts', () => {
     })
   })
 
+  it('picks digest candidates feed by feed and scopes them to a folder', () => {
+    const adapter = createAdapter()
+    // Noon, so every entry below falls inside today's window.
+    const now = new Date().setHours(12, 0, 0, 0)
+    const feeds = [
+      { id: 'busy', category: '社区' },
+      { id: 'quiet', category: '云安全' },
+      { id: 'pics', category: undefined, view: FeedViewType.Pictures },
+    ]
+    for (const f of feeds) {
+      adapter.insertFeed(
+        makeFeed({ ...f, url: `https://example.com/${f.id}.xml` }),
+      )
+    }
+    // The busy feed posts 5 times after the quiet feed's only post.
+    adapter.insertEntries([
+      ...Array.from({ length: 5 }, (_, i) =>
+        makeEntry({
+          id: `busy-${i}`,
+          feedId: 'busy',
+          url: `https://example.com/busy/${i}`,
+          publishedAt: now - i * 1000,
+        }),
+      ),
+      makeEntry({
+        id: 'quiet-0',
+        feedId: 'quiet',
+        url: 'https://example.com/quiet/0',
+        publishedAt: now - 60_000,
+      }),
+      makeEntry({
+        id: 'pic-0',
+        feedId: 'pics',
+        url: 'https://example.com/pic/0',
+        publishedAt: now - 500,
+      }),
+    ])
+
+    const ids = (options: { folder?: string; limit?: number }) =>
+      adapter
+        .listDigestCandidates({ preset: 'today', now, ...options })
+        .map((c) => c.id)
+    expect(ids({ limit: 2 })).toEqual(['busy-0', 'quiet-0'])
+    expect(ids({})).not.toContain('pic-0')
+    expect(ids({ folder: '云安全' })).toEqual(['quiet-0'])
+  })
+
   it('persists entry AI summary sessions by latest updated state', () => {
     const adapter = createAdapter()
     const feed = makeFeed()

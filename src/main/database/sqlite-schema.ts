@@ -284,6 +284,13 @@ const MIGRATIONS: Array<{
         );
     `,
   },
+  {
+    version: 10,
+    name: 'digest-folder',
+    sql: `
+      ALTER TABLE ai_digest_runs ADD COLUMN folder TEXT;
+    `,
+  },
 ]
 
 export function runMigrations(db: Database.Database): void {

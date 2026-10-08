@@ -248,6 +248,7 @@ export function digestRunFromRow(row: unknown): AIDigestRun {
     id: string
     preset: string
     feed_id: string | null
+    folder: string | null
     title: string
     status: AIDigestRun['status']
     window_start_at: number
@@ -271,6 +272,7 @@ export function digestRunFromRow(row: unknown): AIDigestRun {
     id: r.id,
     preset: r.preset as AIDigestPreset,
     feedId: r.feed_id || undefined,
+    folder: r.folder || undefined,
     title: r.title,
     status: r.status,
     windowStartAt: r.window_start_at,

@@ -21,6 +21,13 @@ import {
   getDigestSourceEntryRoute,
   numberDigestCitations,
 } from '../../lib/digest-source-navigation'
+import { sortFolders } from '../../lib/folder-order'
+import { RECOMMENDED_CATEGORY, useFeedStore } from '../../store/feed-store'
+import { useSettingsStore } from '../../store/settings-store'
+
+// Scope values besides folder names.
+const ALL = ''
+const EACH_FOLDER = '\u0000each'
 
 type DigestSourceItem =
   | { id: string; status: 'available'; entry: Entry | AIDigestCandidate }
@@ -48,6 +55,22 @@ function statusLabel(status: AIDigestRun['status']): string {
 export function DigestContent() {
   const navigate = useNavigate()
   const [preset, setPreset] = useState<AIDigestPreset>('today')
+  const [scope, setScope] = useState(ALL)
+  const [progress, setProgress] = useState<string | null>(null)
+  const feeds = useFeedStore((s) => s.feeds)
+  const folderOrder = useSettingsStore((s) => s.settings.general.folderOrder)
+  const folders = useMemo(() => {
+    const names = new Set<string>()
+    for (const feed of feeds) {
+      const name = feed.category?.trim()
+      if (name && name !== RECOMMENDED_CATEGORY && feed.showInAll !== false)
+        names.add(name)
+    }
+    return sortFolders(
+      [...names].map((name) => [name, null]),
+      folderOrder ?? [],
+    ).map(([name]) => name)
+  }, [feeds, folderOrder])
   const [runs, setRuns] = useState<AIDigestRun[]>([])
   const [activeRunId, setActiveRunId] = useState<string | null>(null)
   const [sources, setSources] = useState<DigestSourceItem[]>([])
@@ -110,36 +133,45 @@ export function DigestContent() {
   const handleGenerate = useCallback(async () => {
     setIsGenerating(true)
     setError(null)
+    // "All folders" makes one digest per folder, one after another.
+    const targets = scope === EACH_FOLDER ? folders : [scope]
+    const errors: string[] = []
     try {
-      const result = await window.api.ai.digest.generate({ preset })
-      if (!result.success) {
-        setError(result.error)
-        if (result.run) {
-          setRuns((current) => [
-            result.run!,
-            ...current.filter((run) => run.id !== result.run!.id),
-          ])
-          setActiveRunId(result.run.id)
+      for (const [index, folder] of targets.entries()) {
+        if (targets.length > 1) {
+          setProgress(`${index + 1}/${targets.length} ${folder}`)
         }
-        return
+        const result = await window.api.ai.digest.generate({
+          preset,
+          folder: folder || undefined,
+        })
+        const run = result.run
+        if (run) {
+          setRuns((current) => [
+            run,
+            ...current.filter((item) => item.id !== run.id),
+          ])
+          setActiveRunId(run.id)
+        }
+        if (!result.success) {
+          errors.push(folder ? `${folder}：${result.error}` : result.error)
+          continue
+        }
+        setSources(
+          result.candidates.map((candidate) => ({
+            id: candidate.id,
+            status: 'available',
+            entry: candidate,
+          })),
+        )
       }
-      setRuns((current) => [
-        result.run,
-        ...current.filter((run) => run.id !== result.run.id),
-      ])
-      setActiveRunId(result.run.id)
-      setSources(
-        result.candidates.map((candidate) => ({
-          id: candidate.id,
-          status: 'available',
-          entry: candidate,
-        })),
-      )
+      if (errors.length > 0) setError(errors.join('\n'))
     } finally {
       setIsGenerating(false)
+      setProgress(null)
       void loadRuns()
     }
-  }, [loadRuns, preset])
+  }, [folders, loadRuns, preset, scope])
 
   return (
     <main className="titlebar-safe-pt flex min-h-0 flex-1 flex-col">
@@ -155,6 +187,21 @@ export function DigestContent() {
           <Sparkles size={19} className="text-accent" />
           <h1 className="truncate text-base font-semibold">AI 简报</h1>
         </div>
+        <select
+          aria-label="简报范围"
+          value={scope}
+          onChange={(e) => setScope(e.target.value)}
+          disabled={isGenerating}
+          className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-lg border-none px-2.5 py-2 text-sm focus:outline-none"
+        >
+          <option value={ALL}>全部</option>
+          <option value={EACH_FOLDER}>每个分组各一份</option>
+          {folders.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
         <div className="bg-surface-secondary dark:bg-surface-dark-secondary flex rounded-lg p-1">
           {(['today', 'week'] as const).map((item) => (
             <button
@@ -180,14 +227,14 @@ export function DigestContent() {
           ) : (
             <RefreshCw size={16} />
           )}
-          生成
+          {progress ?? '生成'}
         </button>
       </header>
 
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_320px]">
         <section className="min-w-0 overflow-y-auto px-6 py-5">
           {error && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+            <div className="mb-4 whitespace-pre-line rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
               {error}
             </div>
           )}

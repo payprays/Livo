@@ -6,6 +6,7 @@ import {
   buildDigestRerankMessages,
   canonicalizeDigestLink,
   dedupeDigestCandidates,
+  fitDigestCandidatesToBudget,
   getDigestArticleCharBudget,
   normalizeDigestTitle,
   selectValidDigestRerankIds,
@@ -20,6 +21,22 @@ const candidates: DigestCandidate[] = Array.from({ length: 9 }, (_, index) => ({
 }))
 
 describe('ai digest tools', () => {
+  it('keeps candidates up to the rerank prompt budget', () => {
+    const candidate = (id: string, text: string) => ({
+      id,
+      title: id,
+      summary: text,
+    })
+    const many = Array.from({ length: 50 }, (_, i) =>
+      candidate(`e${i}`, 'x'.repeat(5000)),
+    )
+    // Each costs ~700 (clamped summary) + title + overhead.
+    expect(fitDigestCandidatesToBudget(many, 8000)).toHaveLength(10)
+    expect(fitDigestCandidatesToBudget(many.slice(0, 3))).toHaveLength(3)
+    // One oversized candidate is still kept.
+    expect(fitDigestCandidatesToBudget(many, 10)).toHaveLength(1)
+  })
+
   it('keeps rerank ids inside the candidate set and preserves order', () => {
     const selection = selectValidDigestRerankIds(
       '{"ids":["entry-2","missing","entry-1","entry-2"]}',

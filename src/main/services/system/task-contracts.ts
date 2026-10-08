@@ -62,6 +62,7 @@ export interface EntryActionEffectTaskPayload {
 export interface AiDigestGenerateTaskPayload {
   preset?: string
   feedId?: string
+  folder?: string
 }
 
 export interface AiSummarizeTaskPayload {

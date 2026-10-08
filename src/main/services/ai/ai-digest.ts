@@ -81,6 +81,10 @@ const DEFAULT_MAX_ARTICLES_PER_BATCH = 4
 const DEFAULT_MAX_ARTICLE_CHARS = 8_000
 const DEFAULT_MIN_ARTICLE_CHARS = 600
 const DIGEST_TITLE_SIMILARITY_THRESHOLD = 0.82
+const DIGEST_RERANK_SUMMARY_CHARS = 700
+// About 30k tokens of candidates for the AI to pick from; measured at ~230
+// chars per candidate on real feeds, so ~350 short posts or ~100 long ones.
+const DIGEST_RERANK_BUDGET_CHARS = 80_000
 
 const TRACKING_QUERY_PARAMS = new Set([
   'fbclid',
@@ -262,6 +266,28 @@ function readKnownIdsFromText(raw: string, candidateIds: string[]): string[] {
     .map((m) => m.id)
 }
 
+/** Keep the leading candidates whose rerank text fits the prompt budget. */
+export function fitDigestCandidatesToBudget<T extends DigestCandidate>(
+  candidates: T[],
+  budgetChars = DIGEST_RERANK_BUDGET_CHARS,
+): T[] {
+  let used = 0
+  const kept: T[] = []
+  for (const candidate of candidates) {
+    used +=
+      normalizeText(candidate.title).length +
+      normalizeText(candidate.feedTitle).length +
+      Math.min(
+        DIGEST_RERANK_SUMMARY_CHARS,
+        normalizeText(candidate.summary || candidate.content).length,
+      ) +
+      80 // id and JSON keys
+    if (used > budgetChars && kept.length > 0) break
+    kept.push(candidate)
+  }
+  return kept
+}
+
 export function buildDigestRerankMessages(
   input: DigestRerankInput,
 ): OpenAI.ChatCompletionMessageParam[] {
@@ -272,7 +298,7 @@ export function buildDigestRerankMessages(
     feedTitle: normalizeText(candidate.feedTitle),
     summary: clampContentToBudget(
       normalizeText(candidate.summary || candidate.content),
-      700,
+      DIGEST_RERANK_SUMMARY_CHARS,
     ),
   }))
 

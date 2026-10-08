@@ -167,12 +167,9 @@ export class SqliteAdapter {
     return this.digests.getDigestWindow(preset, now)
   }
 
-  listDigestCandidates(options: {
-    preset: AIDigestPreset
-    feedId?: string
-    limit?: number
-    now?: number
-  }): AIDigestCandidate[] {
+  listDigestCandidates(
+    options: Parameters<DigestRepository['listDigestCandidates']>[0],
+  ): AIDigestCandidate[] {
     return this.digests.listDigestCandidates(options)
   }
 
