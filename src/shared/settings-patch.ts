@@ -303,7 +303,6 @@ const generalSettingsPatchSchema: Record<string, FieldSanitizer> = {
   startInTray: sanitizeBoolean,
   refreshInterval: sanitizeNumber,
   markReadOnScroll: sanitizeBoolean,
-  readabilityMode: sanitizeBoolean,
   folderOrder: sanitizeFolderNames,
   collapsedFolders: sanitizeFolderNames,
   fontSize: sanitizeNumber,

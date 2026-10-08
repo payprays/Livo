@@ -189,26 +189,39 @@ test('auto summary skips short posts and runs for long articles', async () => {
   await expect.poll(() => upstream.summaryRequests()).toBe(before + 1)
 })
 
-test('remembered readability mode keeps quiet when a fetch fails', async () => {
-  // Readability refuses the loopback fixture pages, so every fetch fails here.
-  await page.evaluate(() =>
-    window.api.settings.set({ general: { readabilityMode: true } } as never),
-  )
-  await page.reload()
-  await expect(page.locator('html[data-shortcuts-ready]')).toHaveCount(1)
+test('short feed text fetches the original quietly, full text does not', async () => {
+  // Readability refuses the loopback fixture pages, so every fetch fails and
+  // records readabilityError on the entry; that marks which entries it tried.
   await sidebarFeed(FEEDS.small.title).click()
-  await openEntry(`${FEEDS.small.prefix} 3`)
+  const ids = await page.evaluate(async () =>
+    Object.fromEntries(
+      (await window.api.entries.list({ limit: 200 })).entries.map((e) => [
+        e.title,
+        e.id,
+      ]),
+    ),
+  )
+  const triedFetch = (title: string) =>
+    page.evaluate(
+      async (id) => !!(await window.api.entries.get(id))?.readabilityError,
+      ids[title],
+    )
+  const short = `${FEEDS.small.prefix} 3`
+  const long = `${FEEDS.small.prefix} 1`
+
+  await openEntry(long)
+  await expect(readerTitle()).toHaveText(long)
+  await openEntry(short)
+  await expect.poll(() => triedFetch(short)).toBe(true)
+  expect(await triedFetch(long)).toBe(false)
+  // An automatic fetch that fails keeps the feed text without a banner.
   const getOriginal = page.getByTitle(/获取原文|Get Original/)
   await expect(getOriginal).toBeEnabled()
-  await page.waitForTimeout(500)
   await expect(page.getByText(/全文抓取失败|Full ?text/i)).toHaveCount(0)
 
   // Asking by hand still reports the failure.
   await getOriginal.click()
   await expect(page.getByText(/全文抓取失败|Full ?text/i)).toBeVisible()
-  await page.evaluate(() =>
-    window.api.settings.set({ general: { readabilityMode: false } } as never),
-  )
 })
 
 test('the all view groups folders under their feed type', async () => {

@@ -44,6 +44,7 @@ import {
   type EntryTaskSnapshot,
   type EntryTaskState,
 } from '../../../../shared/types'
+import { htmlTextLength } from '../../../../shared/html-text'
 import { HOTKEY_OVERLAY_SCOPES } from '../../lib/hotkey-scope'
 import { splitHtmlIntoParagraphs } from '../../lib/entry-text'
 import { resolvePreferredEntryVideo } from '../../lib/entry-video-source'
@@ -109,7 +110,6 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     contentFontFamily: settings.contentFontFamily,
     fontSize: settings.fontSize,
     language: settings.language,
-    readabilityMode: settings.readabilityMode,
   }))
   const translationSettings = useSettingSection('translation')
   const summarySettings = useSettingSection('summary')
@@ -429,14 +429,10 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     [t],
   )
 
-  // The toggle is remembered and applies to the next articles too.
+  // Overrides the automatic choice for the current article only.
   const handleReadability = useCallback(async () => {
     if (!selectedEntry?.url) return
-    const next = !isReadabilityMode
-    if (general.readabilityMode !== next) {
-      void updateSettingsSection('general', { readabilityMode: next })
-    }
-    if (!next) {
+    if (isReadabilityMode) {
       setIsReadabilityMode(false)
       return
     }
@@ -445,14 +441,7 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
       return
     }
     await openReadable(selectedEntry)
-  }, [
-    selectedEntry,
-    isReadabilityMode,
-    readableContent,
-    general.readabilityMode,
-    updateSettingsSection,
-    openReadable,
-  ])
+  }, [selectedEntry, isReadabilityMode, readableContent, openReadable])
 
   const handleOpenAISettings = useCallback(() => {
     setSettingsActiveTab('ai')
@@ -565,16 +554,19 @@ export function EntryContent({ hideVideo }: { hideVideo?: boolean }) {
     entryFeedView: currentFeed?.view,
   })
 
-  // Open new articles in readability mode when that was the last choice.
-  const readabilityAutoRef = useRef({ on: false, article: false })
-  readabilityAutoRef.current = {
-    on: general.readabilityMode,
-    article: detailPresentation === 'article',
-  }
+  // Feeds that only carry an excerpt get the original page; full-text feeds
+  // keep their own markup, which readability tends to mangle. Measured on
+  // the real feeds: excerpt feeds sit below ~800 visible chars, full-text
+  // ones above ~1200; 500 misjudges 3% of full-text items (the fetch is then
+  // dropped unless the page is longer) and treats longer forum posts as full.
+  // ponytail: length only; per-feed rules (the readability action) cover the
+  // exceptions.
+  const readabilityAutoRef = useRef(false)
+  readabilityAutoRef.current = detailPresentation === 'article'
   useEffect(() => {
     if (!selectedEntry) return
-    const { on, article } = readabilityAutoRef.current
-    if (on && article && selectedEntry.url)
+    const isExcerpt = htmlTextLength(selectedEntry.content) < 500
+    if (readabilityAutoRef.current && isExcerpt && selectedEntry.url)
       void openReadable(selectedEntry, true)
     else setReadableSettledFor(selectedEntry.id)
     // Only on entry switch; toggling is handled by handleReadability.
