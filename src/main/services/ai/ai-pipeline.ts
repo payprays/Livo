@@ -15,7 +15,14 @@ import {
   buildDigestReduceMessages,
   buildDigestRerankMessages,
   dedupeDigestCandidates,
+  digestArticleTokens,
+  estimateTokens,
   fitDigestCandidatesToBudget,
+  takeDigestArticlesWithinTokens,
+  DIGEST_ARTICLE_CHARS,
+  DIGEST_ARTICLE_TOKEN_BUDGET,
+  DIGEST_BATCH_OUTPUT_TOKENS,
+  DIGEST_REDUCE_OUTPUT_TOKENS,
   getDigestPresetLabel,
   normalizeDigestPreset,
   selectValidDigestRerankIds,
@@ -55,30 +62,50 @@ const DIGEST_EXCERPT_CHARS = 500
  * excerpt (link aggregators, "read more" feeds). Posts (view 1) stay as they
  * are. A failed fetch, or a page no longer than the feed, keeps the feed text.
  */
+// At most this many pages per digest, a few at a time: picking every
+// candidate of a busy folder must not mean hundreds of page loads.
+const DIGEST_MAX_FETCHES = 30
+const DIGEST_FETCH_CONCURRENCY = 6
+const DIGEST_BATCH_CONCURRENCY = 4
+
 async function withFullText<T extends AIDigestCandidate>(
   candidates: T[],
 ): Promise<T[]> {
-  return Promise.all(
-    candidates.map(async (candidate) => {
-      const text = candidate.content || candidate.summary || ''
-      if (
-        candidate.feedView !== 0 ||
-        !candidate.url ||
-        text.length >= DIGEST_EXCERPT_CHARS
-      ) {
-        return candidate
-      }
-      try {
-        const result = await fetchAndPersistReadableContent({
-          url: candidate.url,
-          entryId: candidate.id,
-        })
-        return { ...candidate, content: htmlToText(result.content) }
-      } catch {
-        return candidate
-      }
-    }),
-  )
+  const result = [...candidates]
+  const due = candidates
+    .map((candidate, index) => ({ candidate, index }))
+    .filter(
+      ({ candidate }) =>
+        candidate.feedView === 0 &&
+        candidate.url &&
+        (candidate.content || candidate.summary || '').length <
+          DIGEST_EXCERPT_CHARS,
+    )
+    .slice(0, DIGEST_MAX_FETCHES)
+  for (let i = 0; i < due.length; i += DIGEST_FETCH_CONCURRENCY) {
+    await Promise.all(
+      due
+        .slice(i, i + DIGEST_FETCH_CONCURRENCY)
+        .map(async ({ candidate, index }) => {
+          result[index] = await fetchFullText(candidate)
+        }),
+    )
+  }
+  return result
+}
+
+async function fetchFullText<T extends AIDigestCandidate>(
+  candidate: T,
+): Promise<T> {
+  try {
+    const result = await fetchAndPersistReadableContent({
+      url: candidate.url!,
+      entryId: candidate.id,
+    })
+    return { ...candidate, content: htmlToText(result.content) }
+  } catch {
+    return candidate
+  }
 }
 
 function htmlToText(html: string): string {
@@ -226,44 +253,55 @@ export async function generateAIDigest(
 
   try {
     const topic = presetLabel
-    const maxIds = Math.min(12, candidates.length)
-    let selectedIds = candidates.slice(0, 1).map((candidate) => candidate.id)
+    // Every candidate when they all fit the token budget; otherwise the AI
+    // ranks them and the digest takes them in that order until it is full.
+    let budget = DIGEST_ARTICLE_TOKEN_BUDGET
+    let ranked = candidates
+    const allFit =
+      candidates.reduce((sum, c) => sum + digestArticleTokens(c), 0) <= budget
 
-    if (candidates.length > 1) {
+    if (!allFit && candidates.length > 1) {
       context?.reportProgress({
         completed: 2,
         total: 4,
         message: '重排候选文章',
         data: { preset, feedId: input?.feedId, digestRunId: run.id },
       })
+      const messages = buildDigestRerankMessages({
+        topic,
+        candidates,
+        maxIds: candidates.length,
+      })
+      // ~20 tokens per returned id.
+      const outputTokens = Math.min(16_000, candidates.length * 20 + 200)
+      budget -= estimateTokens(JSON.stringify(messages)) + outputTokens
       const rerankRaw = await requestDigestText(
         aiConfig,
-        buildDigestRerankMessages({ topic, candidates, maxIds }),
-        800,
+        messages,
+        outputTokens,
         0,
       )
       const selection = selectValidDigestRerankIds(
         rerankRaw,
         candidates.map((candidate) => candidate.id),
-        maxIds,
       )
       if (selection.ids.length === 0) {
         throw new Error('AI 未返回有效候选文章 id')
       }
-      selectedIds = selection.ids
+      const candidateById = new Map(
+        candidates.map((candidate) => [candidate.id, candidate]),
+      )
+      ranked = selection.ids.map((id) => candidateById.get(id)!)
     }
 
-    const candidateById = new Map(
-      candidates.map((candidate) => [candidate.id, candidate]),
+    const selectedCandidates = takeDigestArticlesWithinTokens(
+      await withFullText(ranked),
+      budget,
     )
-    const selectedCandidates = selectedIds
-      .map((id) => candidateById.get(id))
-      .filter((candidate): candidate is (typeof candidates)[number] =>
-        Boolean(candidate),
-      )
-    const plan = buildDigestBudgetPlan(await withFullText(selectedCandidates), {
-      totalContextChars: 60_000,
-      promptReserveChars: 8_000,
+    const selectedIds = selectedCandidates.map((candidate) => candidate.id)
+    const plan = buildDigestBudgetPlan(selectedCandidates, {
+      totalContextChars: Number.MAX_SAFE_INTEGER,
+      maxArticleChars: DIGEST_ARTICLE_CHARS,
     })
     const batchNotes: string[] = []
 
@@ -279,14 +317,21 @@ export async function generateAIDigest(
       },
     })
 
-    for (const batch of plan.batches) {
-      const note = await requestDigestText(
-        aiConfig,
-        buildDigestBatchMessages({ topic, presetLabel, batch }),
-        1200,
-        0.2,
+    // A few batches at a time: a full folder can be ~75 batches.
+    for (let i = 0; i < plan.batches.length; i += DIGEST_BATCH_CONCURRENCY) {
+      const notes = await Promise.all(
+        plan.batches
+          .slice(i, i + DIGEST_BATCH_CONCURRENCY)
+          .map((batch) =>
+            requestDigestText(
+              aiConfig,
+              buildDigestBatchMessages({ topic, presetLabel, batch }),
+              DIGEST_BATCH_OUTPUT_TOKENS,
+              0.2,
+            ),
+          ),
       )
-      batchNotes.push(note)
+      batchNotes.push(...notes)
     }
 
     const content = await requestDigestText(
@@ -298,7 +343,7 @@ export async function generateAIDigest(
         windowEndAt,
         batchNotes,
       }),
-      2200,
+      DIGEST_REDUCE_OUTPUT_TOKENS,
       0.3,
     )
     const completed = getDb().digests.updateAIDigestRun(run.id, {

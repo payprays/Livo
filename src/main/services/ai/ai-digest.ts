@@ -288,6 +288,56 @@ export function fitDigestCandidatesToBudget<T extends DigestCandidate>(
   return kept
 }
 
+// Token budget for one digest, all calls included. Per article: its text,
+// its share of a batch prompt and note, and that note again in the report.
+const DIGEST_TOKEN_BUDGET = 256_000
+const DIGEST_BATCH_PROMPT_TOKENS = 300
+export const DIGEST_BATCH_OUTPUT_TOKENS = 1200
+export const DIGEST_REDUCE_OUTPUT_TOKENS = 4000
+export const DIGEST_ARTICLE_CHARS = 8000
+export const DIGEST_ARTICLE_TOKEN_BUDGET =
+  DIGEST_TOKEN_BUDGET - DIGEST_REDUCE_OUTPUT_TOKENS - DIGEST_BATCH_PROMPT_TOKENS
+
+/**
+ * Rough token count: ~0.7 per CJK character, ~0.3 per other character.
+ * ponytail: a heuristic, close enough for a budget; a real tokenizer if it
+ * ever has to be exact.
+ */
+export function estimateTokens(text: string): number {
+  const cjk =
+    text.match(/[\u3000-\u9fff\uac00-\ud7af\uff00-\uffef]/g)?.length ?? 0
+  return Math.ceil(cjk * 0.7 + (text.length - cjk) * 0.3)
+}
+
+export function digestArticleTokens(candidate: DigestCandidate): number {
+  const text = clampContentToBudget(
+    normalizeText(candidate.content || candidate.summary || ''),
+    DIGEST_ARTICLE_CHARS,
+  )
+  return (
+    estimateTokens(text) +
+    Math.ceil(
+      (DIGEST_BATCH_PROMPT_TOKENS + 2 * DIGEST_BATCH_OUTPUT_TOKENS) /
+        DEFAULT_MAX_ARTICLES_PER_BATCH,
+    )
+  )
+}
+
+/** Leading candidates whose digest cost fits `budget` tokens. */
+export function takeDigestArticlesWithinTokens<T extends DigestCandidate>(
+  candidates: T[],
+  budget: number,
+): T[] {
+  let used = 0
+  const kept: T[] = []
+  for (const candidate of candidates) {
+    used += digestArticleTokens(candidate)
+    if (used > budget) break
+    kept.push(candidate)
+  }
+  return kept
+}
+
 export function buildDigestRerankMessages(
   input: DigestRerankInput,
 ): OpenAI.ChatCompletionMessageParam[] {
@@ -314,6 +364,8 @@ export function buildDigestRerankMessages(
         topic: normalizeText(input.topic),
         maxIds,
         candidates,
+        order:
+          '按对该主题的重要性从高到低排列；只保留值得写进简报的，可以少于 maxIds',
         output: { ids: ['候选 id'] },
       }),
     },
