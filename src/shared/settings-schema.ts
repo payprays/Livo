@@ -89,6 +89,10 @@ export interface AppSettings {
     enabled: boolean
     autoTrigger: boolean
     language: string
+    /** Make the day digest daily (and the week digest on Sunday) at digestTime. */
+    digestSchedule: boolean
+    /** HH:MM, local time. */
+    digestTime: string
   }
 }
 
@@ -201,5 +205,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     enabled: false,
     autoTrigger: false,
     language: 'zh-CN',
+    digestSchedule: false,
+    digestTime: '21:00',
   },
 }

@@ -23,7 +23,11 @@ import {
 } from '../../lib/digest-source-navigation'
 import { sortFolders } from '../../lib/folder-order'
 import { RECOMMENDED_CATEGORY, useFeedStore } from '../../store/feed-store'
-import { useSettingsStore } from '../../store/settings-store'
+import {
+  useSettingSection,
+  useSettingsActions,
+  useSettingsStore,
+} from '../../store/settings-store'
 
 // Scope values besides folder names.
 const ALL = ''
@@ -59,6 +63,8 @@ export function DigestContent() {
   const [progress, setProgress] = useState<string | null>(null)
   const feeds = useFeedStore((s) => s.feeds)
   const folderOrder = useSettingsStore((s) => s.settings.general.folderOrder)
+  const summarySettings = useSettingSection('summary')
+  const { updateSettingsSection } = useSettingsActions()
   const folders = useMemo(() => {
     const names = new Set<string>()
     for (const feed of feeds) {
@@ -187,6 +193,34 @@ export function DigestContent() {
           <Sparkles size={19} className="text-accent" />
           <h1 className="truncate text-base font-semibold">AI 简报</h1>
         </div>
+        <label
+          className="text-text-secondary dark:text-text-dark-secondary flex items-center gap-1.5 text-sm"
+          title="每天到点生成今日简报（全部和每个分组），周日另生成本周简报"
+        >
+          <input
+            type="checkbox"
+            checked={summarySettings.digestSchedule}
+            onChange={(e) =>
+              void updateSettingsSection('summary', {
+                digestSchedule: e.target.checked,
+              })
+            }
+          />
+          每天
+          <input
+            type="time"
+            aria-label="定时简报时间"
+            value={summarySettings.digestTime}
+            onChange={(e) =>
+              e.target.value &&
+              void updateSettingsSection('summary', {
+                digestTime: e.target.value,
+              })
+            }
+            className="bg-surface-secondary dark:bg-surface-dark-secondary rounded-md px-1.5 py-1 text-sm"
+          />
+          自动生成
+        </label>
         <select
           aria-label="简报范围"
           value={scope}

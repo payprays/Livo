@@ -38,6 +38,7 @@ import { recoverOrphanBilibiliDynamicFeeds } from './services/bilibili/bilibili-
 import { startCacheMaintenance } from './services/system/cache-maintenance'
 import { registerSessionPolicies } from './services/system/session-policies'
 import { startBrowserCookieSync } from './services/system/browser-cookies'
+import { startDigestSchedule } from './services/ai/digest-schedule'
 import { parseDeepLink } from '../shared/deep-link'
 import { UpdaterService } from './services/updater'
 import { registerUpdaterHandlers } from './handlers/updater-handlers'
@@ -140,6 +141,7 @@ export class AppManager {
     await dbInitPromise
     this.databaseReady = true
     startBrowserCookieSync()
+    startDigestSchedule()
 
     if (this.isQuitting) return
 

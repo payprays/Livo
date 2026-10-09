@@ -338,6 +338,28 @@ test('the reading progress bar animates without relayout', async () => {
   ).toBe('transform')
 })
 
+test('scheduled digest makes the day digests once its time has passed', async () => {
+  // Runs before the manual digest tests, so no digest exists for today yet.
+  await page.evaluate(() =>
+    window.api.settings.set({
+      summary: { digestSchedule: true, digestTime: '00:00' },
+    } as never),
+  )
+  await expect
+    .poll(
+      async () =>
+        (await page.evaluate(() => window.api.ai.digest.listRuns(30)))
+          .filter((run) => run.preset === 'today' && run.status === 'completed')
+          .map((run) => run.title)
+          .sort(),
+      { timeout: 60_000 },
+    )
+    .toEqual(['今日简报', '今日简报 · QA'])
+  await page.evaluate(() =>
+    window.api.settings.set({ summary: { digestSchedule: false } } as never),
+  )
+})
+
 test('AI digest cites sources by number, not raw ids', async () => {
   await page.getByRole('button', { name: 'AI 简报', exact: true }).click()
   await page.getByRole('button', { name: '生成', exact: true }).click()

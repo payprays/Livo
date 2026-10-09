@@ -373,6 +373,9 @@ const summarySettingsPatchSchema: Record<string, FieldSanitizer> = {
   autoTrigger: sanitizeBoolean,
   language: (value, field) =>
     sanitizeString(value, field, SETTINGS_PATCH_SHORT_STRING_MAX_LENGTH),
+  digestSchedule: sanitizeBoolean,
+  digestTime: (value, field) =>
+    sanitizeString(value, field, SETTINGS_PATCH_SHORT_STRING_MAX_LENGTH),
 }
 
 const settingsPatchSchemas: Record<string, SectionSanitizer> = {
