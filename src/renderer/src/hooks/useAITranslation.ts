@@ -40,19 +40,40 @@ export interface AITranslationOptions {
   entryId?: string
 }
 
+/**
+ * Copy of `list` with `text` at `index`. Paragraphs arrive out of order, so
+ * the gaps before it become '' rather than holes the reader would trip on.
+ */
+export function placeParagraph(
+  list: string[],
+  index: number,
+  text: string,
+): string[] {
+  const next = Array.from(
+    { length: Math.max(list.length, index + 1) },
+    (_, i) => list[i] ?? '',
+  )
+  next[index] = text
+  return next
+}
+
 function sessionToState(session: EntryAITranslationSession): {
   translatedParagraphs: string[]
   sourceParagraphs: string[]
   errorMap: TranslationErrorMap
 } {
-  const translatedParagraphs: string[] = []
+  let translatedParagraphs: string[] = []
   const sourceParagraphs: string[] = []
   const errorMap: TranslationErrorMap = {}
   const segments = [...session.segments].sort(
     (left, right) => left.index - right.index,
   )
   for (const segment of segments) {
-    translatedParagraphs[segment.index] = segment.translatedText || ''
+    translatedParagraphs = placeParagraph(
+      translatedParagraphs,
+      segment.index,
+      segment.translatedText || '',
+    )
     sourceParagraphs[segment.index] = segment.sourceText
     if (segment.status === 'failed' && segment.errorMessage) {
       errorMap[segment.index] = segment.errorMessage
@@ -121,9 +142,7 @@ export function useAITranslation(
       if (data.entryId !== entryId || !data.translation) return
       setTranslatedParagraphs((current) => {
         if (current[data.index] === data.translation) return current
-        const next = [...current]
-        next[data.index] = data.translation
-        return next
+        return placeParagraph(current, data.index, data.translation)
       })
     })
   }, [entryId])
